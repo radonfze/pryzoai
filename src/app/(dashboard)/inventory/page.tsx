@@ -1,135 +1,161 @@
-import { getInventoryStats, getRecentStockMovements } from "@/lib/inventory/stats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { 
   Package, 
-  AlertTriangle, 
-  DollarSign, 
-  Activity 
+  Boxes, 
+  TrendingUp, 
+  AlertTriangle,
+  Zap,
+  Plus,
+  Activity,
+  Warehouse
 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 
-const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+export const dynamic = 'force-dynamic';
 
-export default async function InventoryDashboardPage() {
-  const stats = await getInventoryStats(DEMO_COMPANY_ID);
-  const recentMovements = await getRecentStockMovements(DEMO_COMPANY_ID);
+export default function InventoryDashboardPage() {
+  const stats = [
+    {
+      title: "Total Items",
+      value: "0",
+      change: "SKUs",
+      icon: Package,
+      href: "/inventory/items",
+      gradient: "from-teal-500 to-cyan-600",
+    },
+    {
+      title: "Stock Value",
+      value: "AED 0",
+      change: "At cost",
+      icon: TrendingUp,
+      href: "/inventory/items",
+      gradient: "from-violet-500 to-purple-600",
+    },
+    {
+      title: "Low Stock",
+      value: "0",
+      change: "Alerts",
+      icon: AlertTriangle,
+      href: "/inventory/items",
+      gradient: "from-amber-500 to-orange-500",
+    },
+    {
+      title: "Movements",
+      value: "0",
+      change: "Today",
+      icon: Boxes,
+      href: "/inventory/ledger",
+      gradient: "from-blue-500 to-indigo-500",
+    },
+  ];
+
+  const quickActions = [
+    { title: "View Items", href: "/inventory/items", icon: Package, color: "bg-teal-500" },
+    { title: "Stock Ledger", href: "/inventory/ledger", icon: Boxes, color: "bg-violet-500" },
+    { title: "Adjustment", href: "/inventory/adjustments/new", icon: TrendingUp, color: "bg-amber-500" },
+    { title: "Warehouses", href: "/settings/warehouses", icon: Warehouse, color: "bg-blue-500" },
+  ];
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Inventory Overview</h2>
-      </div>
-      
-      {/* Metrics Row */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Stock Value
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.totalStockValue.toLocaleString(undefined, { style: 'currency', currency: 'AED' })}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Current asset value
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Items
-            </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.totalItems}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Active SKU count
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.lowStockItems}</div>
-            <p className="text-xs text-muted-foreground">
-              Items below reorder level
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Movements</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.stockMovementsCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Total transactions
-            </p>
-          </CardContent>
-        </Card>
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 p-8 text-white">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIwOS0xLjc5MS00LTQtNHMtNCAxLjc5MS00IDQgMS43OTEgNCA0IDQgNC0xLjc5MSA0LTR6bTAtMThjMC0yLjIwOS0xLjc5MS00LTQtNHMtNCAxLjc5MS00IDQgMS43OTEgNCA0IDQgNC0xLjc5MSA0LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
+        <div className="relative">
+          <div className="flex items-center gap-2 mb-2">
+            <Package className="h-6 w-6" />
+            <span className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">Inventory</span>
+          </div>
+          <h1 className="text-4xl font-bold mb-2">Inventory Dashboard</h1>
+          <p className="text-white/80 text-lg">Track stock levels, movements and valuations</p>
+        </div>
+        <div className="absolute right-8 top-1/2 -translate-y-1/2 hidden lg:block">
+          <Boxes className="h-32 w-32 text-white/20" />
+        </div>
       </div>
 
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <Link key={stat.title} href={stat.href}>
+            <Card className={`relative overflow-hidden bg-gradient-to-br ${stat.gradient} text-white border-0 hover:scale-105 transition-all duration-300 cursor-pointer`}>
+              <div className="absolute -right-4 -top-4 opacity-20">
+                <stat.icon className="h-24 w-24" />
+              </div>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+                <CardTitle className="text-sm font-medium text-white/90">{stat.title}</CardTitle>
+                <div className="h-8 w-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <stat.icon className="h-4 w-4" />
+                </div>
+              </CardHeader>
+              <CardContent className="relative">
+                <div className="text-3xl font-bold">{stat.value}</div>
+                <span className="text-sm text-white/80">{stat.change}</span>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
+
+      {/* Quick Actions */}
+      <Card className="border-0 shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-yellow-500" />
+            Quick Actions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {quickActions.map((action) => (
+              <Link key={action.title} href={action.href}>
+                <div className="flex flex-col items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 hover:shadow-lg transition-all duration-300 cursor-pointer group">
+                  <div className={`${action.color} p-3 rounded-xl text-white group-hover:scale-110 transition-transform`}>
+                    <action.icon className="h-6 w-6" />
+                  </div>
+                  <span className="text-sm font-medium text-center">{action.title}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Recent Activity */}
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-        <Card>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="border-0 shadow-lg">
           <CardHeader>
-            <CardTitle>Recent Movements</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-teal-500" />
+              Recent Movements
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Item</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentMovements.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
-                      No stock movements found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  recentMovements.map((txn) => (
-                    <TableRow key={txn.id}>
-                      <TableCell className="text-xs">{format(new Date(txn.transactionDate), "dd MMM HH:mm")}</TableCell>
-                      <TableCell className="font-medium">{txn.item.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs uppercase">
-                          {txn.transactionType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className={txn.transactionType.includes('in') || txn.transactionType === 'receipt' ? "text-right text-green-600" : "text-right text-red-600"}>
-                        {Number(txn.quantity) > 0 ? "+" : ""}{Number(txn.quantity)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            <div className="text-center py-8 text-muted-foreground">
+              <Boxes className="h-12 w-12 mx-auto mb-4 opacity-30" />
+              <p>No stock movements</p>
+              <Link href="/inventory/ledger">
+                <Button className="mt-4" variant="outline">
+                  View Ledger
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Low Stock Alerts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8 text-muted-foreground">
+              <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-30" />
+              <p>No low stock items</p>
+            </div>
           </CardContent>
         </Card>
       </div>
