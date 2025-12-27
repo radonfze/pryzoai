@@ -1,7 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* DaisyUI plugin for Tailwind v4 */
+@plugin "daisyui" {
+  themes: light, dark, corporate, business, winter, night, cyberpunk, retro, synthwave, forest, aqua, luxury, dracula, nord;
+}
+
 @custom-variant dark (&:is(.dark *));
+
 
 @theme inline {
   --color-background: var(--background);
