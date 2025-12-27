@@ -9,8 +9,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createItem } from "@/actions/settings/create-item";
-import { useState } from "react";
+import { getNextCode } from "@/actions/settings/auto-code";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -27,6 +29,7 @@ type FormData = z.infer<typeof formSchema>;
 export default function NewItemPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [codeLoading, setCodeLoading] = useState(true);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -41,6 +44,23 @@ export default function NewItemPage() {
     },
   });
 
+  // Auto-fetch next item SKU on mount
+  useEffect(() => {
+    async function fetchNextCode() {
+      try {
+        const result = await getNextCode("ITEM", "00000000-0000-0000-0000-000000000000");
+        if (result.success && (result.preview || result.code)) {
+          form.setValue("sku", result.preview || result.code || "");
+        }
+      } catch (error) {
+        console.error("Failed to fetch next code:", error);
+      } finally {
+        setCodeLoading(false);
+      }
+    }
+    fetchNextCode();
+  }, [form]);
+
   async function onSubmit(data: FormData) {
     setLoading(true);
     try {
@@ -54,6 +74,7 @@ export default function NewItemPage() {
       setLoading(false);
     }
   }
+
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -87,9 +108,18 @@ export default function NewItemPage() {
                   name="sku"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>SKU *</FormLabel>
+                      <FormLabel>SKU * <span className="text-xs text-muted-foreground">(Auto-generated)</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. ITEM-001" {...field} />
+                        <div className="relative">
+                          <Input 
+                            {...field} 
+                            readOnly 
+                            className="bg-muted pr-8"
+                          />
+                          {codeLoading && (
+                            <Loader2 className="absolute right-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                          )}
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
