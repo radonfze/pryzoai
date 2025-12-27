@@ -3,11 +3,11 @@
 import { db } from "@/db";
 import { 
   salesInvoices, 
-  salesInvoiceItems, 
+  salesLines, 
   customers, 
   items, 
   warehouses, 
-  autoNumberSeries
+  numberSeries
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -42,8 +42,8 @@ export async function createInvoiceAction(data: InvoiceFormState) {
 
   // 1. Generate Invoice Number (Simplified here, usually use numbering service)
   // Mocking number generation for MVP
-  const series = await db.query.autoNumberSeries.findFirst({
-      where: and(eq(autoNumberSeries.module, "sales"), eq(autoNumberSeries.isDefault, true))
+  const series = await db.query.numberSeries.findFirst({
+      where: and(eq(numberSeries.module, "sales"), eq(numberSeries.isDefault, true))
   });
   const nextNum = (series?.currentNumber || 1000) + 1;
   const invoiceNumber = `INV-${nextNum}`;
@@ -71,9 +71,9 @@ export async function createInvoiceAction(data: InvoiceFormState) {
     dueDate: new Date(data.dueDate),
     currencyId: "AED", // Default
     exchangeRate: "1",
-    subTotal: String(subTotal),
-    totalDiscount: String(totalDiscount),
-    totalTax: String(totalTax),
+    subtotal: String(subTotal),
+    discountAmount: String(totalDiscount),
+    taxAmount: String(totalTax),
     totalAmount: String(totalAmount),
     balanceAmount: String(totalAmount), // Initially full amount pending
     status: "draft", // Start as draft
@@ -84,27 +84,28 @@ export async function createInvoiceAction(data: InvoiceFormState) {
 
   // 4. Insert Items
   if (data.items.length > 0) {
-    await db.insert(salesInvoiceItems).values(
-      data.items.map((item) => ({
+    await db.insert(salesLines).values(
+      data.items.map((item, index) => ({
+        companyId,
         invoiceId: newInvoice.id,
+        lineNumber: index + 1,
         itemId: item.itemId,
         description: item.description,
         quantity: String(item.quantity),
         uom: "PCS", // Default or fetch from item
         unitPrice: String(item.unitPrice),
         discountAmount: String(item.discountAmount),
-        taxRate: String(item.taxRate),
         taxAmount: String(item.taxAmount),
-        totalAmount: String(item.totalAmount),
+        lineTotal: String(item.totalAmount),
       }))
     );
   }
 
   // 5. Update Number Series (Simplified)
   if (series) {
-      await db.update(autoNumberSeries)
+      await db.update(numberSeries)
         .set({ currentNumber: nextNum })
-        .where(eq(autoNumberSeries.id, series.id));
+        .where(eq(numberSeries.id, series.id));
   }
 
   revalidatePath("/sales/invoices");

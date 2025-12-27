@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { salesInvoices, purchaseBills, journalLines, chartOfAccounts } from "@/db/schema";
+import { salesInvoices, purchaseInvoices, journalLines, chartOfAccounts } from "@/db/schema";
 import { eq, sql, and, sum } from "drizzle-orm";
 
 export interface FinanceStats {
@@ -21,9 +21,9 @@ export async function getFinanceStats(companyId: string): Promise<FinanceStats> 
 
   // 2. Payables (Sum of pending bills)
   const apResult = await db
-    .select({ total: sum(purchaseBills.balanceAmount) })
-    .from(purchaseBills)
-    .where(and(eq(purchaseBills.companyId, companyId), eq(purchaseBills.status, "posted")));
+    .select({ total: sum(purchaseInvoices.balanceAmount) })
+    .from(purchaseInvoices)
+    .where(and(eq(purchaseInvoices.companyId, companyId), eq(purchaseInvoices.status, "posted")));
 
   // 3. Cash on Hand (Sum of 'Asset' accounts with type 'cash'/'bank') -- Simplified to hardcoded query for MVP
   // Ideally query ledger balance for specific accounts.
@@ -36,9 +36,9 @@ export async function getFinanceStats(companyId: string): Promise<FinanceStats> 
     .where(and(eq(salesInvoices.companyId, companyId), eq(salesInvoices.status, "posted")));
 
   const expenseResult = await db
-    .select({ total: sum(purchaseBills.totalAmount) })
-    .from(purchaseBills)
-    .where(and(eq(purchaseBills.companyId, companyId), eq(purchaseBills.status, "posted")));
+    .select({ total: sum(purchaseInvoices.totalAmount) })
+    .from(purchaseInvoices)
+    .where(and(eq(purchaseInvoices.companyId, companyId), eq(purchaseInvoices.status, "posted")));
 
   return {
     cashOnHand: 50000, // Mock current balance
