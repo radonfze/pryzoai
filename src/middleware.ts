@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// Public routes that don't require authentication
+const PUBLIC_ROUTES = ["/login", "/api/auth", "/_next", "/favicon.ico"];
+
 // Define restricted routes and their required permission levels or specific logic
 const RESTRICTED_ROUTES = [
   "/api/finance/payroll", // Payroll posting often restricted to office IP
@@ -12,6 +15,24 @@ const ALLOWED_IPS = (process.env.ALLOWED_OFFICE_IPS || "").split(",").filter(Boo
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  // Check if route is public
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => path.startsWith(route));
+  
+  // Check authentication (simple cookie-based for demo)
+  const isAuthenticated = request.cookies.get("pryzo-auth")?.value === "true";
+
+  // Redirect to login if not authenticated and not on public route
+  if (!isAuthenticated && !isPublicRoute) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", path);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Redirect to dashboard if authenticated and on login page
+  if (isAuthenticated && path === "/login") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
 
   // 1. Check if route is restricted
   const isRestricted = RESTRICTED_ROUTES.some((route) => path.startsWith(route));
@@ -61,3 +82,4 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
+
