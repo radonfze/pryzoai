@@ -22,8 +22,10 @@ import {
   Settings,
   PieChart,
   Briefcase,
-  Layers
+  Layers,
+  Factory
 } from "lucide-react"
+import Link from "next/link"
 
 export function AppSidebar() {
   return (
@@ -38,64 +40,73 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <a href="/dashboard">
+              <Link href="/dashboard">
                 <LayoutDashboard />
                 <span>Dashboard</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <a href="/sales">
+              <Link href="/sales">
                 <ShoppingCart />
                 <span>Sales</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <a href="/inventory">
+              <Link href="/inventory">
                 <Package />
                 <span>Inventory</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <a href="/purchase">
+              <Link href="/procurement">
                 <FileText />
                 <span>Purchase</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <a href="/finance">
+              <Link href="/finance">
                 <PieChart />
                 <span>Finance</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <a href="/projects">
+              <Link href="/projects">
                 <Briefcase />
                 <span>Projects</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <a href="/hr">
+              <Link href="/hr">
                 <Users />
                 <span>HR & Payroll</span>
-              </a>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/manufacturing">
+                <Factory />
+                <span>Manufacturing</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -104,10 +115,10 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <a href="/settings">
+              <Link href="/settings">
                 <Settings />
                 <span>Settings</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -116,3 +127,4 @@ export function AppSidebar() {
     </Sidebar>
   )
 }
+
