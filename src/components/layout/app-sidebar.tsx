@@ -130,6 +130,7 @@ const menuItems = [
 
 const settingsItems = [
   { title: "Company", href: "/settings/company", icon: Building2 },
+  { title: "Theme", href: "/settings/theme", icon: Layers },
   { title: "Customers", href: "/settings/customers", icon: Users },
   { title: "Suppliers", href: "/settings/suppliers", icon: UserPlus },
   { title: "Items", href: "/settings/items", icon: Package },
