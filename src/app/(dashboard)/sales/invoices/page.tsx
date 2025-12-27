@@ -65,7 +65,7 @@ export default async function InvoicesPage() {
                         <TableCell>{format(new Date(inv.invoiceDate), "dd MMM yyyy")}</TableCell>
                         <TableCell>{format(new Date(inv.dueDate), "dd MMM yyyy")}</TableCell>
                         <TableCell>
-                            <Badge variant={inv.status === "posted" ? "default" : inv.status === "draft" ? "secondary" : "outline"}>
+                            <Badge variant={inv.status === "confirmed" || inv.status === "completed" ? "default" : inv.status === "draft" ? "secondary" : "outline"}>
                             {inv.status}
                             </Badge>
                         </TableCell>

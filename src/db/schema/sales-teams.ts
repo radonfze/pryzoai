@@ -17,15 +17,8 @@ import { items } from "./items";
 import { taxes, paymentTerms, currencies } from "./finance-masters";
 import { users } from "./users"; // Import users for sales team members
 
-// Sales document status
-export const salesStatusEnum = pgEnum("sales_status", [
-  "draft",
-  "sent",
-  "confirmed",
-  "partial",
-  "completed",
-  "cancelled",
-]);
+import { salesStatusEnum } from "./sales"; // Import from sales.ts to avoid duplicate export
+
 
 // ... (Existing Sales Quotations, Orders, Invoices, Returns, Lines, Payments, Allocations)
 

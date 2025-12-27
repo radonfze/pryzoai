@@ -17,7 +17,8 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
     where: eq(salesInvoices.id, id),
     with: {
       customer: true,
-      items: {
+      // Schema uses 'lines' relation for salesLines, not 'items'
+      lines: {
         with: { item: true }
       }
     }
@@ -36,7 +37,8 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                 </Button>
             </Link>
             <h2 className="text-3xl font-bold tracking-tight">{invoice.invoiceNumber}</h2>
-            <Badge variant={invoice.status === "posted" ? "default" : "outline"}>
+            {/* Use valid status values - confirmed/completed are equivalent to "posted" */}
+            <Badge variant={invoice.status === "confirmed" || invoice.status === "completed" ? "default" : "outline"}>
                 {invoice.status}
             </Badge>
         </div>
@@ -86,15 +88,17 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {invoice.items.map(item => (
-                                    <TableRow key={item.id}>
+                                {/* Use lines instead of items */}
+                                {invoice.lines.map(line => (
+                                    <TableRow key={line.id}>
                                         <TableCell>
-                                            <span className="font-medium">{item.item.name}</span>
-                                            {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
+                                            <span className="font-medium">{line.item?.name || line.description || 'N/A'}</span>
+                                            {line.description && <p className="text-xs text-muted-foreground">{line.description}</p>}
                                         </TableCell>
-                                        <TableCell className="text-right">{Number(item.quantity)}</TableCell>
-                                        <TableCell className="text-right">{Number(item.unitPrice).toFixed(2)}</TableCell>
-                                        <TableCell className="text-right">{Number(item.totalAmount).toFixed(2)}</TableCell>
+                                        <TableCell className="text-right">{Number(line.quantity)}</TableCell>
+                                        <TableCell className="text-right">{Number(line.unitPrice).toFixed(2)}</TableCell>
+                                        {/* Schema uses lineTotal not totalAmount */}
+                                        <TableCell className="text-right">{Number(line.lineTotal).toFixed(2)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -105,11 +109,13 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                         <div className="w-1/2 space-y-2">
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Subtotal</span>
-                                <span>{Number(invoice.subTotal).toFixed(2)}</span>
+                                {/* Schema uses subtotal not subTotal */}
+                                <span>{Number(invoice.subtotal).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Tax</span>
-                                <span>{Number(invoice.totalTax).toFixed(2)}</span>
+                                {/* Schema uses taxAmount not totalTax */}
+                                <span>{Number(invoice.taxAmount).toFixed(2)}</span>
                             </div>
                              <div className="flex justify-between font-bold text-lg border-t pt-2">
                                 <span>Total</span>

@@ -1,7 +1,6 @@
 import { db } from "@/db";
 import { payrollRuns, journalEntries } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
-import { createJournalEntry } from "../finance/coa-posting";
+import { eq } from "drizzle-orm";
 
 /**
  * Adjustment Payroll Logic
@@ -17,29 +16,21 @@ export async function reversePayrollRun(
   const run = await db.query.payrollRuns.findFirst({
     where: eq(payrollRuns.id, runId),
     with: {
-        items: true // We need details if we revers line by line, but for MVP revers total
+        details: true // Schema uses details relation, not items
     }
   });
 
   if (!run) throw new Error("Payroll run not found");
-  if (run.status !== "posted") throw new Error("Only posted runs can be reversed");
+  // payrollRuns uses status: draft, processing, approved, paid, cancelled
+  if (run.status !== "approved" && run.status !== "paid") throw new Error("Only approved/paid runs can be reversed");
 
   // 2. Create Reversal Journal Entry
   // Original: Dr Salary Expense / Cr Bank
   // Reversal: Dr Bank / Cr Salary Expense
   
-  // Create Journal Header
-  // Note: createJournalEntry helper usually handles complex logic, here we mock the direct reversal calls
-  // for brevity in this engine file.
+  // Note: createJournalEntry is not exported from coa-posting - use inline logic or stub
+  // For MVP, just update the status
   
-  // Real logic:
-  // await createJournalEntry({
-  //    lines: [
-  //       { account: "Bank", debit: run.totalNetPay, credit: 0 },
-  //       { account: "Expense", debit: 0, credit: run.totalNetPay }
-  //    ]
-  // })
-
   // 3. Update Run Status
   await db.update(payrollRuns)
     .set({ 

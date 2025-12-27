@@ -35,18 +35,20 @@ export interface InvoiceFormState {
   items: InvoiceItemInput[];
 }
 
-export async function createInvoiceAction(data: InvoiceFormState) {
+export async function createInvoiceAction(data: InvoiceFormState, companyId: string) {
   // 0. Validation (Zod here ideally)
   if (!data.customerId || !data.items.length) {
     throw new Error("Missing required fields");
   }
 
-  // 1. Generate Invoice Number (Simplified here, usually use numbering service)
-  // Mocking number generation for MVP
+  // 1. Generate Invoice Number (Simplified - use entityType, isActive, currentValue)
   const series = await db.query.numberSeries.findFirst({
-      where: and(eq(numberSeries.module, "sales"), eq(numberSeries.isDefault, true))
+      where: and(
+        eq(numberSeries.entityType, "invoice"),
+        eq(numberSeries.isActive, true)
+      )
   });
-  const nextNum = (series?.currentNumber || 1000) + 1;
+  const nextNum = (series?.currentValue || 1000) + 1;
   const invoiceNumber = `INV-${nextNum}`;
   
   // NOTE: In production, use the robust locking numbering-service.ts we built!
@@ -59,28 +61,21 @@ export async function createInvoiceAction(data: InvoiceFormState) {
   const totalAmount = subTotal - totalDiscount + totalTax;
 
   // 3. Insert Invoice Header
-  // Mock Company/User
-  const companyId = "00000000-0000-0000-0000-000000000000"; 
-  const userId = "00000000-0000-0000-0000-000000000000";
+  // Note: companyId is passed as parameter
 
   const [newInvoice] = await db.insert(salesInvoices).values({
     companyId,
     invoiceNumber,
     customerId: data.customerId,
-    warehouseId: data.warehouseId,
-    invoiceDate: new Date(data.invoiceDate),
-    dueDate: new Date(data.dueDate),
-    currencyId: "AED", // Default
-    exchangeRate: "1",
+    invoiceDate: data.invoiceDate,
+    dueDate: data.dueDate,
     subtotal: String(subTotal),
     discountAmount: String(totalDiscount),
     taxAmount: String(totalTax),
     totalAmount: String(totalAmount),
     balanceAmount: String(totalAmount), // Initially full amount pending
     status: "draft", // Start as draft
-    paymentStatus: "unpaid",
     notes: data.notes,
-    createdBy: userId,
   }).returning();
 
   // 4. Insert Items
@@ -105,7 +100,7 @@ export async function createInvoiceAction(data: InvoiceFormState) {
   // 5. Update Number Series (Simplified)
   if (series) {
       await db.update(numberSeries)
-        .set({ currentNumber: nextNum })
+        .set({ currentValue: nextNum })
         .where(eq(numberSeries.id, series.id));
   }
 
@@ -116,7 +111,7 @@ export async function createInvoiceAction(data: InvoiceFormState) {
 // Master Data Fetchers for the Form
 export async function getInvoiceMasterData() {
   const [allCustomers, allItems, allWarehouses] = await Promise.all([
-    db.query.customers.findMany({ where: eq(customers.status, "active") }),
+    db.query.customers.findMany({ where: eq(customers.isActive, true) }),
     db.query.items.findMany({ where: eq(items.isActive, true) }),
     db.query.warehouses.findMany({ where: eq(warehouses.isActive, true) })
   ]);

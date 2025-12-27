@@ -1,5 +1,7 @@
 import { addMonths, addWeeks, addDays, getDay, nextDay, startOfDay } from "date-fns";
-import { Day } from "date-fns/types";
+
+// Note: date-fns/types doesn't exist in newer versions, define type inline
+type Day = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export type Frequency = "DAILY" | "WEEKLY" | "MONTHLY" | "QUARTERLY" | "HALF_YEARLY" | "YEARLY";
 

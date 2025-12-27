@@ -51,12 +51,14 @@ export default async function ChartOfAccountsPage() {
                         <TableRow key={acc.id}>
                             <TableCell className="font-mono font-medium">{acc.code}</TableCell>
                             <TableCell>
-                                <span className={acc.isGroup ? "font-bold" : "pl-4"}>
+                                {/* Use parentId to determine if group - schema has no isGroup */}
+                                <span className={!acc.parentId ? "font-bold" : "pl-4"}>
                                     {acc.name}
                                 </span>
                             </TableCell>
                             <TableCell className="capitalize">{acc.accountType}</TableCell>
-                            <TableCell className="text-muted-foreground text-sm">{acc.parentAccountId || "-"}</TableCell>
+                            {/* Schema uses parentId not parentAccountId */}
+                            <TableCell className="text-muted-foreground text-sm">{acc.parentId || "-"}</TableCell>
                              <TableCell>
                                 <Badge variant={acc.isActive ? "default" : "secondary"}>
                                     {acc.isActive ? "Active" : "Inactive"}

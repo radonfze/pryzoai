@@ -23,7 +23,8 @@ export default async function PurchaseOrderListPage() {
     with: {
         supplier: true
     },
-    orderBy: [desc(purchaseOrders.transactionDate)]
+    // Schema uses orderDate not transactionDate
+    orderBy: [desc(purchaseOrders.orderDate)]
   });
 
   return (
@@ -60,9 +61,11 @@ export default async function PurchaseOrderListPage() {
                 orders.map((po) => (
                     <TableRow key={po.id}>
                         <TableCell className="text-xs">
-                             {format(new Date(po.transactionDate), "dd MMM yyyy")}
+                             {/* Schema uses orderDate not transactionDate */}
+                             {format(new Date(po.orderDate), "dd MMM yyyy")}
                         </TableCell>
-                        <TableCell className="font-mono text-xs font-medium">#{po.id.slice(0,8)}</TableCell>
+                        {/* Schema has orderNumber */}
+                        <TableCell className="font-mono text-xs font-medium">{po.orderNumber}</TableCell>
                         <TableCell>{po.supplier.name}</TableCell>
                         <TableCell className="text-right font-mono">
                             {Number(po.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}

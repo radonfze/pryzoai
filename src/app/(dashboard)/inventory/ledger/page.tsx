@@ -60,7 +60,8 @@ export default async function StockLedgerPage() {
                              {format(new Date(txn.transactionDate), "dd MMM yyyy HH:mm")}
                         </TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">
-                            {txn.referenceId || "-"}
+                            {/* Schema uses documentNumber not referenceId */}
+                            {txn.documentNumber || "-"}
                         </TableCell>
                         <TableCell className="font-medium">{txn.item.name}</TableCell>
                         <TableCell className="text-muted-foreground text-sm">{txn.warehouse.name}</TableCell>

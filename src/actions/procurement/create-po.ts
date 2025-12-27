@@ -4,12 +4,11 @@ import { db } from "@/db";
 import { purchaseOrders, purchaseLines } from "@/db/schema";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { env } from "@/lib/env";
 
 const createPoSchema = z.object({
   supplierId: z.string().uuid(),
-  transactionDate: z.string(), // ISO Date
-  dueDate: z.string(),
+  orderDate: z.string(), // ISO Date
+  deliveryDate: z.string().optional(),
   items: z.array(z.object({
     itemId: z.string().uuid(),
     quantity: z.number().min(0.01),
@@ -25,46 +24,47 @@ export async function createPurchaseOrder(data: z.infer<typeof createPoSchema>, 
     return { success: false, error: result.error.flatten() };
   }
 
-  const { supplierId, transactionDate, dueDate, items, notes } = result.data;
+  const { supplierId, orderDate, deliveryDate, items, notes } = result.data;
   
   // 1. Calculate Totals
-  let totalAmount = 0;
-  let totalVat = 0;
-  // TODO: Use Tax Engine for precise calc
-  const lines = items.map(item => {
+  let subtotal = 0;
+  let totalTax = 0;
+  const lines = items.map((item, index) => {
     const lineTotal = item.quantity * item.unitPrice;
-    const vatAmount = lineTotal * (item.vatRate / 100);
-    totalAmount += lineTotal + vatAmount;
-    totalVat += vatAmount;
-    return { ...item, lineTotal, vatAmount };
+    const taxAmount = lineTotal * (item.vatRate / 100);
+    subtotal += lineTotal;
+    totalTax += taxAmount;
+    return { ...item, lineTotal, taxAmount, lineNumber: index + 1 };
   });
+  const totalAmount = subtotal + totalTax;
 
-  // 2. Insert PO Header
+  // 2. Insert PO Header (field names match schema/purchase.ts)
   const [po] = await db.insert(purchaseOrders).values({
     companyId,
     supplierId,
-    transactionDate: new Date(transactionDate),
-    dueDate: new Date(dueDate),
-    totalAmount: totalAmount.toFixed(2), // Stored as decimal string
-    status: "draft", // Starts as draft
-    currencyCode: "AED",
-    exchangeRate: "1",
+    orderNumber: `PO-${Date.now()}`, // Required by schema
+    orderDate, // Schema uses orderDate (string date)
+    deliveryDate: deliveryDate || null,
+    subtotal: subtotal.toFixed(2),
+    taxAmount: totalTax.toFixed(2),
+    totalAmount: totalAmount.toFixed(2),
+    status: "draft",
     notes
   }).returning();
 
-  // 3. Insert Lines
+  // 3. Insert Lines (field names match schema/purchase.ts)
   if (lines.length > 0) {
       await db.insert(purchaseLines).values(
           lines.map(line => ({
               companyId,
               purchaseOrderId: po.id,
+              lineNumber: line.lineNumber, // Required by schema
               itemId: line.itemId,
               quantity: line.quantity.toString(),
+              uom: "PCS", // Required by schema
               unitPrice: line.unitPrice.toString(),
-              taxAmount: line.vatAmount.toString(),
+              taxAmount: line.taxAmount.toString(),
               lineTotal: line.lineTotal.toString(),
-              vatRate: line.vatRate.toString(), // TODO: Add to schema if missing or mapping
-              description: "Item purchase"
           }))
       );
   }

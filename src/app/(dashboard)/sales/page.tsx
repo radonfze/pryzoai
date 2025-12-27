@@ -125,7 +125,7 @@ export default async function SalesDashboardPage() {
                       <TableCell>{inv.customer.name}</TableCell>
                       <TableCell>{format(new Date(inv.invoiceDate), "dd MMM yyyy")}</TableCell>
                       <TableCell>
-                        <Badge variant={inv.status === "posted" ? "default" : "secondary"}>
+                        <Badge variant={inv.status === "confirmed" || inv.status === "completed" ? "default" : "secondary"}>
                           {inv.status}
                         </Badge>
                       </TableCell>

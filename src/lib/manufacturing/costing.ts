@@ -21,13 +21,13 @@ export interface CostBreakdown {
  * Calculates the valuation of Finished Goods (FG) based on actual consumption.
  */
 export async function calculateProductionCost(productionOrderId: string): Promise<CostBreakdown> {
-  // 1. Get Production Order
+  // 1. Get Production Order with components (schema uses 'components' relation)
   const po = await db.query.productionOrders.findFirst({
     where: eq(productionOrders.id, productionOrderId),
     with: {
-      items: { // Components consumed
+      components: { // Components consumed - per schema relation name
         with: {
-            item: true
+            // Component has componentItemId, we need to get item details
         }
       }
     }
@@ -38,17 +38,18 @@ export async function calculateProductionCost(productionOrderId: string): Promis
   // 2. Calculate Material Cost (Actual Consumption)
   let materialCost = 0;
 
-  for (const component of po.items) {
+  for (const component of po.components) {
     // Ideally, we look at the 'stock_transactions' related to this PO for EXACT cost
     // For MVP, we use the average cost from the Item Master or Stock Ledger
     
     // Fetch latest average cost from ledger (simplified)
     const ledgerEntry = await db.query.stockLedger.findFirst({
-        where: eq(stockLedger.itemId, component.itemId),
+        where: eq(stockLedger.itemId, component.componentItemId),
     });
 
     const unitCost = Number(ledgerEntry?.averageCost || 0);
-    const cost = Number(component.quantityConsumed) * unitCost;
+    // Schema uses issuedQuantity for consumed amount
+    const cost = Number(component.issuedQuantity || 0) * unitCost;
     materialCost += cost;
   }
 
@@ -59,7 +60,8 @@ export async function calculateProductionCost(productionOrderId: string): Promis
   const overheadCost = materialCost * overheadRate;
 
   const totalCost = materialCost + laborCost + overheadCost;
-  const unitCost = po.quantityProduced ? (totalCost / Number(po.quantityProduced)) : 0;
+  // Schema uses producedQuantity not quantityProduced
+  const unitCost = po.producedQuantity ? (totalCost / Number(po.producedQuantity)) : 0;
 
   return {
     materialCost,

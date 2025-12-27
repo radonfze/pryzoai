@@ -17,8 +17,10 @@ export function middleware(request: NextRequest) {
   const isRestricted = RESTRICTED_ROUTES.some((route) => path.startsWith(route));
 
   if (isRestricted) {
-    // 2. Get IP
-    const ip = request.ip || request.headers.get("x-forwarded-for") || "unknown";
+    // 2. Get IP - request.ip doesn't exist in Next.js 16+, use headers instead
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
+            || request.headers.get("x-real-ip") 
+            || "unknown";
     
     // In dev, usually allow localhost (::1 or 127.0.0.1)
     if (process.env.NODE_ENV === "development") {

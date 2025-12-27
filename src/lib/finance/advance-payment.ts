@@ -15,10 +15,11 @@ export async function postAdvanceReceipt(paymentId: string, companyId: string, u
   });
 
   if (!payment) throw new Error("Payment not found");
-  if (payment.status !== "posted") throw new Error("Payment must be posted first");
+  // customerPayments uses salesStatusEnum: draft, sent, confirmed, partial, completed, cancelled
+  // Use "confirmed" as posted equivalent
+  if (payment.status !== "confirmed") throw new Error("Payment must be confirmed first");
 
-  // 2. Identify COA Accounts
-  // In a real system, fetch these from default_settings
+  // 2. Identify COA Accounts (account codes, not IDs)
   const BANK_OR_CASH_ACCOUNT = "110100"; // Cash/Bank Asset
   const ADVANCE_LIABILITY_ACCOUNT = "210200"; // Advance from Customer Liability
 
@@ -27,28 +28,25 @@ export async function postAdvanceReceipt(paymentId: string, companyId: string, u
   // Credit: Advance from Customer (Liability Increase)
   await createPosting({
     companyId,
-    transactionDate: new Date(payment.paymentDate), // valid Date object or string
-    documentType: "RCT",
+    transactionDate: new Date(payment.paymentDate),
+    documentType: "sales_payment",
     documentId: payment.id,
     documentNumber: payment.paymentNumber,
-    description: `Advance Receipt: ${payment.paymentNumber}`,
-    currencyId: payment.currencyId || undefined,
-    exchangeRate: payment.exchangeRate ? Number(payment.exchangeRate) : 1,
     lines: [
       {
-        accountId: BANK_OR_CASH_ACCOUNT,
+        accountCode: BANK_OR_CASH_ACCOUNT,
         debit: Number(payment.amount),
         credit: 0,
         description: `Receipt into Bank`,
       },
       {
-        accountId: ADVANCE_LIABILITY_ACCOUNT,
+        accountCode: ADVANCE_LIABILITY_ACCOUNT,
         debit: 0,
         credit: Number(payment.amount),
         description: `Advance Liability`,
       },
     ],
-    postedBy: userId,
+    userId,
   });
 }
 
@@ -78,24 +76,23 @@ export async function allocateAdvance(allocationId: string, companyId: string, u
   await createPosting({
     companyId,
     transactionDate: new Date(allocation.allocationDate),
-    documentType: "ALL",
+    documentType: "sales_payment",
     documentId: allocation.id,
     documentNumber: `${allocation.payment.paymentNumber}-ALLOC`,
-    description: `Allocation of Advance ${allocation.payment.paymentNumber} to Invoice ${allocation.invoice.invoiceNumber}`,
     lines: [
       {
-        accountId: ADVANCE_LIABILITY_ACCOUNT,
+        accountCode: ADVANCE_LIABILITY_ACCOUNT,
         debit: amount,
         credit: 0,
         description: `Reduce Advance Liability`,
       },
       {
-        accountId: AR_ACCOUNT,
+        accountCode: AR_ACCOUNT,
         debit: 0,
         credit: amount,
         description: `Settle AR`,
       },
     ],
-    postedBy: userId,
+    userId,
   });
 }

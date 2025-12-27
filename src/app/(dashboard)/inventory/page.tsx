@@ -123,7 +123,7 @@ export default async function InventoryDashboardPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className={txn.transactionType.includes('in') || txn.transactionType === 'receipt' ? "text-right text-green-600" : "text-right text-red-600"}>
-                        {txn.quantity > 0 ? "+" : ""}{Number(txn.quantity)}
+                        {Number(txn.quantity) > 0 ? "+" : ""}{Number(txn.quantity)}
                       </TableCell>
                     </TableRow>
                   ))

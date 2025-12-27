@@ -1,5 +1,6 @@
 import { db } from "@/db";
 import { auditLogs } from "@/db/schema";
+import { eq, desc, asc } from "drizzle-orm";
 import crypto from "crypto";
 
 export type AuditAction =
@@ -48,8 +49,8 @@ async function getLastHash(companyId: string): Promise<string | null> {
   const result = await db
     .select({ currentHash: auditLogs.currentHash })
     .from(auditLogs)
-    .where((eb) => eb.eq(auditLogs.companyId, companyId))
-    .orderBy((eb) => eb.desc(auditLogs.createdAt))
+    .where(eq(auditLogs.companyId, companyId))
+    .orderBy(desc(auditLogs.createdAt))
     .limit(1);
 
   return result[0]?.currentHash ?? null;
@@ -101,8 +102,8 @@ export async function verifyAuditChain(companyId: string): Promise<{
   const entries = await db
     .select()
     .from(auditLogs)
-    .where((eb) => eb.eq(auditLogs.companyId, companyId))
-    .orderBy((eb) => eb.asc(auditLogs.createdAt));
+    .where(eq(auditLogs.companyId, companyId))
+    .orderBy(asc(auditLogs.createdAt));
 
   const invalidEntries: string[] = [];
   let previousHash: string | null = null;

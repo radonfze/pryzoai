@@ -18,7 +18,8 @@ export default async function JournalEntriesPage() {
   const journals = await db.query.journalEntries.findMany({
     where: eq(journalEntries.companyId, DEMO_COMPANY_ID),
     limit: 50,
-    orderBy: [desc(journalEntries.entryDate)]
+    // Schema uses journalDate not entryDate
+    orderBy: [desc(journalEntries.journalDate)]
   });
 
   return (
@@ -54,13 +55,16 @@ export default async function JournalEntriesPage() {
                 journals.map((jv) => (
                     <TableRow key={jv.id}>
                         <TableCell className="text-xs">
-                             {format(new Date(jv.entryDate), "dd MMM yyyy")}
+                             {/* Schema uses journalDate not entryDate */}
+                             {format(new Date(jv.journalDate), "dd MMM yyyy")}
                         </TableCell>
                         <TableCell className="font-mono text-xs font-bold">
-                            {jv.entryNumber}
+                            {/* Schema uses journalNumber not entryNumber */}
+                            {jv.journalNumber}
                         </TableCell>
                         <TableCell className="max-w-[300px] truncate">{jv.description}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{jv.referenceId || "-"}</TableCell>
+                        {/* Schema uses sourceDocNumber not referenceId */}
+                        <TableCell className="text-xs text-muted-foreground">{jv.sourceDocNumber || "-"}</TableCell>
                          <TableCell className="text-right font-mono text-xs">
                             {Number(jv.totalDebit).toFixed(2)}
                         </TableCell>

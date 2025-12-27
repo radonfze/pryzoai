@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { salesInvoices, customers, salesQuotations } from "@/db/schema";
-import { eq, sql, and } from "drizzle-orm";
+import { eq, sql, and, or, ne } from "drizzle-orm";
 
 export interface SalesDashboardStats {
   totalRevenue: number;
@@ -10,8 +10,7 @@ export interface SalesDashboardStats {
 }
 
 export async function getSalesStats(companyId: string): Promise<SalesDashboardStats> {
-  // 1. Total Revenue (Total of 'posted' invoices)
-  // using sum()
+  // 1. Total Revenue - use valid status like "confirmed" or "completed" (not "posted")
   const revenueResult = await db
     .select({ 
       total: sql<number>`sum(${salesInvoices.totalAmount})` 
@@ -20,11 +19,11 @@ export async function getSalesStats(companyId: string): Promise<SalesDashboardSt
     .where(
       and(
         eq(salesInvoices.companyId, companyId),
-        eq(salesInvoices.status, "posted") // or completed
+        or(eq(salesInvoices.status, "confirmed"), eq(salesInvoices.status, "completed"))
       )
     );
 
-  // 2. Outstanding Amount (Balance of 'posted' invoices)
+  // 2. Outstanding Amount (Balance of confirmed/partial invoices)
   const outstandingResult = await db
     .select({
       balance: sql<number>`sum(${salesInvoices.balanceAmount})`
@@ -33,18 +32,18 @@ export async function getSalesStats(companyId: string): Promise<SalesDashboardSt
     .where(
       and(
         eq(salesInvoices.companyId, companyId),
-        eq(salesInvoices.status, "posted")
+        or(eq(salesInvoices.status, "confirmed"), eq(salesInvoices.status, "partial"))
       )
     );
 
-  // 3. Active Customers (Count)
+  // 3. Active Customers (Count) - schema uses isActive not status
   const customersResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(customers)
     .where(
       and(
         eq(customers.companyId, companyId),
-        eq(customers.status, "active")
+        eq(customers.isActive, true)
       )
     );
 

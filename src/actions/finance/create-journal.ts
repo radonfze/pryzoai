@@ -31,29 +31,28 @@ export async function createManualJournal(data: z.infer<typeof createJournalSche
   const { entryDate, description, reference, lines } = result.data;
   const totalAmount = lines.reduce((sum, l) => sum + l.debit, 0);
 
-  // 1. Insert Header
+  // 1. Insert Header (field names match schema/finance.ts)
   const [jv] = await db.insert(journalEntries).values({
       companyId,
-      entryDate: new Date(entryDate),
+      journalNumber: `JV-${Date.now()}`, // Schema uses journalNumber
+      journalDate: entryDate, // Schema uses journalDate (string)
       description,
-      referenceId: reference,
-      entryType: "MANUAL",
+      sourceDocNumber: reference,
       totalDebit: totalAmount.toString(),
       totalCredit: totalAmount.toString(),
       status: "posted", // Auto-post for MVP
-      entryNumber: `JV-${Date.now()}` // Todo: Use Number Series
   }).returning();
 
-  // 2. Insert Lines
+  // 2. Insert Lines (field names match schema/finance.ts)
   await db.insert(journalLines).values(
-      lines.map(line => ({
+      lines.map((line, index) => ({
           companyId,
-          journalEntryId: jv.id,
+          journalId: jv.id, // Schema uses journalId
+          lineNumber: index + 1, // Required by schema
           accountId: line.accountId,
           debit: line.debit.toString(),
           credit: line.credit.toString(),
           description: line.description || description,
-          // partyId/Type not supported manually in MVP schema yet easily
       }))
   );
 

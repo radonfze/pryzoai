@@ -1,9 +1,6 @@
 import { db } from "@/db";
-import { 
-  employees, 
-  employeeLeaveBalance 
-} from "@/db/schema"; // Assuming schema exists or using placeholders
-import { eq, sql } from "drizzle-orm";
+import { employees } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 
 /**
  * Leave Provision Logic
@@ -19,9 +16,9 @@ export async function runLeaveProvision(
   periodYear: number,
   periodMonth: number
 ) {
-  // 1. Get Active Employees
+  // 1. Get Active Employees - use isActive instead of status
   const activeEmployees = await db.query.employees.findMany({
-    where: and(eq(employees.companyId, companyId), eq(employees.status, "active"))
+    where: and(eq(employees.companyId, companyId), eq(employees.isActive, true))
   });
 
   const provisions = [];
@@ -37,7 +34,7 @@ export async function runLeaveProvision(
 
       // Leave Accrual (2.5 days per month)
       const leaveDays = LEAVE_DAYS_PER_YEAR / 12;
-      const leaveAmount = (Number(emp.basicSalary) + Number(emp.allowances || 0)) / 30 * leaveDays;
+      const leaveAmount = (Number(emp.basicSalary) + Number(emp.housingAllowance || 0)) / 30 * leaveDays;
 
       provisions.push({
           employeeId: emp.id,

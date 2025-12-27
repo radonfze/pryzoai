@@ -16,12 +16,6 @@ import { Plus } from "lucide-react";
 const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
 
 export default async function ItemsPage() {
-  // Fetch items with their stock ledger entry (if any)
-  // For simplicity MVP, we just fetch items and a separate map of stock, or left join
-  // Drizzle query API supports relations
-  
-  // Note: Stock Ledger is per warehouse. We need TOTAL stock.
-  // For this list view, let's just list items.
   const allItems = await db.query.items.findMany({
     where: eq(items.companyId, DEMO_COMPANY_ID),
     limit: 50
@@ -64,7 +58,8 @@ export default async function ItemsPage() {
                     <TableRow key={item.id}>
                         <TableCell className="font-mono text-xs">{item.code}</TableCell>
                         <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell className="capitalize">{item.type}</TableCell>
+                        {/* Schema uses itemType not type */}
+                        <TableCell className="capitalize">{item.itemType}</TableCell>
                         <TableCell>--</TableCell> 
                         <TableCell className="text-right">
                             {Number(item.sellingPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}

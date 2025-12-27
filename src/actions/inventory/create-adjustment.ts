@@ -17,7 +17,7 @@ const adjustmentSchema = z.object({
   })).min(1)
 });
 
-export async function createStockAdjustment(data: z.infer<typeof adjustmentSchema>, companyId: string) {
+export async function createStockAdjustment(data: z.infer<typeof adjustmentSchema>, companyId: string, userId: string) {
   const result = adjustmentSchema.safeParse(data);
   if (!result.success) {
       return { success: false, error: result.error.flatten() };
@@ -27,14 +27,19 @@ export async function createStockAdjustment(data: z.infer<typeof adjustmentSchem
 
   // Process each line as a stock movement
   for (const line of lines) {
+       // Determine movement type based on quantity sign
+       const movementType = line.quantity >= 0 ? "adjustment_in" : "adjustment_out";
+       
        await processStockMovement({
            companyId,
            itemId: line.itemId,
            warehouseId: line.warehouseId,
-           transactionDate: new Date(transactionDate),
-           transactionType: "adjustment",
-           quantity: line.quantity,
-           referenceId: "ADJ-MANUAL", // TODO: Auto Number
+           movementType, // Use movementType instead of transactionType
+           quantity: Math.abs(line.quantity), // Always positive, direction from movementType
+           uom: "PCS", // Default UOM
+           userId, // Required by interface
+           documentType: "SA", // Stock Adjustment
+           documentNumber: `ADJ-${Date.now()}`,
            notes: line.notes || reason
        });
   }

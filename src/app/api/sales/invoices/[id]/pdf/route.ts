@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { salesInvoices, companies, customers } from "@/db/schema";
+import { salesInvoices, companies } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateInvoicePdf, InvoiceData } from "@/lib/documents/pdf-generator";
 import { NextResponse } from "next/server";
@@ -10,17 +10,18 @@ export async function GET(
 ) {
   const invoiceId = (await params).id;
 
-  // 1. Fetch Invoice
+  // 1. Fetch Invoice with lines (not items) and customer
   const invoice = await db.query.salesInvoices.findFirst({
     where: eq(salesInvoices.id, invoiceId),
     with: {
       customer: true,
-      items: {
+      // Schema uses 'lines' not 'items'
+      lines: {
           with: {
               item: true
           }
-      },
-      company: true
+      }
+      // Note: salesInvoices doesn't have direct 'company' relation in schema
     }
   });
 
@@ -28,13 +29,22 @@ export async function GET(
     return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
   }
 
+  // Fetch company separately using companyId
+  const company = await db.query.companies.findFirst({
+    where: eq(companies.id, invoice.companyId)
+  });
+
+  if (!company) {
+    return NextResponse.json({ error: "Company not found" }, { status: 404 });
+  }
+
   // 2. Shape Data
   const pdfData: InvoiceData = {
     company: {
-      name: invoice.company.name,
-      trn: invoice.company.taxId || "N/A",
-      address: "Dubai, UAE", // Placeholder or fetch from Company Address
-      logo: undefined // Could fetch from URL
+      name: company.name,
+      trn: company.taxId || "N/A",
+      address: company.address || "Dubai, UAE",
+      logo: undefined
     },
     customer: {
       name: invoice.customer.name,
@@ -48,19 +58,23 @@ export async function GET(
       currency: invoice.currencyId || "AED",
       status: invoice.status
     },
-    items: invoice.items.map(i => ({
-      description: i.description || i.item.name,
-      quantity: Number(i.quantity),
-      uom: i.uom,
-      unitPrice: Number(i.unitPrice),
-      vatPercent: Number(i.taxRate),
-      vatAmount: Number(i.taxAmount),
-      total: Number(i.totalAmount)
+    // Use lines instead of items
+    items: invoice.lines.map(line => ({
+      description: line.description || 'N/A',
+      quantity: Number(line.quantity),
+      uom: line.uom,
+      unitPrice: Number(line.unitPrice),
+      // salesLines uses taxAmount, not taxPercent
+      vatPercent: 5, // Default VAT, schema doesn't have taxPercent per line
+      vatAmount: Number(line.taxAmount || 0),
+      // Schema uses lineTotal not totalAmount
+      total: Number(line.lineTotal)
     })),
     totals: {
-      subtotal: Number(invoice.subTotal),
-      discount: Number(invoice.totalDiscount),
-      vatTotal: Number(invoice.totalTax),
+      // Schema uses subtotal, discountAmount, taxAmount - not subTotal, totalDiscount, totalTax
+      subtotal: Number(invoice.subtotal || 0),
+      discount: Number(invoice.discountAmount || 0),
+      vatTotal: Number(invoice.taxAmount || 0),
       grandTotal: Number(invoice.totalAmount)
     }
   };
