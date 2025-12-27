@@ -152,4 +152,15 @@
   --border: oklch(var(--bc) / 0.1);
   --input: oklch(var(--bc) / 0.15);
   --ring: oklch(var(--p) / 1);
+  
+  /* Sidebar colors - link to DaisyUI theme */
+  --sidebar: oklch(var(--b2, var(--b1)) / 1);
+  --sidebar-foreground: oklch(var(--bc) / 1);
+  --sidebar-primary: oklch(var(--p) / 1);
+  --sidebar-primary-foreground: oklch(var(--pc) / 1);
+  --sidebar-accent: oklch(var(--a, var(--s)) / 1);
+  --sidebar-accent-foreground: oklch(var(--ac, var(--sc)) / 1);
+  --sidebar-border: oklch(var(--bc) / 0.1);
+  --sidebar-ring: oklch(var(--p) / 1);
 }
+
