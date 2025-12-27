@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
+import { ThemeSelector } from "@/components/theme-selector"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -28,8 +29,9 @@ export default function DashboardLayout({
           <Separator orientation="vertical" className="mr-2 h-4" />
           <div className="flex-1 font-semibold">
            {/* Dynamic breadcrumbs can go here later */}
-           ERP Workspace
+           PryzoAI ERP
           </div>
+          <ThemeSelector />
         </header>
         <div className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
           {children}
