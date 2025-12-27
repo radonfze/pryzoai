@@ -157,7 +157,7 @@ export default function NumberSeriesPage() {
                         <SelectContent>
                           <SelectItem value="-">-</SelectItem>
                           <SelectItem value="/">/</SelectItem>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -199,7 +199,7 @@ export default function NumberSeriesPage() {
                       />
                     </TableCell>
                     <TableCell>
-                      <Switch defaultChecked={item.isActive !== false} />
+                      <Switch checked={item.isActive !== false} />
                     </TableCell>
                   </TableRow>
                 ))}
