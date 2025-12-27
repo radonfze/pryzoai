@@ -1,5 +1,5 @@
-import { db } from "../db";
-import { auditLogs } from "../db/schema";
+import { db } from "@/db";
+import { auditLogs } from "@/db/schema";
 import crypto from "crypto";
 
 export type AuditAction =
