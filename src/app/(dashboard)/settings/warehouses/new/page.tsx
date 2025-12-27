@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createWarehouse } from "@/actions/settings/create-warehouse";
-import { useState } from "react";
+import { getNextCode } from "@/actions/settings/auto-code";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -22,6 +24,7 @@ type FormData = z.infer<typeof formSchema>;
 export default function NewWarehousePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [codeLoading, setCodeLoading] = useState(true);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -31,6 +34,23 @@ export default function NewWarehousePage() {
       address: "",
     },
   });
+
+  // Auto-fetch next warehouse code on mount
+  useEffect(() => {
+    async function fetchNextCode() {
+      try {
+        const result = await getNextCode("WH", "00000000-0000-0000-0000-000000000000");
+        if (result.success && (result.preview || result.code)) {
+          form.setValue("code", result.preview || result.code || "");
+        }
+      } catch (error) {
+        console.error("Failed to fetch next code:", error);
+      } finally {
+        setCodeLoading(false);
+      }
+    }
+    fetchNextCode();
+  }, [form]);
 
   async function onSubmit(data: FormData) {
     setLoading(true);
@@ -78,9 +98,18 @@ export default function NewWarehousePage() {
                   name="code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Warehouse Code *</FormLabel>
+                      <FormLabel>Warehouse Code * <span className="text-xs text-muted-foreground">(Auto-generated)</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. WH001" {...field} />
+                        <div className="relative">
+                          <Input 
+                            {...field} 
+                            readOnly 
+                            className="bg-muted pr-8"
+                          />
+                          {codeLoading && (
+                            <Loader2 className="absolute right-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                          )}
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
