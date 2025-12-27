@@ -1,8 +1,9 @@
-// PryzoAI Core Schema - v5.42
+// PryzoAI Core Schema - v5.43
 // Auto-generated exports for all schema modules
 
 export * from "./schema/companies";
 export * from "./schema/users";
+export * from "./schema/roles";
 export * from "./schema/two-factor";
 export * from "./schema/customers";
 export * from "./schema/suppliers";
@@ -24,3 +25,4 @@ export * from "./schema/sales-teams";
 
 export * from "./schema/number-series";
 export * from "./schema/audit-logs";
+
