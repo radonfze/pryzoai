@@ -1,5 +1,3 @@
-"use server";
-
 import { db } from "@/db";
 import { salesInvoices, purchaseOrders, items, customers } from "@/db/schema";
 import { eq, count, sql, and, ne, gte } from "drizzle-orm";

@@ -1,5 +1,3 @@
-"use server";
-
 import { db } from "@/db";
 import { customers } from "@/db/schema";
 import { eq } from "drizzle-orm";
