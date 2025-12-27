@@ -1,0 +1,26 @@
+REQ-<MODULE>-<NNN> | <module> | Short summary of change
+
+RCA:
+- One-line root cause analysis or link to ticket: <JIRA/Issue# or URL>
+
+Details:
+- Files changed: <list>
+- Migration: <migration-file.sql or N/A>
+- Backup: backup/<timestamp>/ (created by pre-commit hook or CI)
+
+Rollback:
+- Command or script to rollback this change:
+  - git revert <commit-hash> OR
+  - psql $DATABASE_URL -f rollback/<migration-rollback-file>.sql
+
+Tests:
+- Unit: <test command>
+- Integration: <test command>
+- RLS: <test command>
+
+Approvers:
+- Engineering Lead: @<handle>
+- Ops/Security Reviewer: @<handle>
+
+Notes:
+- Any special instructions or follow-ups

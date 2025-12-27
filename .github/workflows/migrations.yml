@@ -1,0 +1,94 @@
+name: Migrations and Backup
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/*
+      - staging
+
+jobs:
+  pre-migration-backup:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      BACKUP_BUCKET: ${{ secrets.BACKUP_BUCKET }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Create backup folder
+        run: |
+          TIMESTAMP=$(date -u +"%Y%m%dT%H%M%SZ")
+          BACKUP_DIR="backups/${TIMESTAMP}"
+          mkdir -p "${BACKUP_DIR}"
+          echo "BACKUP_DIR=${BACKUP_DIR}" >> $GITHUB_ENV
+
+      - name: Dump schema and data snapshot
+        run: |
+          pg_dump --schema-only "$DATABASE_URL" > "${BACKUP_DIR}/schema.sql"
+          pg_dump --data-only --table=companies --table=users --table=document_series "$DATABASE_URL" > "${BACKUP_DIR}/data_snapshot.sql"
+          sha256sum "${BACKUP_DIR}/schema.sql" > "${BACKUP_DIR}/checksums.txt"
+          sha256sum "${BACKUP_DIR}/data_snapshot.sql" >> "${BACKUP_DIR}/checksums.txt"
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: "${BACKUP_DIR}"
+
+  migration-generate-and-test:
+    needs: pre-migration-backup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate migrations (drizzle)
+        run: npx drizzle-kit generate --schema src/db/schema.ts --out drizzle/migrations --driver pg
+
+      - name: Run migration dry-run in staging (with lock)
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          LOCK_FILE="/tmp/migration.lock"
+          if [ -f "$LOCK_FILE" ]; then
+            echo "Migration lock present. Aborting."
+            exit 1
+          fi
+          touch "$LOCK_FILE"
+          trap 'rm -f "$LOCK_FILE"' EXIT
+          npx drizzle-kit push --schema src/db/schema.ts --out drizzle/migrations --driver pg
+
+      - name: Run automated tests
+        run: npm run test:ci
+
+  post-migration-verification:
+    needs: migration-generate-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run RLS isolation tests
+        run: npm run test:rls
+
+      - name: Run cancel idempotency tests
+        run: npm run test:cancel-idempotency
+
+      - name: Upload migration artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-artifacts-${{ github.run_id }}
+          path: drizzle/migrations
