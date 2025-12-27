@@ -120,6 +120,30 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    /* Use DaisyUI theme colors that respond to data-theme */
+    background-color: oklch(var(--b1) / 1);
+    color: oklch(var(--bc) / 1);
   }
+}
+
+/* Override shadcn variables with DaisyUI oklch colors */
+:root,
+[data-theme] {
+  --background: oklch(var(--b1) / 1);
+  --foreground: oklch(var(--bc) / 1);
+  --card: oklch(var(--b2, var(--b1)) / 1);
+  --card-foreground: oklch(var(--bc) / 1);
+  --popover: oklch(var(--b1) / 1);
+  --popover-foreground: oklch(var(--bc) / 1);
+  --primary: oklch(var(--p) / 1);
+  --primary-foreground: oklch(var(--pc) / 1);
+  --secondary: oklch(var(--s) / 1);
+  --secondary-foreground: oklch(var(--sc) / 1);
+  --muted: oklch(var(--b3, var(--b2)) / 1);
+  --muted-foreground: oklch(var(--bc) / 0.6);
+  --accent: oklch(var(--a) / 1);
+  --accent-foreground: oklch(var(--ac) / 1);
+  --border: oklch(var(--bc) / 0.1);
+  --input: oklch(var(--bc) / 0.15);
+  --ring: oklch(var(--p) / 1);
 }
