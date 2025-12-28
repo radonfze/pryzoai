@@ -11,6 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { companies, branches } from "./companies";
+import { users } from "./users";
 
 // Employee status enum
 export const employeeStatusEnum = pgEnum("employee_status", [
@@ -31,6 +32,8 @@ export const employees = pgTable("employees", {
     .notNull()
     .references(() => companies.id),
   branchId: uuid("branch_id").references(() => branches.id),
+  userId: uuid("user_id").references(() => users.id), // Link to system user
+  
   
   // Identity
   code: varchar("code", { length: 20 }).notNull(), // EMP-00001
@@ -95,5 +98,9 @@ export const employeesRelations = relations(employees, ({ one }) => ({
   branch: one(branches, {
     fields: [employees.branchId],
     references: [branches.id],
+  }),
+  user: one(users, {
+    fields: [employees.userId],
+    references: [users.id],
   }),
 }));
