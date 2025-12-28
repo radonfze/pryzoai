@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Truck } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export default function NewGRNPage() {
   const router = useRouter();
@@ -13,7 +14,12 @@ export default function NewGRNPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <h2 className="text-3xl font-bold tracking-tight">New Goods Receipt Note</h2>
+      <GradientHeader
+        module="procurement"
+        title="Goods Receipt Note"
+        description="Record items received from suppliers against POs"
+        icon={Truck}
+      />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
