@@ -51,6 +51,7 @@ import {
   ShieldCheck,
   Wand2,
   Target,
+  Building,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -114,6 +115,7 @@ const menuItems = [
     items: [
       { title: "Chart of Accounts", href: "/finance/coa", icon: BookOpen },
       { title: "Journal Entries", href: "/finance/journals", icon: FileText },
+      { title: "Fixed Assets", href: "/finance/assets", icon: Building },
       { title: "Bank Accounts", href: "/finance/bank-accounts", icon: Landmark },
       { title: "Budgets", href: "/finance/budgets", icon: Banknote },
       { title: "Reconciliation", href: "/finance/reconciliation", icon: ClipboardList },

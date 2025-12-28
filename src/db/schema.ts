@@ -27,4 +27,5 @@ export * from "./schema/number-series";
 export * from "./schema/audit-logs";
 export * from "./schema/approvals";
 export * from "./schema/item-hierarchy";
+export * from "./schema/fixed-assets";
 
