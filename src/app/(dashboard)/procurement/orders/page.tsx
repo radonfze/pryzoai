@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, ShoppingCart } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 import Link from "next/link";
 import { format } from "date-fns";
 
@@ -28,9 +29,15 @@ export default async function PurchaseOrderListPage() {
   });
 
   return (
-    <div className="flex flex-col gap-4 p-4 pt-0">
-      <div className="flex items-center justify-between">
-         <h2 className="text-3xl font-bold tracking-tight">Purchase Orders</h2>
+    <div className="flex flex-col gap-6 p-4 pt-0">
+      <GradientHeader
+        module="procurement"
+        title="Purchase Orders"
+        description="Create and track purchase orders from suppliers"
+        icon={ShoppingCart}
+      />
+      
+      <div className="flex items-center justify-end">
          <Link href="/procurement/orders/new">
             <Button>
                 <Plus className="mr-2 h-4 w-4" />

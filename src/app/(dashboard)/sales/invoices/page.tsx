@@ -12,7 +12,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { Plus } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
+import { FileText } from "lucide-react";
 
 export default async function InvoicesPage() {
   // Fetch all invoices (limit 50 for MVP)
@@ -25,12 +26,15 @@ export default async function InvoicesPage() {
   });
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-         <div>
-            <h2 className="text-3xl font-bold tracking-tight">Invoices</h2>
-            <p className="text-muted-foreground">Manage your sales invoices and payments.</p>
-         </div>
+    <div className="flex flex-col gap-6">
+      <GradientHeader
+        module="sales"
+        title="Sales Invoices"
+        description="Track revenue, invoices, and customer payments"
+        icon={FileText}
+      />
+      
+      <div className="flex items-center justify-end">
          <Button>
             <Plus className="mr-2 h-4 w-4" />
             Create Invoice

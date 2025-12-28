@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { Plus, Clock, CheckCircle, Circle, AlertCircle } from "lucide-react";
+import { Plus, Clock, CheckCircle, Circle, AlertCircle, ListTodo } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
@@ -33,12 +34,15 @@ export default function ProjectsTasksPage() {
   };
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Tasks</h2>
-          <p className="text-muted-foreground">Manage project tasks and track progress</p>
-        </div>
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      <GradientHeader
+        module="projects"
+        title="Project Tasks"
+        description="Manage tasks, assign priorities, and track progress"
+        icon={ListTodo}
+      />
+      
+      <div className="flex items-center justify-end">
         <Link href="/projects/tasks/new">
           <Button><Plus className="mr-2 h-4 w-4" /> New Task</Button>
         </Link>

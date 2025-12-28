@@ -10,6 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { BookOpen } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -20,13 +22,13 @@ export default async function ChartOfAccountsPage() {
   });
 
   return (
-    <div className="flex flex-col gap-4 p-4 pt-0">
-       <div className="flex items-center justify-between space-y-2">
-        <div>
-            <h2 className="text-3xl font-bold tracking-tight">Chart of Accounts</h2>
-            <p className="text-muted-foreground">Manage your General Ledger structure.</p>
-        </div>
-      </div>
+    <div className="flex flex-col gap-6 p-4 pt-0">
+      <GradientHeader
+        module="finance"
+        title="Chart of Accounts"
+        description="Configure your General Ledger structure and account hierarchy"
+        icon={BookOpen}
+      />
 
       <div className="rounded-md border bg-white">
          <Table>

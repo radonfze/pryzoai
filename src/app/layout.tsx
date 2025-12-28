@@ -27,6 +27,7 @@ export default function RootLayout({
     <html lang="en" data-theme="corporate" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         <MUIProvider>
           {children}

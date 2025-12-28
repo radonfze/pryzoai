@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, UserCheck } from "lucide-react";
+import { Calendar, Clock, UserCheck, CalendarCheck } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
@@ -18,12 +19,16 @@ export default function AttendancePage() {
   ];
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      <GradientHeader
+        module="hr"
+        title="Attendance Management"
+        description="Track daily attendance, check-ins, and leave status"
+        icon={CalendarCheck}
+      />
+      
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Attendance</h2>
-          <p className="text-muted-foreground">{today}</p>
-        </div>
+        <p className="text-muted-foreground">{today}</p>
         <Button><UserCheck className="mr-2 h-4 w-4" /> Mark Attendance</Button>
       </div>
 

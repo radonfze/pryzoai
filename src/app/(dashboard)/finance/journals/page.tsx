@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { BookmarkCheck } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -23,13 +25,13 @@ export default async function JournalEntriesPage() {
   });
 
   return (
-    <div className="flex flex-col gap-4 p-4 pt-0">
-      <div className="flex items-center justify-between">
-         <div>
-            <h2 className="text-3xl font-bold tracking-tight">Journal Entries</h2>
-            <p className="text-muted-foreground">General Ledger transaction history.</p>
-         </div>
-      </div>
+    <div className="flex flex-col gap-6 p-4 pt-0">
+      <GradientHeader
+        module="finance"
+        title="Journal Entries"
+        description="General Ledger transaction history and manual entries"
+        icon={BookmarkCheck}
+      />
 
       <div className="rounded-md border bg-white">
         <Table>

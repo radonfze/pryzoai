@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Package } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -22,12 +23,15 @@ export default async function ItemsPage() {
   });
 
   return (
-    <div className="flex flex-col gap-4 p-4 pt-0">
-      <div className="flex items-center justify-between">
-         <div>
-            <h2 className="text-3xl font-bold tracking-tight">Items</h2>
-            <p className="text-muted-foreground">Manage your products and services.</p>
-         </div>
+    <div className="flex flex-col gap-6 p-4 pt-0">
+      <GradientHeader
+        module="inventory"
+        title="Items Master"
+        description="Manage your products, services, and inventory items"
+        icon={Package}
+      />
+      
+      <div className="flex items-center justify-end">
          <Button>
             <Plus className="mr-2 h-4 w-4" />
             Create Item

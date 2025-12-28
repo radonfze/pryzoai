@@ -4,7 +4,8 @@ import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Building2, CreditCard, Landmark } from "lucide-react";
+import { Plus, Building2, CreditCard, Landmark, Wallet2 } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
@@ -21,9 +22,15 @@ export default async function BankAccountsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Bank Accounts</h2>
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      <GradientHeader
+        module="finance"
+        title="Bank Accounts"
+        description="Manage company bank accounts and track balances"
+        icon={Wallet2}
+      />
+      
+      <div className="flex items-center justify-end">
         <Link href="/finance/bank-accounts/new">
           <Button><Plus className="mr-2 h-4 w-4" /> Add Bank Account</Button>
         </Link>

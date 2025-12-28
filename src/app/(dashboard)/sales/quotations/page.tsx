@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Plus, FileCheck } from "lucide-react";
+import { Plus, FileCheck, FileText } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
@@ -9,9 +8,15 @@ export default function QuotationsPage() {
   const quoteList: any[] = [];
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Quotations</h2>
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      <GradientHeader
+        module="sales"
+        title="Quotations"
+        description="Create and send pricing quotes to customers"
+        icon={FileText}
+      />
+      
+      <div className="flex items-center justify-end">
         <Link href="/sales/quotations/new">
           <Button><Plus className="mr-2 h-4 w-4" /> New Quotation</Button>
         </Link>

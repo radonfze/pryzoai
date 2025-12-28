@@ -5,8 +5,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, ShoppingCart } from "lucide-react";
 import { format } from "date-fns";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
@@ -38,9 +39,15 @@ export default async function SalesOrdersPage() {
   };
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Sales Orders</h2>
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      <GradientHeader
+        module="sales"
+        title="Sales Orders"
+        description="Manage customer orders and track fulfillment"
+        icon={ShoppingCart}
+      />
+      
+      <div className="flex items-center justify-end">
         <Link href="/sales/orders/new">
           <Button><Plus className="mr-2 h-4 w-4" /> New Sales Order</Button>
         </Link>

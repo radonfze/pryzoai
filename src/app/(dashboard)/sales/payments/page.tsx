@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Plus, CreditCard } from "lucide-react";
+import { Plus, CreditCard, Wallet } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
@@ -9,9 +10,15 @@ export default function CustomerPaymentsPage() {
   const payments: any[] = [];
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Customer Payments</h2>
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      <GradientHeader
+        module="sales"
+        title="Customer Payments"
+        description="Record and track customer payments against invoices"
+        icon={Wallet}
+      />
+      
+      <div className="flex items-center justify-end">
         <Link href="/sales/payments/new">
           <Button><Plus className="mr-2 h-4 w-4" /> Record Payment</Button>
         </Link>

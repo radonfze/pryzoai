@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { Plus, Factory, Eye } from "lucide-react";
+import { Plus, Factory, Eye, Hammer } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
@@ -25,12 +26,15 @@ export default function WorkOrdersPage() {
   };
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Work Orders</h2>
-          <p className="text-muted-foreground">Manage manufacturing work orders</p>
-        </div>
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      <GradientHeader
+        module="manufacturing"
+        title="Work Orders"
+        description="Create and track manufacturing work orders"
+        icon={Hammer}
+      />
+      
+      <div className="flex items-center justify-end">
         <Link href="/manufacturing/work-orders/new">
           <Button><Plus className="mr-2 h-4 w-4" /> New Work Order</Button>
         </Link>
