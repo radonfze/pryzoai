@@ -49,6 +49,8 @@ import {
   DollarSign,
   Tag,
   ShieldCheck,
+  Wand2,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -64,6 +66,7 @@ const menuItems = [
     icon: ShoppingCart,
     href: "/sales",
     items: [
+      { title: "Invoice Wizard", href: "/sales/invoices/wizard", icon: Wand2 },
       { title: "Invoices", href: "/sales/invoices", icon: Receipt },
       { title: "Sales Orders", href: "/sales/orders", icon: ClipboardList },
       { title: "Quotations", href: "/sales/quotations", icon: FileText },
@@ -71,6 +74,8 @@ const menuItems = [
       { title: "Credit Notes", href: "/sales/credit-notes", icon: Receipt },
       { title: "Delivery Notes", href: "/sales/delivery-notes", icon: Package },
       { title: "Returns", href: "/sales/returns", icon: ClipboardList },
+      { title: "Sales Teams", href: "/sales/teams", icon: Users },
+      { title: "Sales Targets", href: "/sales/targets", icon: Target },
     ],
   },
   {
