@@ -104,6 +104,8 @@ const menuItems = [
       { title: "Chart of Accounts", href: "/finance/coa", icon: BookOpen },
       { title: "Journal Entries", href: "/finance/journals", icon: FileText },
       { title: "Bank Accounts", href: "/finance/bank-accounts", icon: Landmark },
+      { title: "Budgets", href: "/finance/budgets", icon: Banknote },
+      { title: "Reconciliation", href: "/finance/reconciliation", icon: ClipboardList },
       { title: "Reports", href: "/finance/reports", icon: ClipboardList },
     ],
   },
@@ -134,6 +136,7 @@ const menuItems = [
     items: [
       { title: "Work Orders", href: "/manufacturing/work-orders", icon: Hammer },
       { title: "Bill of Materials", href: "/manufacturing/bom", icon: Boxes },
+      { title: "Production Planning", href: "/manufacturing/planning", icon: Calendar },
     ],
   },
 ];

@@ -8,6 +8,7 @@ import {
   decimal,
   date,
   pgEnum,
+  integer,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { companies, warehouses } from "./companies";
@@ -234,3 +235,56 @@ export const inventoryReservationsRelations = relations(inventoryReservations, (
   warehouse: one(warehouses, { fields: [inventoryReservations.warehouseId], references: [warehouses.id] }),
   item: one(items, { fields: [inventoryReservations.itemId], references: [items.id] }),
 }));
+
+// Stock Adjustments (for physical count corrections / write-offs)
+export const stockAdjustments = pgTable("stock_adjustments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("company_id")
+    .notNull()
+    .references(() => companies.id),
+  
+  adjustmentNumber: varchar("adjustment_number", { length: 50 }).notNull(),
+  adjustmentDate: date("adjustment_date").notNull(),
+  
+  notes: text("notes"),
+  status: varchar("status", { length: 20 }).default("draft").notNull(), // draft, posted
+  isPosted: boolean("is_posted").default(false),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdBy: uuid("created_by"),
+});
+
+export const stockAdjustmentLines = pgTable("stock_adjustment_lines", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("company_id").notNull(),
+  adjustmentId: uuid("adjustment_id")
+    .notNull()
+    .references(() => stockAdjustments.id),
+  
+  lineNumber: integer("line_number").notNull(),
+  itemId: uuid("item_id")
+    .notNull()
+    .references(() => items.id),
+  warehouseId: uuid("warehouse_id")
+    .notNull()
+    .references(() => warehouses.id),
+  
+  currentQty: decimal("current_qty", { precision: 18, scale: 3 }).default("0"),
+  adjustedQty: decimal("adjusted_qty", { precision: 18, scale: 3 }).notNull(),
+  variance: decimal("variance", { precision: 18, scale: 3 }).notNull(), // adjusted - current
+  
+  reason: text("reason"),
+});
+
+export const stockAdjustmentsRelations = relations(stockAdjustments, ({ one, many }) => ({
+  company: one(companies, { fields: [stockAdjustments.companyId], references: [companies.id] }),
+  lines: many(stockAdjustmentLines),
+}));
+
+export const stockAdjustmentLinesRelations = relations(stockAdjustmentLines, ({ one }) => ({
+  adjustment: one(stockAdjustments, { fields: [stockAdjustmentLines.adjustmentId], references: [stockAdjustments.id] }),
+  item: one(items, { fields: [stockAdjustmentLines.itemId], references: [items.id] }),
+  warehouse: one(warehouses, { fields: [stockAdjustmentLines.warehouseId], references: [warehouses.id] }),
+}));
+

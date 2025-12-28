@@ -29,13 +29,14 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Settings2 } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Settings2, Trash2, Download } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   searchKey?: string
   placeholder?: string
+  onDelete?: (ids: string[]) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -43,6 +44,7 @@ export function DataTable<TData, TValue>({
   data,
   searchKey,
   placeholder = "Filter...",
+  onDelete,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -50,6 +52,7 @@ export function DataTable<TData, TValue>({
   )
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
+  const [rowSelection, setRowSelection] = React.useState({})
 
   const table = useReactTable({
     data,
@@ -61,18 +64,20 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
+      rowSelection,
     },
   })
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         {searchKey && (
-           <div className="flex items-center py-4">
+           <div className="flex items-center flex-1">
             <Input
               placeholder={placeholder}
               value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
@@ -83,6 +88,26 @@ export function DataTable<TData, TValue>({
             />
           </div>
         )}
+        
+        {/* Bulk Actions */}
+        {Object.keys(rowSelection).length > 0 && (
+            <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-md">
+                <span className="text-sm font-medium">{Object.keys(rowSelection).length} selected</span>
+                {onDelete && (
+                     <Button variant="destructive" size="sm" onClick={() => {
+                         const selectedIds = table.getFilteredSelectedRowModel().rows.map(r => (r.original as any).id);
+                         onDelete(selectedIds);
+                         setRowSelection({});
+                     }}>
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                     </Button>
+                )}
+                <Button variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" /> Export
+                </Button>
+            </div>
+        )}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">

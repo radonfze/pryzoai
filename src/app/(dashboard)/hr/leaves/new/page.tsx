@@ -1,24 +1,17 @@
 import { db } from "@/db";
-import { employees, leaveTransactions } from "@/db/schema";
+import { employees } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { LeaveRequestForm } from "@/components/hr/leave-request-form";
 import GradientHeader from "@/components/ui/gradient-header";
 import { CalendarDays } from "lucide-react";
-import { notFound } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
 
-export default async function EditLeavePage({ params }: { params: { id: string } }) {
+export default async function NewLeavePage() {
   const companyId = "00000000-0000-0000-0000-000000000000";
 
-  const leave = await db.query.leaveTransactions.findFirst({
-      where: eq(leaveTransactions.id, params.id),
-  });
-
-  if (!leave) notFound();
-
   const employeeList = await db.query.employees.findMany({
-    where: eq(employees.companyId, companyId),
+    where: and(eq(employees.companyId, companyId), eq(employees.status, 'active')),
     columns: { id: true, firstName: true, lastName: true, employeeCode: true }
   });
 
@@ -26,14 +19,11 @@ export default async function EditLeavePage({ params }: { params: { id: string }
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <GradientHeader
         module="hr"
-        title={`Edit Leave Request`}
-        description="Modify leave application details"
+        title="New Leave Request"
+        description="Submit a leave application for approval"
         icon={CalendarDays}
       />
-      <LeaveRequestForm 
-        employees={employeeList} 
-        initialData={leave}
-      />
+      <LeaveRequestForm employees={employeeList} />
     </div>
   );
 }

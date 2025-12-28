@@ -13,7 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import GradientHeader from "@/components/ui/gradient-header";
-import { FileText } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
+import Link from "next/link";
+
+export const dynamic = 'force-dynamic';
 
 export default async function InvoicesPage() {
   // Fetch all invoices (limit 50 for MVP)
@@ -26,7 +29,7 @@ export default async function InvoicesPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 p-4 md:p-8 pt-6">
       <GradientHeader
         module="sales"
         title="Sales Invoices"
@@ -35,10 +38,9 @@ export default async function InvoicesPage() {
       />
       
       <div className="flex items-center justify-end">
-         <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Invoice
-         </Button>
+         <Link href="/sales/invoices/new">
+           <Button><Plus className="mr-2 h-4 w-4" /> Create Invoice</Button>
+         </Link>
       </div>
 
       <div className="rounded-md border bg-white">
