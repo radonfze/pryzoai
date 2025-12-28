@@ -146,23 +146,22 @@ export default function NumberSeriesPage() {
                       <Input 
                         defaultValue={item.prefix} 
                         className="h-8 w-20"
-                        disabled={editingCode !== item.code}
                       />
                     </TableCell>
                     <TableCell>
-                      <Select defaultValue={item.separator} disabled={editingCode !== item.code}>
+                      <Select defaultValue={item.separator}>
                         <SelectTrigger className="h-8 w-16">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="-">-</SelectItem>
-                          <SelectItem value="/">/</SelectItem>
+                          <SelectItem value="/">/ </SelectItem>
                           <SelectItem value="none">None</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Select defaultValue={String(item.digits)} disabled={editingCode !== item.code}>
+                      <Select defaultValue={String(item.digits)}>
                         <SelectTrigger className="h-8 w-16">
                           <SelectValue />
                         </SelectTrigger>
@@ -174,7 +173,7 @@ export default function NumberSeriesPage() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Select defaultValue={item.yearFormat} disabled={editingCode !== item.code}>
+                      <Select defaultValue={item.yearFormat}>
                         <SelectTrigger className="h-8 w-24">
                           <SelectValue />
                         </SelectTrigger>
@@ -195,7 +194,6 @@ export default function NumberSeriesPage() {
                         type="number"
                         defaultValue={item.currentNumber || 0} 
                         className="h-8 w-20"
-                        disabled={editingCode !== item.code}
                       />
                     </TableCell>
                     <TableCell>

@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Building2, Globe, FileText, Banknote } from "lucide-react";
+import { getCompanySettings, updateCompanySettings } from "@/actions/settings/update-company";
+import { useToast } from "@/hooks/use-toast";
 
 const companySchema = z.object({
   name: z.string().min(2, "Company name is required"),
@@ -29,9 +31,12 @@ const companySchema = z.object({
 
 type CompanyFormData = z.infer<typeof companySchema>;
 
+const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+
 export default function CompanySetupPage() {
   const [loading, setLoading] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const { toast } = useToast();
 
   const form = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
@@ -52,13 +57,53 @@ export default function CompanySetupPage() {
     },
   });
 
+  useEffect(() => {
+    async function loadCompanyData() {
+      setFetching(true);
+      try {
+        const company = await getCompanySettings(DEMO_COMPANY_ID);
+        if (company) {
+          form.reset({
+            name: company.name || "",
+            legalName: company.legalName || "",
+            taxId: company.taxId || "",
+            email: company.email || "",
+            phone: company.phone || "",
+            website: company.website || "",
+            address: company.address || "",
+            city: company.city || "Dubai",
+            country: company.country || "UAE",
+            currency: company.currency || "AED",
+            fiscalYearStart: String(company.fiscalYearStart || "01"),
+            timezone: company.timezone || "Asia/Dubai",
+            dateFormat: "DD/MM/YYYY",
+          });
+        }
+      } catch (error) {
+        console.error("Failed to load company data:", error);
+      } finally {
+        setFetching(false);
+      }
+    }
+    loadCompanyData();
+  }, [form]);
+
   async function onSubmit(data: CompanyFormData) {
     setLoading(true);
     try {
-      // TODO: Call server action to save company settings
-      console.log("Company data:", data);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      const result = await updateCompanySettings(DEMO_COMPANY_ID, data);
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -324,8 +369,8 @@ export default function CompanySetupPage() {
           </Card>
 
           <div className="flex gap-4">
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : saved ? "✓ Saved!" : "Save Company Settings"}
+            <Button type="submit" disabled={loading || fetching}>
+              {fetching ? "Loading..." : loading ? "Saving..." : "Save Company Settings"}
             </Button>
           </div>
         </form>
