@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { FileText } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export default function NewQuotationPage() {
   const router = useRouter();
@@ -13,9 +14,12 @@ export default function NewQuotationPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">New Quotation</h2>
-      </div>
+      <GradientHeader
+        module="sales"
+        title="New Quotation"
+        description="Create a new sales estimate for a customer"
+        icon={FileText}
+      />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
