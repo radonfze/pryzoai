@@ -55,12 +55,13 @@ export default async function PurchaseOrderListPage() {
               <TableHead>Supplier</TableHead>
               <TableHead className="text-right">Total</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="w-[80px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {orders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
                     No orders found.
                   </TableCell>
                 </TableRow>
@@ -81,6 +82,13 @@ export default async function PurchaseOrderListPage() {
                             <Badge variant={po.status === "draft" ? "secondary" : "default"} className="uppercase text-[10px]">
                                 {po.status}
                             </Badge>
+                        </TableCell>
+                        <TableCell>
+                            <Link href={`/procurement/orders/${po.id}`}>
+                                <Button variant="ghost" size="icon">
+                                    <ShoppingCart className="h-4 w-4" />
+                                </Button>
+                            </Link>
                         </TableCell>
                     </TableRow>
                 ))
