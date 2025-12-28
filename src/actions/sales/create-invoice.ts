@@ -8,7 +8,10 @@ import {
   items, 
   warehouses, 
   numberSeries,
-  companies
+  companies,
+  journalEntries,
+  journalLines,
+  chartOfAccounts
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -209,10 +212,103 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
         );
       }
 
-      // 5. Success
+      // 5. Automatic GL Posting (Sales Invoice)
+      // DR: Accounts Receivable (Customer)
+      // CR: Sales Revenue
+      // CR: VAT Payable
+
+      // Fetch COA IDs (In a real app, these should be from settings/defaults)
+      const coa = await tx.query.chartOfAccounts.findMany({
+        where: and(
+          eq(chartOfAccounts.companyId, companyId),
+          // We need simple way to identify accounts. 
+          // Ideally use 'code' we seeded: 1130 (AR), 4100 (Sales), 2120 (VAT)
+        )
+      });
+
+      // Simple lookup helper
+      const getAccountId = (code: string) => coa.find(a => a.code === code)?.id;
+
+      const arAccountId = getAccountId("1130"); // Accounts Receivable
+      const salesAccountId = getAccountId("4100"); // Sales Revenue
+      const taxAccountId = getAccountId("2120"); // VAT Payable
+
+      if (arAccountId && salesAccountId && taxAccountId) {
+          // Generate Journal Number
+          const journalSeries = await tx.query.numberSeries.findFirst({
+              where: and(eq(numberSeries.companyId, companyId), eq(numberSeries.entityType, "journal"))
+          });
+          
+          let journalNum = `JV-${Date.now()}`;
+          if (journalSeries) {
+              const nextJv = (journalSeries.currentValue || 0) + 1;
+              journalNum = `${journalSeries.prefix}-${journalSeries.yearFormat === 'YYYY' ? new Date().getFullYear() : ''}-${nextJv.toString().padStart(5, '0')}`;
+              await tx.update(numberSeries).set({ currentValue: nextJv }).where(eq(numberSeries.id, journalSeries.id));
+          }
+
+          // Insert Journal Header
+          const [journal] = await tx.insert(journalEntries).values({
+              companyId,
+              journalNumber: journalNum,
+              journalDate: new Date(data.invoiceDate),
+              sourceDocType: "INV",
+              sourceDocId: newInvoice.id,
+              sourceDocNumber: invoiceNumber,
+              description: `Invoice ${invoiceNumber} for ${data.customerId}`, // Todo: Get customer name
+              totalDebit: grandTotal.toFixed(2),
+              totalCredit: grandTotal.toFixed(2),
+              status: "posted",
+          }).returning();
+
+          // Insert Journal Lines
+          // 1. Debit AR (Total Receivable)
+          await tx.insert(journalLines).values({
+              companyId,
+              journalId: journal.id,
+              lineNumber: 1,
+              accountId: arAccountId,
+              description: `Receivable - ${invoiceNumber}`,
+              debit: grandTotal.toFixed(2),
+              credit: "0",
+          });
+
+          // 2. Credit Sales (Subtotal - Discount)
+          const salesAmount = (subTotal - totalDiscount);
+          await tx.insert(journalLines).values({
+              companyId,
+              journalId: journal.id,
+              lineNumber: 2,
+              accountId: salesAccountId,
+              description: `Sales Revenue - ${invoiceNumber}`,
+              debit: "0",
+              credit: salesAmount.toFixed(2),
+          });
+
+          // 3. Credit Tax (Total Tax)
+          if (totalTax > 0) {
+              await tx.insert(journalLines).values({
+                  companyId,
+                  journalId: journal.id,
+                  lineNumber: 3,
+                  accountId: taxAccountId,
+                  description: `VAT Output - ${invoiceNumber}`,
+                  debit: "0",
+                  credit: totalTax.toFixed(2),
+              });
+          }
+
+          // Update Invoice to Posted
+          await tx.update(salesInvoices)
+            .set({ isPosted: true })
+            .where(eq(salesInvoices.id, newInvoice.id));
+      } else {
+          console.warn("Skipping GL Posting: Standard accounts (1130, 4100, 2120) not found in COA.");
+      }
+
+      // 6. Success
       return { 
           success: true, 
-          message: `Invoice ${invoiceNumber} created successfully`, 
+          message: `Invoice ${invoiceNumber} created & posted successfully`, 
           invoiceId: newInvoice.id 
       };
 
