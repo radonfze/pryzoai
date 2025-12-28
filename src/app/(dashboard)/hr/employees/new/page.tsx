@@ -9,6 +9,9 @@ import { useState, useEffect } from "react";
 import { getNextCode } from "@/actions/settings/auto-code";
 import { Loader2 } from "lucide-react";
 
+import { UserPlus } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
+
 export default function NewEmployeePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -29,7 +32,12 @@ export default function NewEmployeePage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <h2 className="text-3xl font-bold tracking-tight">Add New Employee</h2>
+      <GradientHeader
+        module="hr"
+        title="Add New Employee"
+        description="Create a new employee record"
+        icon={UserPlus}
+      />
 
       <Card className="max-w-3xl">
         <CardHeader>
