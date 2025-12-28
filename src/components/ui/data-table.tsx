@@ -27,9 +27,13 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Settings2, Trash2, Download } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Settings2, Trash2, Download, FileSpreadsheet, FileText, Printer } from "lucide-react"
+import { exportToExcel, exportToCSV, exportToPDF } from "@/lib/export-utils"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -37,6 +41,7 @@ interface DataTableProps<TData, TValue> {
   searchKey?: string
   placeholder?: string
   onDelete?: (ids: string[]) => void
+  exportName?: string
 }
 
 export function DataTable<TData, TValue>({
@@ -45,6 +50,7 @@ export function DataTable<TData, TValue>({
   searchKey,
   placeholder = "Filter...",
   onDelete,
+  exportName = "export",
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -102,9 +108,35 @@ export function DataTable<TData, TValue>({
                         <Trash2 className="mr-2 h-4 w-4" /> Delete
                      </Button>
                 )}
-                <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" /> Export
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="mr-2 h-4 w-4" /> Export
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Export Selected</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => {
+                      const selectedRows = table.getFilteredSelectedRowModel().rows.map(r => r.original);
+                      exportToExcel(selectedRows as any[], exportName);
+                    }}>
+                      <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel (.xlsx)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      const selectedRows = table.getFilteredSelectedRowModel().rows.map(r => r.original);
+                      exportToCSV(selectedRows as any[], exportName);
+                    }}>
+                      <FileText className="mr-2 h-4 w-4" /> CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      const selectedRows = table.getFilteredSelectedRowModel().rows.map(r => r.original);
+                      exportToPDF(selectedRows as any[], exportName, exportName);
+                    }}>
+                      <Printer className="mr-2 h-4 w-4" /> PDF
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         )}
 

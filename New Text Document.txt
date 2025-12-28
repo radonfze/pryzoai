@@ -22,5 +22,5 @@ if anything existing, skip accept it if anything advanced add it to them
 postgresql://postgres.bddveetxtckdyefnlsdo:[YOUR-PASSWORD]@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres
 
 
-implementation plan v1 to v90 anything pending , missing ui?? , missing gaps?, missing dependencies??, any suggestions? missing Logics??, missing links??, missing pages,?? missing forms? add & edit, update? List? , select all ? delete all?? action buttons??export??sidebar auto linking, coa auto linking ??,missing tables?? missing schemas.???all 404 erro, all 500 error.,
+implementation plan v1 to v90 anything pending , missing ui?? , missing gaps?, missing dependencies??, any suggestions? missing Logics??, missing links??, missing pages,?? missing forms? add & edit, update? List? , select all ? delete all?? action buttons??export??sidebar auto linking, coa auto linking ??,missing tables?? missing schemas.???, missing routes??,all 404 erro, all 500 error.,
  finish them all , fixi ,no hot fixes, only roots , build & push , commit & deploy as you go 
