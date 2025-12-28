@@ -124,7 +124,17 @@ const menuItems = [
     ],
   },
   {
-    title: "Projects",
+    title: "Manufacturing",
+    href: "/manufacturing",
+    icon: Factory,
+    items: [
+      { title: "Production Orders", href: "/manufacturing/orders", icon: ClipboardList },
+      { title: "Bill of Materials", href: "/manufacturing/bom", icon: Layers },
+      { title: "Workstations", href: "/manufacturing/workstations", icon: Hammer },
+    ],
+  },
+  {
+    title: "Procurement",
     icon: Briefcase,
     href: "/projects",
     items: [

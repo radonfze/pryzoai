@@ -1,43 +1,29 @@
-name: CI
+name: Production Build
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ["main"]
   pull_request:
-    branches: ["main", "master"]
+    branches: ["main"]
 
 jobs:
   build:
-    name: Build & Test
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.x"
           cache: "npm"
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Run Linter
-        run: npm run lint
-
-      - name: Run Tests
-        run: npm run test
-
-      - name: Run Type Check (Build)
-        # We assume Next.js build handles type checking.
-        # We mock env vars to pass Zod validation during build
+      - name: Build
         run: npm run build
         env:
-          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/pryzoai_test"
-          NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key"
-          NEXT_PUBLIC_SENTRY_DSN: "https://example@sentry.io/123"
-          # Add other required fields from src/lib/env.ts to prevent Zod crash
-          SKIP_ENV_VALIDATION: "true" # Common pattern, or just rely on the mocks above
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}

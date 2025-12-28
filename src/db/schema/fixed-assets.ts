@@ -66,8 +66,12 @@ export const fixedAssets = pgTable("fixed_assets", {
   assetCode: varchar("asset_code", { length: 50 }).notNull(), // Unique
   description: text("description"),
   serialNumber: varchar("serial_number", { length: 100 }),
+  qrCodeData: text("qr_code_data"), // For barcode generation
   
   purchaseDate: date("purchase_date").notNull(),
+  disposalDate: date("disposal_date"),
+  disposalPrice: decimal("disposal_price", { precision: 18, scale: 2 }),
+  gainLossAmount: decimal("gain_loss_amount", { precision: 18, scale: 2 }),
   inServiceDate: date("in_service_date"), // When depreciation starts
   
   purchaseCost: decimal("purchase_cost", { precision: 18, scale: 2 }).notNull(),
