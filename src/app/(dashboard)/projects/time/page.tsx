@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
-import { Plus, Clock, Play, Pause } from "lucide-react";
+import { Plus, Clock, Play, Pause, Timer } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
@@ -15,18 +16,19 @@ export default function TimeTrackingPage() {
   ];
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Time Tracking</h2>
-          <p className="text-muted-foreground">Log time spent on projects and tasks</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline"><Play className="mr-2 h-4 w-4" /> Start Timer</Button>
-          <Link href="/projects/time/new">
-            <Button><Plus className="mr-2 h-4 w-4" /> Log Time</Button>
-          </Link>
-        </div>
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      <GradientHeader
+        module="projects"
+        title="Time Tracking"
+        description="Log time spent on projects, tasks, and track productivity"
+        icon={Timer}
+      />
+      
+      <div className="flex items-center justify-end gap-2">
+        <Button variant="outline"><Play className="mr-2 h-4 w-4" /> Start Timer</Button>
+        <Link href="/projects/time/new">
+          <Button><Plus className="mr-2 h-4 w-4" /> Log Time</Button>
+        </Link>
       </div>
 
       {/* Stats */}
