@@ -17,8 +17,8 @@ export default function ReportsPage() {
     {
       category: "Financial Statements",
       items: [
-        { title: "Profit & Loss", description: "Statement of comprehensive income" },
-        { title: "Balance Sheet", description: "Statement of financial position" },
+        { title: "Profit & Loss", description: "Statement of comprehensive income", href: "/finance/reports/profit-loss" },
+        { title: "Balance Sheet", description: "Statement of financial position", href: "/finance/reports/balance-sheet" },
         { title: "Cash Flow", description: "Inflows and outflows of cash" },
         { title: "Trial Balance", description: "List of all accounts and balances" },
       ]
@@ -82,18 +82,27 @@ export default function ReportsPage() {
             <h3 className="text-lg font-semibold tracking-tight">{section.category}</h3>
             <div className="grid gap-4">
               {section.items.map((report) => (
-                <Card key={report.title} className="flex flex-row items-center justify-between p-4 hover:shadow-md transition-shadow">
-                  <div className="space-y-1">
-                    <h4 className="font-semibold text-sm">{report.title}</h4>
-                    <p className="text-xs text-muted-foreground">{report.description}</p>
-                  </div>
-                  <div className="flex gap-2">
-                     <Button size="sm" variant="outline">Preview</Button>
-                     <Button size="sm">
-                        <FileDown className="h-4 w-4" />
-                     </Button>
-                  </div>
-                </Card>
+                <div key={report.title} className="relative group">
+                    <Card className="flex flex-row items-center justify-between p-4 hover:shadow-md transition-shadow">
+                    <div className="space-y-1">
+                        <h4 className="font-semibold text-sm">{report.title}</h4>
+                        <p className="text-xs text-muted-foreground">{report.description}</p>
+                    </div>
+                    <div className="flex gap-2">
+                         {/* @ts-ignore */}
+                        {report.href ? (
+                            <Button size="sm" variant="outline" onClick={() => window.location.href = report.href}>
+                                Preview
+                            </Button>
+                        ) : (
+                             <Button size="sm" variant="outline" disabled>Preview</Button>
+                        )}
+                        <Button size="sm" disabled>
+                            <FileDown className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    </Card>
+                </div>
               ))}
             </div>
           </div>
