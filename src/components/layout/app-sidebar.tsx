@@ -97,6 +97,11 @@ const menuItems = [
     ],
   },
   {
+    title: "AI Copilot",
+    icon: Wand2,
+    href: "/ai/copilot", // New Ph17
+  },
+  {
     title: "Purchase",
     icon: FileText,
     href: "/procurement",
@@ -120,6 +125,7 @@ const menuItems = [
       { title: "Bank Accounts", href: "/finance/bank-accounts", icon: Landmark },
       { title: "Budgets", href: "/finance/budgets", icon: Banknote },
       { title: "Reconciliation", href: "/finance/reconciliation", icon: ClipboardList },
+      { title: "Tax Audit (FAF)", href: "/finance/tax-audit", icon: ShieldCheck }, // New Ph17
       { title: "Reports", href: "/finance/reports", icon: ClipboardList },
     ],
   },
@@ -176,7 +182,8 @@ const settingsItems = [
   { title: "Currencies", href: "/settings/currencies", icon: Coins },
   { title: "Taxes", href: "/settings/taxes", icon: Banknote },
   { title: "GL Accounts (COA)", href: "/finance/coa", icon: Landmark },
-  { title: "Default GL Mapping", href: "/settings/gl-mapping", icon: Calculator }, // New
+  { title: "Defult GL Mapping", href: "/settings/gl-mapping", icon: Calculator },
+  { title: "Audit Logs", href: "/settings/audit-logs", icon: ClipboardList }, // New Ph17
   { title: "Company Profile", href: "/settings/company", icon: Building },
   { title: "Number Series", href: "/settings/number-series", icon: ListTodo },
   { title: "Users", href: "/settings/users", icon: UserCog },
