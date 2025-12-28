@@ -28,4 +28,6 @@ export * from "./schema/audit-logs";
 export * from "./schema/approvals";
 export * from "./schema/item-hierarchy";
 export * from "./schema/fixed-assets";
+export * from "./schema/warranty";
+export * from "./schema/field-service";
 
