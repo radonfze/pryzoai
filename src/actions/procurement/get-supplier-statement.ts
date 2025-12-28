@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { purchaseBills, supplierPayments, suppliers } from "@/db/schema";
+import { purchaseInvoices, supplierPayments, suppliers } from "@/db/schema";
 import { and, eq, gte, lte } from "drizzle-orm";
 import { getCompanyId } from "@/lib/auth";
 
@@ -14,12 +14,12 @@ export async function getSupplierStatement(supplierId: string, startDate: string
         });
         if (!supplier) throw new Error("Supplier not found");
 
-        const bills = await db.query.purchaseBills.findMany({
+        const bills = await db.query.purchaseInvoices.findMany({
             where: and(
-                eq(purchaseBills.companyId, companyId),
-                eq(purchaseBills.supplierId, supplierId),
-                gte(purchaseBills.billDate, startDate),
-                lte(purchaseBills.billDate, endDate)
+                eq(purchaseInvoices.companyId, companyId),
+                eq(purchaseInvoices.supplierId, supplierId),
+                gte(purchaseInvoices.invoiceDate, startDate),
+                lte(purchaseInvoices.invoiceDate, endDate)
             )
         });
 
@@ -33,7 +33,7 @@ export async function getSupplierStatement(supplierId: string, startDate: string
         });
 
         const transactions = [
-            ...bills.map(b => ({ date: b.billDate, type: "BILL", ref: b.billNumber, dr: 0, cr: Number(b.totalAmount) })),
+            ...bills.map(b => ({ date: b.invoiceDate, type: "BILL", ref: b.invoiceNumber, dr: 0, cr: Number(b.totalAmount) })),
             ...payments.map(p => ({ date: p.paymentDate, type: "PAYMENT", ref: p.paymentNumber, dr: Number(p.amount), cr: 0 }))
         ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 

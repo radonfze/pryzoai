@@ -78,6 +78,7 @@ const menuItems = [
       { title: "Warranty Claims", href: "/sales/warranty", icon: ShieldCheck },
       { title: "Sales Teams", href: "/sales/teams", icon: Users },
       { title: "Sales Targets", href: "/sales/targets", icon: Target },
+      { title: "Statement of Account", href: "/sales/reports/customer-statement", icon: FileText }, // New Phase 19
     ],
   },
   {
@@ -112,6 +113,7 @@ const menuItems = [
       { title: "Debit Notes", href: "/procurement/debit-notes", icon: Receipt },
       { title: "Returns", href: "/procurement/returns", icon: ClipboardList },
       { title: "Supplier Payments", href: "/procurement/payments", icon: CreditCard },
+      { title: "Statement of Account", href: "/procurement/reports/supplier-statement", icon: FileText }, // New Phase 19
     ],
   },
   {
@@ -125,8 +127,8 @@ const menuItems = [
       { title: "Bank Accounts", href: "/finance/bank-accounts", icon: Landmark },
       { title: "Budgets", href: "/finance/budgets", icon: Banknote },
       { title: "Reconciliation", href: "/finance/reconciliation", icon: ClipboardList },
-      { title: "Tax Audit (FAF)", href: "/finance/tax-audit", icon: ShieldCheck }, // New Ph17
-      { title: "Reports", href: "/finance/reports", icon: ClipboardList },
+      { title: "Tax Audit (FAF)", href: "/finance/tax-audit", icon: ShieldCheck },
+      { title: "Financial Reports", href: "/finance/reports", icon: ClipboardList }, // Updated
     ],
   },
   {
