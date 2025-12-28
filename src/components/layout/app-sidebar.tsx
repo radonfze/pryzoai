@@ -52,6 +52,7 @@ import {
   Wand2,
   Target,
   Building,
+  Workflow, // New Phase 20
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -191,6 +192,7 @@ const settingsItems = [
   { title: "Users", href: "/settings/users", icon: UserCog },
   { title: "AI Policies", href: "/settings/ai-policies", icon: Shield },
   { title: "Roles", href: "/settings/roles", icon: Shield },
+  { title: "Integrations & API", href: "/settings/integrations", icon: Workflow }, // New Phase 20
 ];
 
 export function AppSidebar() {
