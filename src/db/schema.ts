@@ -2,6 +2,7 @@
 // Auto-generated exports for all schema modules
 
 export * from "./schema/companies";
+export * from "./schema/gl-mapping";
 export * from "./schema/users";
 export * from "./schema/roles";
 export * from "./schema/two-factor";
