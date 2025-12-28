@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, Eye } from "lucide-react";
+import { Plus, Package, Eye, PackageCheck } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 import { format } from "date-fns";
 
 export const dynamic = 'force-dynamic';
@@ -29,9 +30,15 @@ export default async function GRNPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Goods Receipt Notes</h2>
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      <GradientHeader
+        module="procurement"
+        title="Goods Receipt Notes"
+        description="Record incoming goods from suppliers and link to purchase orders"
+        icon={PackageCheck}
+      />
+      
+      <div className="flex items-center justify-end">
         <Link href="/procurement/grn/new">
           <Button><Plus className="mr-2 h-4 w-4" /> New GRN</Button>
         </Link>

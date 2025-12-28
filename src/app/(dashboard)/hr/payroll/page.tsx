@@ -1,15 +1,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { DollarSign, Users, Calendar, Play } from "lucide-react";
+import { DollarSign, Users, Calendar, Play, Wallet } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
 export default async function PayrollPage() {
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Payroll</h2>
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      <GradientHeader
+        module="hr"
+        title="Payroll Management"
+        description="Process monthly payroll, manage salaries, and track payments"
+        icon={Wallet}
+      />
+      
+      <div className="flex items-center justify-end">
         <Link href="/hr/payroll/new">
           <Button><Play className="mr-2 h-4 w-4" /> Run Payroll</Button>
         </Link>
