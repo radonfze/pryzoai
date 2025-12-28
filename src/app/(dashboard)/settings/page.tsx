@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Building, Package, Landmark, Receipt, Warehouse, Building2, Hash, CreditCard } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, Building, Package, Landmark, Receipt, Warehouse, Building2, Hash, CreditCard, Shield, Database, Download, Settings2 } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +15,18 @@ const companySettings = [
     priority: true,
   },
   {
+    title: "Users",
+    description: "Manage system users and access",
+    href: "/settings/users",
+    icon: Users,
+  },
+  {
+    title: "Roles & Permissions",
+    description: "Configure user roles and permissions",
+    href: "/settings/roles",
+    icon: Shield,
+  },
+  {
     title: "Number Series",
     description: "Auto-numbering for documents and codes",
     href: "/settings/number-series",
@@ -23,6 +37,13 @@ const companySettings = [
     description: "Define payment terms and conditions",
     href: "/settings/payment-terms",
     icon: CreditCard,
+  },
+  {
+    title: "Database Backup",
+    description: "Backup and restore database",
+    href: "/settings/backup",
+    icon: Database,
+    priority: true,
   },
 ];
 
@@ -68,9 +89,12 @@ const masterDataItems = [
 export default function SettingsPage() {
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-      </div>
+      <GradientHeader
+        module="hr"
+        title="Settings & Configuration"
+        description="Manage system settings, master data, and preferences"
+        icon={Settings2}
+      />
       
       {/* Company Settings Section */}
       <div className="space-y-4">
