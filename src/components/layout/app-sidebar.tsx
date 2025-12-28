@@ -47,6 +47,8 @@ import {
   UserPlus,
   Shield,
   DollarSign,
+  Tag,
+  ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -77,7 +79,10 @@ const menuItems = [
     href: "/inventory",
     items: [
       { title: "Items", href: "/inventory/items", icon: Boxes },
-      { title: "Categories", href: "/inventory/categories", icon:  Package }, // using Package from lucide-react imported above
+      { title: "Categories", href: "/inventory/categories", icon:  Package },
+      { title: "Subcategories", href: "/inventory/subcategories", icon: Layers },
+      { title: "Brands", href: "/inventory/brands", icon: Tag },
+      { title: "Models", href: "/inventory/models", icon: Boxes },
       { title: "Stock Ledger", href: "/inventory/ledger", icon: BookOpen },
       { title: "Stock Transfers", href: "/inventory/transfers", icon: ClipboardList },
       { title: "Adjustments", href: "/inventory/adjustments/new", icon: ClipboardList },
@@ -151,8 +156,8 @@ const settingsItems = [
   { title: "Items", href: "/settings/items", icon: Package },
   { title: "Warehouses", href: "/settings/warehouses", icon: Warehouse },
   { title: "Taxes", href: "/settings/taxes", icon: Receipt },
-  { title: "Currencies", href: "/settings/currencies", icon: DollarSign },
   { title: "Payment Terms", href: "/settings/payment-terms", icon: CreditCard },
+  { title: "Approvals", href: "/settings/approvals", icon: ShieldCheck },
   { title: "Number Series", href: "/settings/number-series", icon: ListTodo },
   { title: "Users", href: "/settings/users", icon: UserCog },
   { title: "Roles", href: "/settings/roles", icon: Shield },
