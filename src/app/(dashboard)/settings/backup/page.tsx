@@ -7,7 +7,7 @@ import { Database, Download, Upload, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function DatabaseBackupPage() {
-  const [backing up, setBackingUp] = useState(false);
+  const [backingUp, setBackingUp] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const { toast } = useToast();
 
@@ -94,10 +94,10 @@ export default function DatabaseBackupPage() {
             </ul>
             <Button 
               onClick={handleBackup} 
-              disabled={backing up}
+              disabled={backingUp}
               className="w-full"
             >
-              {backing up ? (
+              {backingUp ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                   Backing up...
