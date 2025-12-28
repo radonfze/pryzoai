@@ -1,11 +1,31 @@
-import { Plus, FileCheck, FileText } from "lucide-react";
+import { db } from "@/db";
+import { salesQuotations } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Plus, FileText } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
+import { DataTable } from "@/components/ui/data-table";
+import { columns } from "./columns";
 
 export const dynamic = 'force-dynamic';
 
-export default function QuotationsPage() {
-  // TODO: Add quotations table to schema
-  const quoteList: any[] = [];
+export default async function QuotationsPage() {
+  const companyId = "00000000-0000-0000-0000-000000000000";
+
+  let specificQuotations: any[] = [];
+  try {
+     specificQuotations = await db.query.salesQuotations.findMany({
+      where: eq(salesQuotations.companyId, companyId),
+      orderBy: [desc(salesQuotations.createdAt)],
+      with: {
+        customer: true,
+      },
+      limit: 50,
+    });
+  } catch {
+      // Table might not exist
+  }
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
@@ -22,11 +42,12 @@ export default function QuotationsPage() {
         </Link>
       </div>
 
-      <div className="text-center py-12 text-muted-foreground">
-        <FileCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <p className="text-lg">No quotations yet.</p>
-        <p className="text-sm mt-2">Create quotations to send pricing to customers.</p>
-      </div>
+      <DataTable 
+        columns={columns} 
+        data={specificQuotations} 
+        searchKey="quotationNumber"
+        placeholder="Search quotations..." 
+      />
     </div>
   );
 }
