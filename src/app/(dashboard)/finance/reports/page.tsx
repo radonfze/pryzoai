@@ -35,7 +35,7 @@ export default function ReportsPage() {
       items: [
         { title: "Customer Aging", description: "Unpaid invoices by age" },
         { title: "Supplier Aging", description: "Unpaid bills by age" },
-        { title: "Sales Analysis", description: "Sales by customer/item" },
+        { title: "Sales Analysis", description: "Sales by customer/item", href: "/finance/reports/sales-analysis" },
         { title: "Purchase Analysis", description: "Expenses by category" },
       ]
     },
@@ -43,7 +43,7 @@ export default function ReportsPage() {
        category: "Inventory",
        items: [
          { title: "Stock Ledger", description: "Movement of items" },
-         { title: "Stock Valuation", description: "Current value of inventory" },
+         { title: "Stock Valuation", description: "Current value of inventory", href: "/finance/reports/inventory-valuation" },
        ]
     }
   ];
