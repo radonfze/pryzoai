@@ -97,7 +97,12 @@ export const amcContracts = pgTable("amc_contracts", {
   
   // Pricing
   contractValue: decimal("contract_value", { precision: 18, scale: 2 }).notNull(),
-  billingFrequency: varchar("billing_frequency", { length: 20 }).default("monthly"), // monthly, quarterly, yearly
+  billingFrequency: varchar("billing_frequency", { length: 20 }).default("monthly"),
+  visitFrequency: varchar("visit_frequency", { length: 20 }).default("monthly"), // monthly, quarterly, bi-yearly
+  
+  // SLA (Hours)
+  slaResponseTime: integer("sla_response_time").default(24),
+  slaResolutionTime: integer("sla_resolution_time").default(48),
   
   // Visits
   totalVisits: integer("total_visits").default(0),
