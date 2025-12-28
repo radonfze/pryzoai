@@ -61,7 +61,11 @@ interface InvoiceFormProps {
   warehouses: any[];
 }
 
+import { useRouter } from "next/navigation";
+
+// ... inside component ...
 export function InvoiceForm({ customers, items, warehouses }: InvoiceFormProps) {
+  const router = useRouter(); // Initialize router
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 3. Form Init
@@ -71,7 +75,6 @@ export function InvoiceForm({ customers, items, warehouses }: InvoiceFormProps) 
       invoiceDate: new Date(),
       dueDate: new Date(),
       items: [{ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0, taxRate: 5 }],
-      discountAmount: 0, // Wait, this is item level
     },
   });
 
@@ -97,6 +100,7 @@ export function InvoiceForm({ customers, items, warehouses }: InvoiceFormProps) 
 
   // 5. Submit Handler
   async function onSubmit(data: InvoiceFormValues) {
+    console.log("Submitting form data:", data); // Debug log
     setIsSubmitting(true);
     try {
       // Transform data for server action
@@ -106,7 +110,7 @@ export function InvoiceForm({ customers, items, warehouses }: InvoiceFormProps) 
         dueDate: data.dueDate.toISOString(),
         items: data.items.map((item, idx) => {
            const rowTotal = calculateRowTotal(idx);
-           // Re-calculate details for server
+           // Re-calculate details for server (though server recalcs too for security)
            const sub = item.quantity * item.unitPrice;
            const taxable = sub - item.discountAmount;
            const tax = taxable * (item.taxRate / 100);
@@ -118,7 +122,18 @@ export function InvoiceForm({ customers, items, warehouses }: InvoiceFormProps) 
         })
       };
       
-      await createInvoiceAction(payload);
+      const result = await createInvoiceAction(payload);
+      
+      if (result.success) {
+          // Success Feedback
+          alert(result.message); 
+          // Redirect to list
+          router.push("/sales/invoices"); 
+          router.refresh(); 
+      } else {
+          alert(`Error: ${result.message}`);
+      }
+
     } catch (error) {
       console.error(error);
       alert("Failed to create invoice");
