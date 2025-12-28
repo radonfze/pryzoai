@@ -79,6 +79,7 @@ const menuItems = [
       { title: "Items", href: "/inventory/items", icon: Boxes },
       { title: "Categories", href: "/inventory/categories", icon:  Package }, // using Package from lucide-react imported above
       { title: "Stock Ledger", href: "/inventory/ledger", icon: BookOpen },
+      { title: "Stock Transfers", href: "/inventory/transfers", icon: ClipboardList },
       { title: "Adjustments", href: "/inventory/adjustments/new", icon: ClipboardList },
       { title: "Stock Count", href: "/inventory/count", icon: ClipboardList },
     ],
