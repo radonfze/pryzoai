@@ -123,6 +123,7 @@ const menuItems = [
     items: [
       { title: "Employees", href: "/hr/employees", icon: UserCog },
       { title: "Attendance", href: "/hr/attendance", icon: Calendar },
+      { title: "Leaves", href: "/hr/leaves", icon: ClipboardList },
       { title: "Payroll", href: "/hr/payroll", icon: Banknote },
     ],
   },
