@@ -1,12 +1,29 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { db } from "@/db";
+import { payrollRuns } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
-import { DollarSign, Users, Calendar, Play, Wallet } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Play, Wallet } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
+import { DataTable } from "@/components/ui/data-table";
+import { columns } from "./columns";
 
 export const dynamic = 'force-dynamic';
 
 export default async function PayrollPage() {
+  const companyId = "00000000-0000-0000-0000-000000000000";
+
+  let runs: any[] = [];
+  try {
+     runs = await db.query.payrollRuns.findMany({
+      where: eq(payrollRuns.companyId, companyId),
+      orderBy: [desc(payrollRuns.createdAt)],
+      limit: 50,
+    });
+  } catch (e) {
+      console.error("Failed to fetch payroll runs", e);
+  }
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <GradientHeader
@@ -22,62 +39,12 @@ export default async function PayrollPage() {
         </Link>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Payroll</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold font-mono">AED 0.00</div>
-            <p className="text-xs text-muted-foreground">This month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Employees</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">On payroll</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Next Payday</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">-</div>
-            <p className="text-xs text-muted-foreground">Not scheduled</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Pending Runs</CardTitle>
-            <Play className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">Awaiting approval</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Payroll Runs */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Payroll Runs</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No payroll runs yet.</p>
-            <p className="text-sm mt-1">Click "Run Payroll" to process your first payroll.</p>
-          </div>
-        </CardContent>
-      </Card>
+      <DataTable 
+        columns={columns} 
+        data={runs} 
+        searchKey="runNumber"
+        placeholder="Search payroll runs..." 
+      />
     </div>
   );
 }
