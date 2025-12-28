@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { suppliers, purchaseOrders, purchaseBills } from "@/db/schema";
+import { suppliers, purchaseOrders, purchaseInvoices } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import GradientHeader from "@/components/ui/gradient-header";
@@ -33,9 +33,9 @@ export default async function SupplierDetailPage({ params }: { params: { id: str
   });
 
   // Get recent bills
-  const recentBills = await db.query.purchaseBills.findMany({
-    where: eq(purchaseBills.supplierId, params.id),
-    orderBy: [desc(purchaseBills.createdAt)],
+  const recentBills = await db.query.purchaseInvoices.findMany({
+    where: eq(purchaseInvoices.supplierId, params.id),
+    orderBy: [desc(purchaseInvoices.createdAt)],
     limit: 10
   });
 

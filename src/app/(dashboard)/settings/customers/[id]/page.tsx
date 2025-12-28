@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { customers, salesInvoices, salesPayments } from "@/db/schema";
+import { customers, salesInvoices, customerPayments } from "@/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import GradientHeader from "@/components/ui/gradient-header";
@@ -33,9 +33,9 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
   });
 
   // Get recent payments
-  const recentPayments = await db.query.salesPayments.findMany({
-    where: eq(salesPayments.customerId, params.id),
-    orderBy: [desc(salesPayments.createdAt)],
+  const recentPayments = await db.query.customerPayments.findMany({
+    where: eq(customerPayments.customerId, params.id),
+    orderBy: [desc(customerPayments.createdAt)],
     limit: 10
   });
 

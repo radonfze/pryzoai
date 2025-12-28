@@ -288,3 +288,59 @@ export const stockAdjustmentLinesRelations = relations(stockAdjustmentLines, ({ 
   warehouse: one(warehouses, { fields: [stockAdjustmentLines.warehouseId], references: [warehouses.id] }),
 }));
 
+// Stock Transfers (Inter-warehouse movements)
+export const stockTransfers = pgTable("stock_transfers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("company_id")
+    .notNull()
+    .references(() => companies.id),
+  
+  transferNumber: varchar("transfer_number", { length: 50 }).notNull().unique(),
+  fromWarehouseId: uuid("from_warehouse_id")
+    .notNull()
+    .references(() => warehouses.id),
+  toWarehouseId: uuid("to_warehouse_id")
+    .notNull()
+    .references(() => warehouses.id),
+  
+  transferDate: date("transfer_date").notNull(),
+  reference: varchar("reference", { length: 100 }),
+  notes: text("notes"),
+  
+  status: varchar("status", { length: 20 }).default("draft").notNull(), // draft, in_transit, completed, cancelled
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdBy: uuid("created_by"),
+});
+
+export const stockTransferLines = pgTable("stock_transfer_lines", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("company_id").notNull(),
+  transferId: uuid("transfer_id")
+    .notNull()
+    .references(() => stockTransfers.id),
+  
+  lineNumber: integer("line_number").notNull(),
+  itemId: uuid("item_id")
+    .notNull()
+    .references(() => items.id),
+  
+  quantity: decimal("quantity", { precision: 18, scale: 3 }).notNull(),
+  uom: varchar("uom", { length: 20 }).notNull(),
+  notes: text("notes"),
+});
+
+export const stockTransfersRelations = relations(stockTransfers, ({ one, many }) => ({
+  company: one(companies, { fields: [stockTransfers.companyId], references: [companies.id] }),
+  fromWarehouse: one(warehouses, { fields: [stockTransfers.fromWarehouseId], references: [warehouses.id] }),
+  toWarehouse: one(warehouses, { fields: [stockTransfers.toWarehouseId], references: [warehouses.id] }),
+  lines: many(stockTransferLines),
+}));
+
+export const stockTransferLinesRelations = relations(stockTransferLines, ({ one }) => ({
+  transfer: one(stockTransfers, { fields: [stockTransferLines.transferId], references: [stockTransfers.id] }),
+  item: one(items, { fields: [stockTransferLines.itemId], references: [items.id] }),
+}));
+
+
