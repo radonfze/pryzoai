@@ -3,26 +3,20 @@ import { employees } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Users, Eye, UserCircle } from "lucide-react";
+import { Plus, UserCircle } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
+import { DataTable } from "@/components/ui/data-table";
+import { columns } from "./columns";
 
 export const dynamic = 'force-dynamic';
 
 export default async function EmployeesPage() {
   const companyId = "00000000-0000-0000-0000-000000000000";
 
-  let employeeList: any[] = [];
-  try {
-    employeeList = await db.query.employees.findMany({
-      where: eq(employees.companyId, companyId),
-      orderBy: [desc(employees.createdAt)],
-      limit: 50,
-    });
-  } catch {
-    // Table might not exist
-  }
+  const data = await db.query.employees.findMany({
+    where: eq(employees.companyId, companyId),
+    orderBy: [desc(employees.createdAt)],
+  });
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
@@ -39,52 +33,12 @@ export default async function EmployeesPage() {
         </Link>
       </div>
 
-      {employeeList.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">No employees added yet.</p>
-          <p className="text-sm mt-2">Add employees to manage payroll and attendance.</p>
-        </div>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Employee ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Position</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[80px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {employeeList.map((emp) => (
-                <TableRow key={emp.id}>
-                  <TableCell className="font-medium font-mono">{emp.employeeCode || emp.id.slice(0, 8)}</TableCell>
-                  <TableCell>{emp.firstName} {emp.lastName}</TableCell>
-                  <TableCell>{emp.department || "-"}</TableCell>
-                  <TableCell>{emp.position || "-"}</TableCell>
-                  <TableCell>{emp.email || "-"}</TableCell>
-                  <TableCell>
-                    <Badge variant={emp.isActive ? "default" : "secondary"}>
-                      {emp.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Link href={`/hr/employees/${emp.id}`}>
-                      <Button variant="ghost" size="icon">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <DataTable 
+        columns={columns} 
+        data={data} 
+        searchKey="firstName"
+        placeholder="Search employees..." 
+      />
     </div>
   );
 }
