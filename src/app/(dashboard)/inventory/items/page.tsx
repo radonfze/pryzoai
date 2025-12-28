@@ -7,6 +7,8 @@ import { Plus, Package } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "./columns";
+import { deleteItemsAction } from "@/actions/inventory/delete-items";
+
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +39,11 @@ export default async function ItemsPage() {
         columns={columns} 
         data={data} 
         searchKey="name"
-        placeholder="Search items..." 
+        placeholder="Search items..."
+        onDelete={async (ids) => {
+          "use server";
+          await deleteItemsAction(ids);
+        }}
       />
     </div>
   );

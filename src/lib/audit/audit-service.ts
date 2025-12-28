@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { auditLogs } from "@/db/schema";
+import { auditLogs } from "@/db/schema/audit-logs";
 import { eq, desc, asc } from "drizzle-orm";
 import crypto from "crypto";
 

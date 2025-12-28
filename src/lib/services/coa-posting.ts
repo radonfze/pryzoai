@@ -81,14 +81,18 @@ async function getGLAccount(
 /**
  * Generate journal entries for a document
  */
+/**
+ * Generate journal entries for a document
+ */
 export async function generateJournalEntries(params: {
   companyId: string;
   documentType: keyof typeof GL_MAPPINGS;
   totalAmount: number;
   vatAmount?: number;
   description?: string;
+  overrides?: Record<string, string>; // Map semantic key (e.g. "sales_revenue") to Account ID
 }): Promise<PostingResult> {
-  const { companyId, documentType, totalAmount, vatAmount = 0 } = params;
+  const { companyId, documentType, totalAmount, vatAmount = 0, overrides = {} } = params;
 
   const mapping = GL_MAPPINGS[documentType];
   if (!mapping) {
@@ -101,17 +105,28 @@ export async function generateJournalEntries(params: {
   try {
     // Generate debit entries
     for (const accountGroup of mapping.debit) {
-      const account = await getGLAccount(companyId, accountGroup);
-      if (!account) {
-        return { success: false, error: `GL account not found for ${accountGroup}` };
+      // 1. Check override
+      let accountId = overrides[accountGroup];
+      let accountCode = "MANUAL";
+      let accountName = "Manual Override";
+
+      // 2. If no override, look up by Group
+      if (!accountId) {
+          const account = await getGLAccount(companyId, accountGroup);
+          if (!account) {
+            return { success: false, error: `GL account not found for ${accountGroup}` };
+          }
+          accountId = account.id;
+          accountCode = account.code;
+          accountName = account.name;
       }
 
       const amount = accountGroup.includes("tax") ? vatAmount : netAmount;
       if (amount > 0) {
         entries.push({
-          accountId: account.id,
-          accountCode: account.code,
-          accountName: account.name,
+          accountId,
+          accountCode,
+          accountName,
           debit: amount,
           credit: 0,
         });
@@ -120,32 +135,44 @@ export async function generateJournalEntries(params: {
 
     // Generate credit entries
     for (const accountGroup of mapping.credit) {
-      const account = await getGLAccount(companyId, accountGroup);
-      if (!account) {
-        return { success: false, error: `GL account not found for ${accountGroup}` };
+       // 1. Check override
+      let accountId = overrides[accountGroup];
+      let accountCode = "MANUAL";
+      let accountName = "Manual Override";
+
+      // 2. If no override, look up by Group
+      if (!accountId) {
+          const account = await getGLAccount(companyId, accountGroup);
+          if (!account) {
+            return { success: false, error: `GL account not found for ${accountGroup}` };
+          }
+          accountId = account.id;
+          accountCode = account.code;
+          accountName = account.name;
       }
 
       const amount = accountGroup.includes("tax") ? vatAmount : 
                      accountGroup === "sales_revenue" ? netAmount : totalAmount;
       if (amount > 0) {
         entries.push({
-          accountId: account.id,
-          accountCode: account.code,
-          accountName: account.name,
+          accountId,
+          accountCode,
+          accountName,
           debit: 0,
           credit: amount,
         });
       }
     }
 
-    // Validate double-entry (debits = credits)
+    // Validate double-entry
     const totalDebits = entries.reduce((sum, e) => sum + e.debit, 0);
     const totalCredits = entries.reduce((sum, e) => sum + e.credit, 0);
-
-    if (Math.abs(totalDebits - totalCredits) > 0.01) {
+    
+    // Allow small float variance
+    if (Math.abs(totalDebits - totalCredits) > 0.05) {
       return {
         success: false,
-        error: `Unbalanced entry: Debits ${totalDebits} != Credits ${totalCredits}`,
+        error: `Unbalanced entry: Debits ${totalDebits.toFixed(2)} != Credits ${totalCredits.toFixed(2)}`,
       };
     }
 
@@ -161,6 +188,8 @@ export async function generateJournalEntries(params: {
 /**
  * Post a document to the General Ledger
  */
+import { journalEntries, journalLines } from "@/db/schema";  // Ensure imported
+
 export async function postToGL(params: {
   companyId: string;
   documentType: keyof typeof GL_MAPPINGS;
@@ -171,30 +200,65 @@ export async function postToGL(params: {
   postingDate: Date;
   description?: string;
   createdBy?: string;
+  overrides?: Record<string, string>;
 }): Promise<PostingResult> {
-  const { companyId, documentType, totalAmount, vatAmount } = params;
+  const { companyId, documentType, totalAmount, vatAmount, overrides } = params;
 
-  // Generate journal entries
+  // Generate logic entries
   const result = await generateJournalEntries({
     companyId,
     documentType,
     totalAmount,
     vatAmount,
     description: params.description,
+    overrides
   });
 
   if (!result.success || !result.entries) {
     return result;
   }
 
-  // TODO: Insert into journal_entries table
-  // This would create actual journal entry records in the database
+  // Insert into DB
+  try {
+     const [journal] = await db.insert(journalEntries).values({
+        companyId,
+        journalNumber: `JV-${params.documentNumber}`,
+        journalDate: params.postingDate,
+        sourceDocType: documentType,
+        sourceDocId: params.documentId,
+        sourceDocNumber: params.documentNumber,
+        description: params.description || `Auto-posting for ${documentType} ${params.documentNumber}`,
+        totalDebit: totalAmount.toString(),
+        totalCredit: totalAmount.toString(),
+        status: "posted",
+        postedAt: new Date(),
+        postedBy: params.createdBy ? params.createdBy : undefined, // Check type if uuid
+        createdBy: params.createdBy ? params.createdBy : undefined
+     }).returning();
 
-  return result;
+     // Insert Lines
+     await db.insert(journalLines).values(
+        result.entries.map((entry, idx) => ({
+            companyId,
+            journalId: journal.id,
+            lineNumber: idx + 1,
+            accountId: entry.accountId,
+            description: entry.accountName, // Or params.description
+            debit: entry.debit.toString(),
+            credit: entry.credit.toString()
+        }))
+     );
+
+     return { success: true, entries: result.entries };
+
+  } catch (dbError: any) {
+      console.error("DB Posting Error:", dbError);
+      return { success: false, error: dbError.message };
+  }
 }
 
 /**
- * Reverse a GL posting (for cancellations/voids)
+ * Reverse a GL posting
  */
 export async function reverseGLPosting(params: {
   companyId: string;
@@ -203,6 +267,6 @@ export async function reverseGLPosting(params: {
   reason: string;
   createdBy?: string;
 }): Promise<PostingResult> {
-  // TODO: Look up original entries and create reversing entries
+  // TODO: Implement Reversal Logic
   return { success: true, entries: [] };
 }

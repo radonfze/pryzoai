@@ -55,6 +55,7 @@ import {
   Workflow,
   Lock,
   Coins,
+  Calculator,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -135,17 +136,7 @@ const menuItems = [
     ],
   },
   {
-    title: "Manufacturing",
-    href: "/manufacturing",
-    icon: Factory,
-    items: [
-      { title: "Production Orders", href: "/manufacturing/orders", icon: ClipboardList },
-      { title: "Bill of Materials", href: "/manufacturing/bom", icon: Layers },
-      { title: "Workstations", href: "/manufacturing/workstations", icon: Hammer },
-    ],
-  },
-  {
-    title: "Procurement",
+    title: "Projects",
     icon: Briefcase,
     href: "/projects",
     items: [
@@ -184,18 +175,22 @@ const settingsItems = [
   { title: "Customers", href: "/settings/customers", icon: Users },
   { title: "Suppliers", href: "/settings/suppliers", icon: UserPlus },
   { title: "Items", href: "/settings/items", icon: Package },
+  { title: "Warehouses", href: "/settings/warehouses", icon: Warehouse },
   { title: "Currencies", href: "/settings/currencies", icon: Coins },
   { title: "Taxes", href: "/settings/taxes", icon: Banknote },
+  { title: "Payment Terms", href: "/settings/payment-terms", icon: Clock },
+  { title: "Approvals", href: "/settings/approvals", icon: ShieldCheck },
   { title: "GL Accounts (COA)", href: "/finance/coa", icon: Landmark },
-  { title: "Defult GL Mapping", href: "/settings/gl-mapping", icon: Calculator },
-  { title: "Audit Logs", href: "/settings/audit-logs", icon: ClipboardList }, // New Ph17
+  { title: "Defult GL Mapping", href: "/settings/gl-mapping", icon: Calculator }, // Note: Calculator needs import or change
+  { title: "Audit Logs", href: "/settings/audit-logs", icon: ClipboardList },
   { title: "Company Profile", href: "/settings/company", icon: Building },
   { title: "Number Series", href: "/settings/number-series", icon: ListTodo },
   { title: "Users", href: "/settings/users", icon: UserCog },
   { title: "AI Policies", href: "/settings/ai-policies", icon: Shield },
   { title: "Roles", href: "/settings/roles", icon: Shield },
-  { title: "Permission Matrix", href: "/settings/roles/matrix", icon: Lock }, // New Phase 22
-  { title: "Integrations & API", href: "/settings/integrations", icon: Workflow }, // New Phase 20
+  { title: "Permission Matrix", href: "/settings/roles/matrix", icon: Lock },
+  { title: "Integrations & API", href: "/settings/integrations", icon: Workflow },
+  { title: "Backup & Restore", href: "/settings/backup", icon: Layers },
 ];
 
 export function AppSidebar() {

@@ -3,9 +3,10 @@ import { customers } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
+import { columns } from "./columns";
+import { deleteCustomersAction } from "@/actions/settings/delete-customers";
 
 export const dynamic = 'force-dynamic';
 
@@ -26,43 +27,16 @@ export default async function CustomersPage() {
         </Link>
       </div>
 
-      {customerList.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">No customers yet.</p>
-          <p className="text-sm mt-2">Click "Add Customer" to create your first customer.</p>
-        </div>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Code</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>TRN</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {customerList.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell className="font-medium">{customer.name}</TableCell>
-                  <TableCell>{customer.code}</TableCell>
-                  <TableCell>{customer.phone}</TableCell>
-                  <TableCell>{customer.email}</TableCell>
-                  <TableCell>{customer.taxId}</TableCell>
-                  <TableCell>
-                    <Badge variant={customer.isActive ? "default" : "secondary"}>
-                      {customer.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <DataTable 
+        columns={columns} 
+        data={customerList} 
+        searchKey="name"
+        placeholder="Search customers..."
+        onDelete={async (ids) => {
+          "use server";
+          await deleteCustomersAction(ids);
+        }}
+      />
     </div>
   );
 }

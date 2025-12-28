@@ -187,7 +187,12 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
         vatAmount: totalTax,
         postingDate: new Date(data.invoiceDate),
         description: `Invoice ${invoiceNumber}`,
-        createdBy: "system"
+        createdBy: "system",
+        overrides: {
+           "accounts_receivable": arAccount || "", // Type safety need check
+           "sales_revenue": salesAccount || "",
+           "tax_payable": vatAccount || ""
+        }
       });
 
       if (!postingResult.success) {
