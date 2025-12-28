@@ -65,11 +65,13 @@ const menuItems = [
     title: "Dashboard",
     icon: LayoutDashboard,
     href: "/dashboard",
+    color: "text-sky-500",
   },
   {
     title: "Sales",
     icon: ShoppingCart,
     href: "/sales",
+    color: "text-blue-500",
     items: [
       { title: "Invoice Wizard", href: "/sales/invoices/wizard", icon: Wand2 },
       { title: "Invoices", href: "/sales/invoices", icon: Receipt },
@@ -82,13 +84,14 @@ const menuItems = [
       { title: "Warranty Claims", href: "/sales/warranty", icon: ShieldCheck },
       { title: "Sales Teams", href: "/sales/teams", icon: Users },
       { title: "Sales Targets", href: "/sales/targets", icon: Target },
-      { title: "Statement of Account", href: "/sales/reports/customer-statement", icon: FileText }, // New Phase 19
+      { title: "Statement of Account", href: "/sales/reports/customer-statement", icon: FileText },
     ],
   },
   {
     title: "Inventory",
     icon: Package,
     href: "/inventory",
+    color: "text-emerald-500",
     items: [
       { title: "Items", href: "/inventory/items", icon: Boxes },
       { title: "Categories", href: "/inventory/categories", icon:  Package },
@@ -104,12 +107,14 @@ const menuItems = [
   {
     title: "AI Copilot",
     icon: Wand2,
-    href: "/ai/copilot", // New Ph17
+    href: "/ai/copilot",
+    color: "text-violet-600",
   },
   {
     title: "Purchase",
     icon: FileText,
     href: "/procurement",
+    color: "text-orange-500",
     items: [
       { title: "Purchase Orders", href: "/procurement/orders", icon: ClipboardList },
       { title: "Goods Receipt", href: "/procurement/grn", icon: Package },
@@ -117,13 +122,14 @@ const menuItems = [
       { title: "Debit Notes", href: "/procurement/debit-notes", icon: Receipt },
       { title: "Returns", href: "/procurement/returns", icon: ClipboardList },
       { title: "Supplier Payments", href: "/procurement/payments", icon: CreditCard },
-      { title: "Statement of Account", href: "/procurement/reports/supplier-statement", icon: FileText }, // New Phase 19
+      { title: "Statement of Account", href: "/procurement/reports/supplier-statement", icon: FileText },
     ],
   },
   {
     title: "Finance",
     icon: PieChart,
     href: "/finance",
+    color: "text-indigo-500",
     items: [
       { title: "Chart of Accounts", href: "/finance/coa", icon: BookOpen },
       { title: "Journal Entries", href: "/finance/journals", icon: FileText },
@@ -132,13 +138,14 @@ const menuItems = [
       { title: "Budgets", href: "/finance/budgets", icon: Banknote },
       { title: "Reconciliation", href: "/finance/reconciliation", icon: ClipboardList },
       { title: "Tax Audit (FAF)", href: "/finance/tax-audit", icon: ShieldCheck },
-      { title: "Financial Reports", href: "/finance/reports", icon: ClipboardList }, // Updated
+      { title: "Financial Reports", href: "/finance/reports", icon: ClipboardList },
     ],
   },
   {
     title: "Projects",
     icon: Briefcase,
     href: "/projects",
+    color: "text-cyan-500",
     items: [
       { title: "Tasks", href: "/projects/tasks", icon: ListTodo },
       { title: "Technician Queue", href: "/projects/technician-queue", icon: Hammer },
@@ -149,6 +156,7 @@ const menuItems = [
     title: "HR & Payroll",
     icon: Users,
     href: "/hr",
+    color: "text-pink-500",
     items: [
       { title: "Employees", href: "/hr/employees", icon: UserCog },
       { title: "Attendance", href: "/hr/attendance", icon: Calendar },
@@ -160,6 +168,7 @@ const menuItems = [
     title: "Manufacturing",
     icon: Factory,
     href: "/manufacturing",
+    color: "text-slate-500",
     items: [
       { title: "Work Orders", href: "/manufacturing/work-orders", icon: Hammer },
       { title: "Bill of Materials", href: "/manufacturing/bom", icon: Boxes },
@@ -175,13 +184,14 @@ const settingsItems = [
   { title: "Customers", href: "/settings/customers", icon: Users },
   { title: "Suppliers", href: "/settings/suppliers", icon: UserPlus },
   { title: "Items", href: "/settings/items", icon: Package },
+  { title: "Branches", href: "/settings/branches", icon: Building },
   { title: "Warehouses", href: "/settings/warehouses", icon: Warehouse },
   { title: "Currencies", href: "/settings/currencies", icon: Coins },
   { title: "Taxes", href: "/settings/taxes", icon: Banknote },
   { title: "Payment Terms", href: "/settings/payment-terms", icon: Clock },
   { title: "Approvals", href: "/settings/approvals", icon: ShieldCheck },
   { title: "GL Accounts (COA)", href: "/finance/coa", icon: Landmark },
-  { title: "Defult GL Mapping", href: "/settings/gl-mapping", icon: Calculator }, // Note: Calculator needs import or change
+  { title: "Default GL Mapping", href: "/settings/gl-mapping", icon: Calculator }, // Note: Calculator needs import or change
   { title: "Audit Logs", href: "/settings/audit-logs", icon: ClipboardList },
   { title: "Company Profile", href: "/settings/company", icon: Building },
   { title: "Number Series", href: "/settings/number-series", icon: ListTodo },
@@ -208,27 +218,28 @@ export function AppSidebar() {
         <SidebarMenu>
           {menuItems.map((item) =>
             item.items ? (
-              <Collapsible key={item.title} defaultOpen={pathname.startsWith(item.href)}>
+              <Collapsible key={item.title} defaultOpen={pathname.startsWith(item.href)} className="group/collapsible">
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                      <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]:rotate-90" />
+                    <SidebarMenuButton tooltip={item.title} className={`${pathname.startsWith(item.href) ? "bg-sidebar-accent font-medium" : ""}`}>
+                      <item.icon className={`h-4 w-4 ${item.color}`} />
+                      <span className={pathname.startsWith(item.href) ? "text-sidebar-foreground" : "text-muted-foreground group-hover/collapsible:text-sidebar-foreground transition-colors"}>
+                        {item.title}
+                      </span>
+                      <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90 text-muted-foreground" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={pathname === item.href}>
-                          <Link href={item.href}>Dashboard</Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
                       {item.items.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild isActive={pathname.startsWith(subItem.href)}>
-                            <Link href={subItem.href}>
-                              <subItem.icon className="h-3 w-3 mr-2" />
+                          <SidebarMenuSubButton asChild isActive={pathname.startsWith(subItem.href)} className="ring-0 hover:bg-transparent">
+                             <Link href={subItem.href} className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-200 
+                                ${pathname.startsWith(subItem.href) 
+                                  ? `bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium translate-x-1 border-l-2 ${item.color.replace('text-', 'border-')}` 
+                                  : "text-muted-foreground hover:text-foreground hover:translate-x-1"
+                                }`}>
+                              <subItem.icon className={`h-3.5 w-3.5 ${pathname.startsWith(subItem.href) ? item.color : "text-muted-foreground"}`} />
                               {subItem.title}
                             </Link>
                           </SidebarMenuSubButton>
@@ -240,10 +251,10 @@ export function AppSidebar() {
               </Collapsible>
             ) : (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild isActive={pathname === item.href}>
+                <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.title} className={pathname === item.href ? "bg-sidebar-accent" : ""}>
                   <Link href={item.href}>
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
+                    <item.icon className={`h-4 w-4 ${item.color}`} />
+                    <span className={pathname === item.href ? "font-medium" : "text-muted-foreground"}>{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
