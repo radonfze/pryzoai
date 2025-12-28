@@ -53,7 +53,8 @@ import {
   Target,
   Building,
   Workflow,
-  Lock, // New Phase 22
+  Lock,
+  Coins,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
