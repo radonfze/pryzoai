@@ -75,6 +75,7 @@ const menuItems = [
       { title: "Credit Notes", href: "/sales/credit-notes", icon: Receipt },
       { title: "Delivery Notes", href: "/sales/delivery-notes", icon: Package },
       { title: "Returns", href: "/sales/returns", icon: ClipboardList },
+      { title: "Warranty Claims", href: "/sales/warranty", icon: ShieldCheck },
       { title: "Sales Teams", href: "/sales/teams", icon: Users },
       { title: "Sales Targets", href: "/sales/targets", icon: Target },
     ],
@@ -128,6 +129,7 @@ const menuItems = [
     href: "/projects",
     items: [
       { title: "Tasks", href: "/projects/tasks", icon: ListTodo },
+      { title: "Technician Queue", href: "/projects/technician-queue", icon: Hammer },
       { title: "Time Tracking", href: "/projects/time", icon: Clock },
     ],
   },
@@ -167,6 +169,7 @@ const settingsItems = [
   { title: "Approvals", href: "/settings/approvals", icon: ShieldCheck },
   { title: "Number Series", href: "/settings/number-series", icon: ListTodo },
   { title: "Users", href: "/settings/users", icon: UserCog },
+  { title: "AI Policies", href: "/settings/ai-policies", icon: Shield },
   { title: "Roles", href: "/settings/roles", icon: Shield },
 ];
 
