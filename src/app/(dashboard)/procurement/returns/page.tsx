@@ -1,47 +1,13 @@
 import { db } from "@/db";
-import { purchaseReturns, suppliers } from "@/db/schema";
+import { purchaseReturns } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Undo2 } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
-import { DataTable } from "@/components/ui/data-table";
-import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
+import { PurchaseReturnsTable } from "@/components/procurement/purchase-returns-table";
 
 export const dynamic = 'force-dynamic';
-
-const columns = [
-  { accessorKey: "returnNumber", header: "Return #" },
-  { 
-    accessorKey: "supplier.name", 
-    header: "Supplier",
-    cell: ({ row }: any) => row.original.supplier?.name || "-"
-  },
-  { 
-    accessorKey: "returnDate", 
-    header: "Date",
-    cell: ({ row }: any) => format(new Date(row.original.returnDate), "dd MMM yyyy")
-  },
-  { 
-    accessorKey: "totalAmount", 
-    header: "Amount",
-    cell: ({ row }: any) => `${Number(row.original.totalAmount).toLocaleString()} AED`
-  },
-  { 
-    accessorKey: "status", 
-    header: "Status",
-    cell: ({ row }: any) => <Badge variant="outline">{row.original.status}</Badge>
-  },
-  {
-    id: "actions",
-    cell: ({ row }: any) => (
-      <Link href={`/procurement/returns/${row.original.id}`}>
-        <Button variant="ghost" size="sm">View</Button>
-      </Link>
-    )
-  }
-];
 
 export default async function PurchaseReturnsPage() {
   const companyId = "00000000-0000-0000-0000-000000000000";
@@ -68,7 +34,7 @@ export default async function PurchaseReturnsPage() {
         </Link>
       </div>
 
-      <DataTable columns={columns} data={returns} searchColumn="returnNumber" />
+      <PurchaseReturnsTable returns={returns} />
     </div>
   );
 }
