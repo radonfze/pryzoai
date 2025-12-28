@@ -81,7 +81,7 @@ export const columns: ColumnDef<Quotation>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string
       const variant = 
-          status === "confirmed" ? "default" :
+          status === "issued" ? "default" :
           status === "sent" ? "outline" :
           status === "cancelled" ? "destructive" : "secondary"
           

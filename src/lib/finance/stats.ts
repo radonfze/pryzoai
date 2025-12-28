@@ -14,13 +14,13 @@ const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
 
 export async function getFinanceStats(companyId: string): Promise<FinanceStats> {
   // 1. Receivables (Simplified: Sum of pending invoices)
-  // Using "confirmed" or "partial" status (not "posted" which doesn't exist)
+  // Using "issued" or "partial" status (not "posted" which doesn't exist)
   const arResult = await db
     .select({ total: sum(salesInvoices.balanceAmount) })
     .from(salesInvoices)
     .where(and(
       eq(salesInvoices.companyId, companyId), 
-      or(eq(salesInvoices.status, "confirmed"), eq(salesInvoices.status, "partial"))
+      or(eq(salesInvoices.status, "issued"), eq(salesInvoices.status, "partial"))
     ));
 
   // 2. Payables (Sum of pending bills)
@@ -29,7 +29,7 @@ export async function getFinanceStats(companyId: string): Promise<FinanceStats> 
     .from(purchaseInvoices)
     .where(and(
       eq(purchaseInvoices.companyId, companyId), 
-      or(eq(purchaseInvoices.status, "confirmed"), eq(purchaseInvoices.status, "partial"))
+      or(eq(purchaseInvoices.status, "issued"), eq(purchaseInvoices.status, "partial"))
     ));
 
   // 3. Cash on Hand - Mock for MVP

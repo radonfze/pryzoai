@@ -10,7 +10,7 @@ export interface SalesDashboardStats {
 }
 
 export async function getSalesStats(companyId: string): Promise<SalesDashboardStats> {
-  // 1. Total Revenue - use valid status like "confirmed" or "completed" (not "posted")
+  // 1. Total Revenue - use valid status like "issued" or "completed" (not "posted")
   const revenueResult = await db
     .select({ 
       total: sql<number>`sum(${salesInvoices.totalAmount})` 
@@ -19,7 +19,7 @@ export async function getSalesStats(companyId: string): Promise<SalesDashboardSt
     .where(
       and(
         eq(salesInvoices.companyId, companyId),
-        or(eq(salesInvoices.status, "confirmed"), eq(salesInvoices.status, "completed"))
+        or(eq(salesInvoices.status, "issued"), eq(salesInvoices.status, "completed"))
       )
     );
 
@@ -32,7 +32,7 @@ export async function getSalesStats(companyId: string): Promise<SalesDashboardSt
     .where(
       and(
         eq(salesInvoices.companyId, companyId),
-        or(eq(salesInvoices.status, "confirmed"), eq(salesInvoices.status, "partial"))
+        or(eq(salesInvoices.status, "issued"), eq(salesInvoices.status, "partial"))
       )
     );
 

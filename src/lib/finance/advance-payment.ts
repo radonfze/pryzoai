@@ -16,8 +16,8 @@ export async function postAdvanceReceipt(paymentId: string, companyId: string, u
 
   if (!payment) throw new Error("Payment not found");
   // customerPayments uses salesStatusEnum: draft, sent, confirmed, partial, completed, cancelled
-  // Use "confirmed" as posted equivalent
-  if (payment.status !== "confirmed") throw new Error("Payment must be confirmed first");
+  // Use "issued" as posted equivalent
+  if (payment.status !== "issued") throw new Error("Payment must be confirmed first");
 
   // 2. Identify COA Accounts (account codes, not IDs)
   const BANK_OR_CASH_ACCOUNT = "110100"; // Cash/Bank Asset

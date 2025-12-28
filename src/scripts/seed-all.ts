@@ -313,7 +313,7 @@ async function main() {
       orderDate: new Date().toISOString().split('T')[0],
       deliveryDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0],
       customerId: CUSTOMER_1_ID,
-      status: "confirmed",
+      status: "issued",
       subtotal: "5000.00",
       taxAmount: "250.00",
       totalAmount: "5250.00",

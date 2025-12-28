@@ -81,7 +81,7 @@ export const columns: ColumnDef<SalesOrder>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string
       const variant = 
-          status === "confirmed" || status === "completed" ? "default" :
+          status === "issued" || status === "completed" ? "default" :
           status === "cancelled" ? "destructive" :
           status === "partial" ? "secondary" : "secondary"
           

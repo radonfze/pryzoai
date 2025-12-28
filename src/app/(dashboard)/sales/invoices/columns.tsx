@@ -85,7 +85,7 @@ export const columns: ColumnDef<Invoice>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string
       return (
-        <Badge variant={status === "confirmed" || status === "completed" ? "default" : status === "draft" ? "secondary" : "outline"}>
+        <Badge variant={status === "issued" || status === "completed" ? "default" : status === "draft" ? "secondary" : "outline"}>
           {status}
         </Badge>
       )

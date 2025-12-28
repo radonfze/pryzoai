@@ -69,7 +69,7 @@ export default async function SalesOrderDetailPage({ params }: { params: { id: s
                <div>
                    <label className="text-sm font-medium text-muted-foreground">Status</label>
                    <div className="mt-1">
-                       <Badge variant={order.status === 'confirmed' ? 'default' : 'secondary'}>
+                       <Badge variant={order.status === 'issued' ? 'default' : 'secondary'}>
                            {order.status || 'Draft'}
                        </Badge>
                    </div>

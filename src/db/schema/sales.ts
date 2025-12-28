@@ -20,7 +20,7 @@ import { taxes, paymentTerms, currencies } from "./finance-masters";
 export const salesStatusEnum = pgEnum("sales_status", [
   "draft",
   "sent",
-  "confirmed",
+  "issued",
   "partial",
   "completed",
   "cancelled",

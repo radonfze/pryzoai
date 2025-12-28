@@ -69,7 +69,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
                <div>
                    <label className="text-sm font-medium text-muted-foreground">Status</label>
                    <div className="mt-1">
-                       <Badge variant={quotation.status === 'confirmed' ? 'default' : 'outline'}>
+                       <Badge variant={quotation.status === 'issued' ? 'default' : 'outline'}>
                            {quotation.status || 'Draft'}
                        </Badge>
                    </div>

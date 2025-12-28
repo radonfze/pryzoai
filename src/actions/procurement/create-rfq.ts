@@ -19,7 +19,7 @@ export async function createRfq(data: any) {
         
         // In V120 Logic, RFQ is often the precursor to PO.
         // We'll insert into Purchase Order table with status 'rfq' (if enum supports) or just 'draft'.
-        // Checking schema... `purchaseStatusEnum` in `purchase.ts` usually has "draft", "sent", "confirmed".
+        // Checking schema... `purchaseStatusEnum` in `purchase.ts` usually has "draft", "sent", "issued".
         // Use "draft" and add a note "RFQ Mode".
         
         // This acts as the logic placeholder for the V120 GAP.

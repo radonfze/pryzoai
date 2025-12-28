@@ -38,7 +38,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
             </Link>
             <h2 className="text-3xl font-bold tracking-tight">{invoice.invoiceNumber}</h2>
             {/* Use valid status values - confirmed/completed are equivalent to "posted" */}
-            <Badge variant={invoice.status === "confirmed" || invoice.status === "completed" ? "default" : "outline"}>
+            <Badge variant={invoice.status === "issued" || invoice.status === "completed" ? "default" : "outline"}>
                 {invoice.status}
             </Badge>
         </div>

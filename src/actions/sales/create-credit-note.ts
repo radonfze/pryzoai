@@ -89,7 +89,7 @@ export async function createCreditNoteAction(input: CreditNoteInput): Promise<Ac
                 taxAmount: taxTotal.toFixed(2),
                 totalAmount: totalAmount.toFixed(2),
                 balanceAmount: totalAmount.toFixed(2), // Initially unused
-                status: "confirmed", // auto-approve for now
+                status: "issued", // auto-approve for now
                 notes: input.notes,
                 isPosted: false
             }).returning();
