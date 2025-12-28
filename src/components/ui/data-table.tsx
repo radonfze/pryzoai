@@ -140,6 +140,42 @@ export function DataTable<TData, TValue>({
             </div>
         )}
 
+        {/* Export All Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Download className="mr-2 h-4 w-4" /> Export All
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Export All Data</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => exportToExcel(data as any[], exportName)}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel (.xlsx)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportToCSV(data as any[], exportName)}>
+              <FileText className="mr-2 h-4 w-4" /> CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportToPDF(data as any[], exportName, exportName)}>
+              <Printer className="mr-2 h-4 w-4" /> PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Clear Filters */}
+        {(columnFilters.length > 0 || Object.keys(rowSelection).length > 0) && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => {
+              setColumnFilters([]);
+              setRowSelection({});
+            }}
+          >
+            Clear Filters
+          </Button>
+        )}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
