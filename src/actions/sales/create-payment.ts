@@ -8,7 +8,10 @@ import {
   companies,
   customers,
   currencies,
-  numberSeries
+  numberSeries,
+  journalEntries,
+  journalLines,
+  chartOfAccounts
 } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -256,6 +259,73 @@ export async function createPaymentAction(
               .where(eq(salesInvoices.id, allocation.invoiceId));
           }
         }
+      }
+
+      // Automatic GL Posting (Payment Receipt)
+      // DR: Bank/Cash (Asset)
+      // CR: Accounts Receivable (Asset) - Reduces AR
+
+      const coa = await tx.query.chartOfAccounts.findMany({
+         where: and(eq(chartOfAccounts.companyId, DEMO_COMPANY_ID))
+      });
+      const getAccountId = (code: string) => coa.find(a => a.code === code)?.id;
+
+      const arAccountId = getAccountId("1130"); // Accounts Receivable
+      // Determine Bank or Cash account based on method
+      let bankAccountId = getAccountId("1120"); // Default Bank
+      if (input.paymentMethod === "cash") {
+          bankAccountId = getAccountId("1110"); // Cash on Hand
+      }
+
+      if (arAccountId && bankAccountId) {
+          const journalSeries = await tx.query.numberSeries.findFirst({
+              where: and(eq(numberSeries.companyId, DEMO_COMPANY_ID), eq(numberSeries.entityType, "journal"))
+          });
+
+          let journalNum = `JV-${Date.now()}`;
+          if (journalSeries) {
+              const nextJv = (journalSeries.currentValue || 0) + 1;
+              journalNum = `${journalSeries.prefix}-${journalSeries.yearFormat === 'YYYY' ? new Date().getFullYear() : ''}-${nextJv.toString().padStart(5, '0')}`;
+              await tx.update(numberSeries).set({ currentValue: nextJv }).where(eq(numberSeries.id, journalSeries.id));
+          }
+
+          const [journal] = await tx.insert(journalEntries).values({
+              companyId: DEMO_COMPANY_ID,
+              journalNumber: journalNum,
+              journalDate: new Date(input.paymentDate),
+              sourceDocType: "PAYMENT",
+              sourceDocId: payment.id,
+              sourceDocNumber: paymentNumber,
+              description: `Payment ${paymentNumber} from Customer`,
+              totalDebit: input.amount.toString(),
+              totalCredit: input.amount.toString(),
+              status: "posted",
+          }).returning();
+
+          // 1. Debit Bank/Cash (Asset Increases)
+          await tx.insert(journalLines).values({
+              companyId: DEMO_COMPANY_ID,
+              journalId: journal.id,
+              lineNumber: 1,
+              accountId: bankAccountId,
+              description: `Receipt into ${input.paymentMethod}`,
+              debit: input.amount.toString(),
+              credit: "0",
+          });
+
+          // 2. Credit AR (Asset Decreases)
+          await tx.insert(journalLines).values({
+              companyId: DEMO_COMPANY_ID,
+              journalId: journal.id,
+              lineNumber: 2,
+              accountId: arAccountId,
+              description: `Payment for Invoices`,
+              debit: "0",
+              credit: input.amount.toString(),
+          });
+          
+          // Update payment to posted
+          await tx.update(customerPayments).set({ isPosted: true }).where(eq(customerPayments.id, payment.id));
       }
 
       return { payment };
