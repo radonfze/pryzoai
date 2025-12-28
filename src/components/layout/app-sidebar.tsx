@@ -165,7 +165,7 @@ const menuItems = [
     ],
   },
   {
-    title: "Manufacturing",
+    title: "Manufacture", // Shortened for fit
     icon: Factory,
     href: "/manufacturing",
     color: "text-slate-500",
@@ -175,32 +175,36 @@ const menuItems = [
       { title: "Production Planning", href: "/manufacturing/planning", icon: Calendar },
     ],
   },
-];
-
-const settingsItems = [
-  { title: "Dashboard", href: "/settings", icon: LayoutDashboard },
-  { title: "Company", href: "/settings/company", icon: Building2 },
-  { title: "Theme", href: "/settings/theme", icon: Layers },
-  { title: "Customers", href: "/settings/customers", icon: Users },
-  { title: "Suppliers", href: "/settings/suppliers", icon: UserPlus },
-  { title: "Items", href: "/settings/items", icon: Package },
-  { title: "Branches", href: "/settings/branches", icon: Building },
-  { title: "Warehouses", href: "/settings/warehouses", icon: Warehouse },
-  { title: "Currencies", href: "/settings/currencies", icon: Coins },
-  { title: "Taxes", href: "/settings/taxes", icon: Banknote },
-  { title: "Payment Terms", href: "/settings/payment-terms", icon: Clock },
-  { title: "Approvals", href: "/settings/approvals", icon: ShieldCheck },
-  { title: "GL Accounts (COA)", href: "/finance/coa", icon: Landmark },
-  { title: "Default GL Mapping", href: "/settings/gl-mapping", icon: Calculator }, // Note: Calculator needs import or change
-  { title: "Audit Logs", href: "/settings/audit-logs", icon: ClipboardList },
-  { title: "Company Profile", href: "/settings/company", icon: Building },
-  { title: "Number Series", href: "/settings/number-series", icon: ListTodo },
-  { title: "Users", href: "/settings/users", icon: UserCog },
-  { title: "AI Policies", href: "/settings/ai-policies", icon: Shield },
-  { title: "Roles", href: "/settings/roles", icon: Shield },
-  { title: "Permission Matrix", href: "/settings/roles/matrix", icon: Lock },
-  { title: "Integrations & API", href: "/settings/integrations", icon: Workflow },
-  { title: "Backup & Restore", href: "/settings/backup", icon: Layers },
+  {
+    title: "Settings",
+    icon: Settings,
+    href: "/settings",
+    color: "text-gray-500",
+    items: [
+      { title: "General", href: "/settings", icon: LayoutDashboard },
+      { title: "Company", href: "/settings/company", icon: Building2 },
+      { title: "Theme", href: "/settings/theme", icon: Layers },
+      { title: "Customers", href: "/settings/customers", icon: Users },
+      { title: "Suppliers", href: "/settings/suppliers", icon: UserPlus },
+      { title: "Items", href: "/settings/items", icon: Package },
+      { title: "Branches", href: "/settings/branches", icon: Building },
+      { title: "Warehouses", href: "/settings/warehouses", icon: Warehouse },
+      { title: "Currencies", href: "/settings/currencies", icon: Coins },
+      { title: "Taxes", href: "/settings/taxes", icon: Banknote },
+      { title: "Payment Terms", href: "/settings/payment-terms", icon: Clock },
+      { title: "Approvals", href: "/settings/approvals", icon: ShieldCheck },
+      { title: "GL Accounts", href: "/finance/coa", icon: Landmark },
+      { title: "Mapping", href: "/settings/gl-mapping", icon: Calculator },
+      { title: "Audit Logs", href: "/settings/audit-logs", icon: ClipboardList },
+      { title: "Number Series", href: "/settings/number-series", icon: ListTodo },
+      { title: "Users", href: "/settings/users", icon: UserCog },
+      { title: "AI Policies", href: "/settings/ai-policies", icon: Shield },
+      { title: "Roles", href: "/settings/roles", icon: Shield },
+      { title: "Permissions", href: "/settings/roles/matrix", icon: Lock },
+      { title: "Integrations", href: "/settings/integrations", icon: Workflow },
+      { title: "Backup", href: "/settings/backup", icon: Layers },
+    ],
+  },
 ];
 
 export function AppSidebar() {
@@ -263,33 +267,10 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
-          <Collapsible defaultOpen={pathname.startsWith("/settings")}>
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton>
-                  <Settings className="h-4 w-4" />
-                  <span>Settings</span>
-                  <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]:rotate-90" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  {settingsItems.map((item) => (
-                    <SidebarMenuSubItem key={item.title}>
-                      <SidebarMenuSubButton asChild isActive={pathname.startsWith(item.href)}>
-                        <Link href={item.href}>
-                          <item.icon className="h-3 w-3 mr-2" />
-                          {item.title}
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-          </Collapsible>
-        </SidebarMenu>
+         {/* Footer content can be used for user profile or version later */}
+         <div className="px-4 py-2 text-xs text-muted-foreground text-center">
+             v5.40 (Phase 23)
+         </div>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
