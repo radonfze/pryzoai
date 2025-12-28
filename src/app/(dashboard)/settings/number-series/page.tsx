@@ -79,16 +79,33 @@ type SeriesItem = {
 
 export default function NumberSeriesPage() {
   const [saving, setSaving] = useState(false);
-  const [editingCode, setEditingCode] = useState<string | null>(null);
+  // Initialize state from static definitions
+  const [seriesData, setSeriesData] = useState(seriesDefinitions);
 
   const handleSaveAll = async () => {
     setSaving(true);
     try {
       // TODO: Save all series to database
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate save
       alert("Number series settings saved!");
     } finally {
       setSaving(false);
     }
+  };
+
+  const updateSeriesItem = (categoryKey: keyof typeof seriesDefinitions, itemCode: string, field: keyof SeriesItem, value: any) => {
+    setSeriesData(prev => {
+      const newData = { ...prev };
+      const category = newData[categoryKey];
+      const items = category.items.map(item => {
+        if (item.code === itemCode) {
+          return { ...item, [field]: value };
+        }
+        return item;
+      });
+      newData[categoryKey] = { ...category, items };
+      return newData;
+    });
   };
 
   const previewNumber = (item: SeriesItem) => {
@@ -98,7 +115,7 @@ export default function NumberSeriesPage() {
     } else if (item.yearFormat === "yy") {
       result += item.separator + String(new Date().getFullYear()).slice(-2);
     }
-    result += item.separator + "0".repeat(item.digits - 1) + "1";
+    result += item.separator + "0".repeat(Number(item.digits) - 1) + "1";
     return result;
   };
 
@@ -115,7 +132,7 @@ export default function NumberSeriesPage() {
         </Button>
       </div>
 
-      {Object.entries(seriesDefinitions).map(([key, category]) => (
+      {(Object.entries(seriesData) as [keyof typeof seriesDefinitions, typeof seriesDefinitions['masters']][]).map(([key, category]) => (
         <Card key={key}>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -144,12 +161,16 @@ export default function NumberSeriesPage() {
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell>
                       <Input 
-                        defaultValue={item.prefix} 
+                        value={item.prefix}
+                        onChange={(e) => updateSeriesItem(key, item.code, 'prefix', e.target.value)}
                         className="h-8 w-20"
                       />
                     </TableCell>
                     <TableCell>
-                      <Select defaultValue={item.separator}>
+                      <Select 
+                        value={item.separator} 
+                        onValueChange={(val) => updateSeriesItem(key, item.code, 'separator', val)}
+                      >
                         <SelectTrigger className="h-8 w-16">
                           <SelectValue />
                         </SelectTrigger>
@@ -161,7 +182,10 @@ export default function NumberSeriesPage() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Select defaultValue={String(item.digits)}>
+                      <Select 
+                        value={String(item.digits)}
+                        onValueChange={(val) => updateSeriesItem(key, item.code, 'digits', Number(val))}
+                      >
                         <SelectTrigger className="h-8 w-16">
                           <SelectValue />
                         </SelectTrigger>
@@ -173,7 +197,10 @@ export default function NumberSeriesPage() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Select defaultValue={item.yearFormat}>
+                      <Select 
+                        value={item.yearFormat}
+                        onValueChange={(val) => updateSeriesItem(key, item.code, 'yearFormat', val)}
+                      >
                         <SelectTrigger className="h-8 w-24">
                           <SelectValue />
                         </SelectTrigger>
@@ -192,12 +219,16 @@ export default function NumberSeriesPage() {
                     <TableCell>
                       <Input 
                         type="number"
-                        defaultValue={item.currentNumber || 0} 
+                        value={item.currentNumber || 0}
+                        onChange={(e) => updateSeriesItem(key, item.code, 'currentNumber', Number(e.target.value))}
                         className="h-8 w-20"
                       />
                     </TableCell>
                     <TableCell>
-                      <Switch checked={item.isActive !== false} />
+                      <Switch 
+                        checked={item.isActive !== false}
+                        onCheckedChange={(val) => updateSeriesItem(key, item.code, 'isActive', val)}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
