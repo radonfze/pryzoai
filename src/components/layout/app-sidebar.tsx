@@ -129,6 +129,7 @@ const menuItems = [
 ];
 
 const settingsItems = [
+  { title: "Dashboard", href: "/settings", icon: LayoutDashboard },
   { title: "Company", href: "/settings/company", icon: Building2 },
   { title: "Theme", href: "/settings/theme", icon: Layers },
   { title: "Customers", href: "/settings/customers", icon: Users },
