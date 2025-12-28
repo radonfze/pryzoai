@@ -3,11 +3,10 @@ import { goodsReceipts } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Package, Eye, PackageCheck } from "lucide-react";
+import { Plus, PackageCheck } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
-import { format } from "date-fns";
+import { DataTable } from "@/components/ui/data-table";
+import { columns } from "./columns";
 
 export const dynamic = 'force-dynamic';
 
@@ -44,50 +43,12 @@ export default async function GRNPage() {
         </Link>
       </div>
 
-      {grnList.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">No goods receipts yet.</p>
-          <p className="text-sm mt-2">Record goods received from purchase orders.</p>
-        </div>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>GRN #</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead>PO Reference</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[80px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {grnList.map((grn) => (
-                <TableRow key={grn.id}>
-                  <TableCell className="font-medium">{grn.grnNumber || grn.id.slice(0, 8)}</TableCell>
-                  <TableCell>{grn.receiptDate ? format(new Date(grn.receiptDate), "dd/MM/yyyy") : "-"}</TableCell>
-                  <TableCell>{grn.supplier?.name || "-"}</TableCell>
-                  <TableCell>{grn.purchaseOrder?.orderNumber || "-"}</TableCell>
-                  <TableCell>
-                    <Badge variant={grn.status === "posted" ? "default" : "outline"}>
-                      {grn.status || "Draft"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Link href={`/procurement/grn/${grn.id}`}>
-                      <Button variant="ghost" size="icon">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <DataTable 
+        columns={columns} 
+        data={grnList} 
+        searchKey="grnNumber"
+        placeholder="Search GRNs..." 
+      />
     </div>
   );
 }
