@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus } from "lucide-react";
+import { Plus, UserPlus } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +20,13 @@ export default async function SuppliersPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Suppliers</h2>
+      <GradientHeader
+        module="procurement"
+        title="Suppliers"
+        description="Manage your vendor relationships and contacts"
+        icon={UserPlus}
+      />
+      <div className="flex items-center justify-end">
         <Link href="/settings/suppliers/new">
           <Button><Plus className="mr-2 h-4 w-4" /> Add Supplier</Button>
         </Link>
