@@ -48,6 +48,7 @@ export default async function ItemsPage() {
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="w-[80px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -72,6 +73,13 @@ export default async function ItemsPage() {
                             <Badge variant={item.isActive ? "default" : "secondary"}>
                             {item.isActive ? "Active" : "Inactive"}
                             </Badge>
+                        </TableCell>
+                        <TableCell>
+                            <Link href={`/inventory/items/${item.id}`}>
+                                <Button variant="ghost" size="icon">
+                                    <Package className="h-4 w-4" />
+                                </Button>
+                            </Link>
                         </TableCell>
                     </TableRow>
                 ))
