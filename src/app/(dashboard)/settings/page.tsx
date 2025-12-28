@@ -1,49 +1,53 @@
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Building, Package, Landmark, Receipt, Warehouse, Building2, Hash, CreditCard, Shield, Database, Download, Settings2 } from "lucide-react";
+import { Users, Building, Package, Landmark, Receipt, Warehouse, Building2, Hash, CreditCard, Shield, Database, Download, Settings2, Palette, FileText } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
 const companySettings = [
   {
-    title: "Company Setup",
-    description: "Configure company details, TRN, and preferences",
+    title: "Company Profile",
+    description: "Manage company details and localization",
     href: "/settings/company",
     icon: Building2,
-    priority: true,
+    color: "text-blue-500",
   },
   {
-    title: "Users",
-    description: "Manage system users and access",
-    href: "/settings/users",
-    icon: Users,
-  },
-  {
-    title: "Roles & Permissions",
-    description: "Configure user roles and permissions",
-    href: "/settings/roles",
-    icon: Shield,
+    title: "Theme Settings",
+    description: "Customize application appearance",
+    href: "/settings/theme",
+    icon: Palette, // Changed from Settings2 to Palette for variety if available, else standard
+    color: "text-purple-500",
   },
   {
     title: "Number Series",
-    description: "Auto-numbering for documents and codes",
+    description: "Configure document numbering formats",
     href: "/settings/number-series",
-    icon: Hash,
+    icon: FileText,
+    color: "text-green-500",
   },
   {
-    title: "Payment Terms",
-    description: "Define payment terms and conditions",
-    href: "/settings/payment-terms",
-    icon: CreditCard,
+    title: "Users",
+    description: "Manage system users",
+    href: "/settings/users",
+    icon: Users,
+    color: "text-orange-500",
+  },
+  {
+    title: "Roles & Permissions",
+    description: "Configure access control",
+    href: "/settings/roles",
+    icon: Shield,
+    color: "text-red-500",
   },
   {
     title: "Database Backup",
-    description: "Backup and restore database",
+    description: "Backup and restore system data",
     href: "/settings/backup",
     icon: Database,
-    priority: true,
+    color: "text-slate-500",
   },
 ];
 

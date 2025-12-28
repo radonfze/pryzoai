@@ -66,6 +66,9 @@ const menuItems = [
       { title: "Sales Orders", href: "/sales/orders", icon: ClipboardList },
       { title: "Quotations", href: "/sales/quotations", icon: FileText },
       { title: "Payments", href: "/sales/payments", icon: CreditCard },
+      { title: "Credit Notes", href: "/sales/credit-notes", icon: Receipt },
+      { title: "Delivery Notes", href: "/sales/delivery-notes", icon: Package },
+      { title: "Returns", href: "/sales/returns", icon: ClipboardList },
     ],
   },
   {
@@ -76,6 +79,7 @@ const menuItems = [
       { title: "Items", href: "/inventory/items", icon: Boxes },
       { title: "Stock Ledger", href: "/inventory/ledger", icon: BookOpen },
       { title: "Adjustments", href: "/inventory/adjustments/new", icon: ClipboardList },
+      { title: "Stock Count", href: "/inventory/count", icon: ClipboardList },
     ],
   },
   {
@@ -86,6 +90,9 @@ const menuItems = [
       { title: "Purchase Orders", href: "/procurement/orders", icon: ClipboardList },
       { title: "Goods Receipt", href: "/procurement/grn", icon: Package },
       { title: "Bills", href: "/procurement/bills", icon: Receipt },
+      { title: "Debit Notes", href: "/procurement/debit-notes", icon: Receipt },
+      { title: "Returns", href: "/procurement/returns", icon: ClipboardList },
+      { title: "Supplier Payments", href: "/procurement/payments", icon: CreditCard },
     ],
   },
   {
@@ -96,6 +103,7 @@ const menuItems = [
       { title: "Chart of Accounts", href: "/finance/coa", icon: BookOpen },
       { title: "Journal Entries", href: "/finance/journals", icon: FileText },
       { title: "Bank Accounts", href: "/finance/bank-accounts", icon: Landmark },
+      { title: "Reports", href: "/finance/reports", icon: ClipboardList },
     ],
   },
   {
