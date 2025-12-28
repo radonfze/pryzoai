@@ -1,0 +1,26 @@
+R@DON@5012010
+adminR@DON@89
+
+
+https://bddveetxtckdyefnlsdo.supabase.co
+
+Publishable key
+sb_publishable_ZU39Ca8_6lG5Ez4LCTqnUQ_Lq19jMZ_
+
+
+Secret keys
+sb_secret_rMFTvimzhRviYwWA0e6bPA_r6HEME-0
+
+anon public
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkZHZlZXR4dGNrZHllZm5sc2RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3Njg0MTksImV4cCI6MjA4MjM0NDQxOX0.HS8rA9qSekjNH7DPEsWuVfnPn10A_kik1cCi_9Zhess
+
+
+update it to both existing task and plan , 
+if anything existing, skip accept it if anything advanced add it to them 
+
+
+postgresql://postgres.bddveetxtckdyefnlsdo:[YOUR-PASSWORD]@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres
+
+
+implementation plan v1 to v90 anything pending , missing ui?? , missing gaps?, missing dependencies??, any suggestions? missing Logics??, missing links??, missing pages,?? missing forms? add & edit, update? List? , select all ? delete all?? action buttons??export??sidebar auto linking, coa auto linking ??,missing tables?? missing schemas.???all 404 erro, all 500 error.
+ build , finish & push , commit & deploy as you go 
