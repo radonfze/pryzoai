@@ -1,0 +1,49 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { PackageCheck } from "lucide-react";
+import GradientHeader from "@/components/ui/gradient-header";
+
+export default function EditGRNPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  
+  return (
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <GradientHeader
+        module="procurement"
+        title="Edit GRN"
+        description={`Modify goods receipt note`}
+        icon={PackageCheck}
+      />
+
+      <div className="grid gap-4 lg:grid-cols-3">
+         <div className="lg:col-span-2">
+            <Card>
+                <CardHeader><CardTitle>Edit Details</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                    <p className="text-muted-foreground">Editing functionality is currently disabled in this demo. GRNs affect inventory and are locked after posting.</p>
+                    <div className="grid gap-4 md:grid-cols-2">
+                         <div>
+                            <label className="text-sm font-medium">GRN Number</label>
+                            <Input disabled value="GRN-LOADING..." />
+                         </div>
+                    </div>
+                </CardContent>
+            </Card>
+         </div>
+         <Card>
+             <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
+             <CardContent className="space-y-4">
+                 <Button variant="outline" className="w-full" onClick={() => router.back()}>Cancel</Button>
+                 <Button className="w-full" disabled>Save Changes</Button>
+             </CardContent>
+         </Card>
+      </div>
+    </div>
+  );
+}
