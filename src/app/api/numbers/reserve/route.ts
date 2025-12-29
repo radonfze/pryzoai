@@ -25,13 +25,41 @@ export async function POST(request: Request) {
     }
 
     // Find active series
-    const series = await db.query.numberSeries.findFirst({
+    let series = await db.query.numberSeries.findFirst({
       where: and(
         eq(numberSeries.companyId, companyId),
         eq(numberSeries.entityType, entityType),
         eq(numberSeries.isActive, true)
       ),
     });
+
+    // Auto-create default series for invoices if missing
+    if (!series && entityType === 'invoice') {
+      console.log('Auto-creating default invoice number series...');
+      try {
+        const [created] = await db.insert(numberSeries).values({
+          companyId,
+          entityType: 'invoice',
+          documentType: 'INV',
+          prefix: 'INV',
+          separator: '-',
+          yearFormat: 'YYYY',
+          currentValue: 0,
+          resetRule: 'YEARLY',
+          scope: 'COMPANY',
+          isLocked: false,
+          isActive: true,
+        }).returning();
+        
+        series = created; // Use the newly created series
+      } catch (createError) {
+        console.error('Failed to auto-create number series:', createError);
+        return NextResponse.json(
+          { error: 'No active number series found. Please configure in Settings.' },
+          { status: 404 }
+        );
+      }
+    }
 
     if (!series) {
       return NextResponse.json(
