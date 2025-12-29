@@ -1,0 +1,1 @@
+ALTER TYPE "public"."journal_status" ADD VALUE 'pending_approval' BEFORE 'posted';

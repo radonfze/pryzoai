@@ -10,6 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { companies } from "./companies";
+import { chartOfAccounts } from "./coa";
 
 // Tax type enum (UAE specific)
 export const taxTypeEnum = pgEnum("tax_type", [
@@ -113,7 +114,7 @@ export const taxesRelations = relations(taxes, ({ one }) => ({
     references: [companies.id],
   }),
 }));
-
+// Reverted defaultGlAccounts addition as it exists in gl-mapping.ts
 export const paymentTermsRelations = relations(paymentTerms, ({ one }) => ({
   company: one(companies, {
     fields: [paymentTerms.companyId],

@@ -1,9 +1,10 @@
 "use server";
 
 import { db } from "@/db";
-import { purchaseBills, purchaseBillLines, purchaseOrders, numberSeries, journalEntries, journalLines, chartOfAccounts } from "@/db/schema";
+import { purchaseBills, purchaseBillLines, purchaseOrders, numberSeries, defaultGlAccounts } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { postPurchaseBillToGL } from "@/lib/services/gl-posting-service";
 
 export type ActionResponse = { success: boolean; message: string; data?: any };
 type BillLine = { poLineId?: string; itemId: string; quantity: number; unitPrice: number; taxAmount?: number };
@@ -69,67 +70,37 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
         }))
       );
 
-      // 3. GL Posting: DR Expense/Inventory, DR VAT Input, CR Accounts Payable
-      const coa = await tx.query.chartOfAccounts.findMany({
-        where: eq(chartOfAccounts.companyId, DEMO_COMPANY_ID)
+      // 3. GL Posting: Use Standard Service
+      // Fetch GL Mapping
+      const defaults = await tx.query.defaultGlAccounts.findMany({
+          where: eq(defaultGlAccounts.companyId, DEMO_COMPANY_ID)
       });
-      const getAccountId = (code: string) => coa.find(a => a.code === code)?.id;
+      const getDef = (key: string) => defaults.find(d => d.mappingKey === key)?.accountId;
 
-      const apAccountId = getAccountId("2110"); // Accounts Payable
-      const expenseAccountId = getAccountId("5100"); // COGS
-      const taxAccountId = getAccountId("2120"); // VAT Payable
+      const glMapping = {
+        salesRevenue: getDef("DEFAULT_SALES") || "",
+        salesVat: getDef("VAT_PAYABLE") || "",
+        accountsReceivable: getDef("DEFAULT_RECEIVABLE") || "",
+        inventory: getDef("DEFAULT_INVENTORY") || "",
+        costOfGoodsSold: getDef("DEFAULT_COGS") || "",
+        accountsPayable: getDef("DEFAULT_PAYABLE") || "",
+        purchaseVat: getDef("VAT_RECEIVABLE") || "",
+        bank: getDef("DEFAULT_BANK") || "",
+        cash: getDef("DEFAULT_CASH") || "",
+        payrollExpense: getDef("PAYROLL_EXPENSE") || "",
+        payrollPayable: getDef("PAYROLL_PAYABLE") || ""
+      };
 
-      if (apAccountId && expenseAccountId) {
-        const journalNum = `JV-BILL-${Date.now()}`;
-
-        const [journal] = await tx.insert(journalEntries).values({
-          companyId: DEMO_COMPANY_ID,
-          journalNumber: journalNum,
-          journalDate: input.billDate,
-          sourceDocType: "BILL",
-          sourceDocId: bill.id,
-          sourceDocNumber: billNumber,
-          description: `Bill ${billNumber} from Supplier`,
-          totalDebit: total.toFixed(2),
-          totalCredit: total.toFixed(2),
-          status: "posted",
-        }).returning();
-
-        // Credit AP (Total)
-        await tx.insert(journalLines).values({
-          companyId: DEMO_COMPANY_ID,
-          journalId: journal.id,
-          lineNumber: 1,
-          accountId: apAccountId,
-          description: `Payable - ${billNumber}`,
-          debit: "0",
-          credit: total.toFixed(2),
-        });
-
-        // Debit Expense (Subtotal)
-        await tx.insert(journalLines).values({
-          companyId: DEMO_COMPANY_ID,
-          journalId: journal.id,
-          lineNumber: 2,
-          accountId: expenseAccountId,
-          description: `Purchase Expense - ${billNumber}`,
-          debit: subtotal.toFixed(2),
-          credit: "0",
-        });
-
-        // Debit VAT (Tax)
-        if (taxTotal > 0 && taxAccountId) {
-          await tx.insert(journalLines).values({
-            companyId: DEMO_COMPANY_ID,
-            journalId: journal.id,
-            lineNumber: 3,
-            accountId: taxAccountId,
-            description: `VAT Input - ${billNumber}`,
-            debit: taxTotal.toFixed(2),
-            credit: "0",
-          });
-        }
-      }
+      await postPurchaseBillToGL(
+        bill.id,
+        billNumber,
+        new Date(input.billDate),
+        input.supplierId,
+        Number(subtotal),
+        Number(taxTotal),
+        Number(total),
+        glMapping
+      );
 
       return { bill };
     });

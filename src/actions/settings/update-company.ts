@@ -45,9 +45,40 @@ export async function updateCompanySettings(
   data: CompanyData
 ): Promise<ActionResponse> {
   try {
-    await db
-      .update(companies)
-      .set({
+    console.log("updateCompanySettings called for ID:", companyId);
+    console.log("Data:", data);
+
+    // First check if company exists
+    const existing = await db.query.companies.findFirst({
+      where: eq(companies.id, companyId),
+    });
+    
+    console.log("Existing company found:", !!existing);
+    
+    if (existing) {
+      // Update existing company
+      await db
+        .update(companies)
+        .set({
+          name: data.name,
+          legalName: data.legalName,
+          taxId: data.taxId,
+          email: data.email,
+          phone: data.phone,
+          website: data.website,
+          address: data.address,
+          city: data.city,
+          country: data.country,
+          currency: data.currency,
+          fiscalYearStart: parseInt(data.fiscalYearStart),
+          timezone: data.timezone,
+          updatedAt: new Date(),
+        })
+        .where(eq(companies.id, companyId));
+    } else {
+      // Create new company with specified ID
+      await db.insert(companies).values({
+        id: companyId,
         name: data.name,
         legalName: data.legalName,
         taxId: data.taxId,
@@ -60,15 +91,16 @@ export async function updateCompanySettings(
         currency: data.currency,
         fiscalYearStart: parseInt(data.fiscalYearStart),
         timezone: data.timezone,
-        updatedAt: new Date(),
-      })
-      .where(eq(companies.id, companyId));
+        active: true,
+      });
+    }
 
     revalidatePath("/settings/company");
+    revalidatePath("/dashboard");
 
     return {
       success: true,
-      message: "Company settings updated successfully",
+      message: "Company settings saved successfully",
     };
   } catch (error: any) {
     console.error("Update company error:", error);

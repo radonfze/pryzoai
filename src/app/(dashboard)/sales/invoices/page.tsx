@@ -14,13 +14,21 @@ export const dynamic = 'force-dynamic';
 
 export default async function InvoicesPage() {
   // Fetch all invoices (limit 50 for MVP)
-  const invoices = await db.query.salesInvoices.findMany({
-    with: {
-      customer: true
-    },
-    orderBy: [desc(salesInvoices.createdAt)],
-    limit: 50
-  });
+  // Fetch all invoices (limit 50 for MVP)
+  let invoices = [];
+  try {
+    invoices = await db.query.salesInvoices.findMany({
+      with: {
+        customer: true
+      },
+      orderBy: [desc(salesInvoices.createdAt)],
+      limit: 50
+    });
+  } catch (error) {
+    console.error("CRITICAL ERROR: Failed to fetch invoices:", error);
+    // Suppress crash and show empty state
+    invoices = [];
+  }
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-8 pt-6">

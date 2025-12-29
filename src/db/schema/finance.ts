@@ -18,6 +18,7 @@ import { users } from "./users";
 // Journal entry status
 export const journalStatusEnum = pgEnum("journal_status", [
   "draft",
+  "pending_approval",
   "posted",
   "cancelled",
 ]);

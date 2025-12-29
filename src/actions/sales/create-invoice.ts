@@ -15,7 +15,8 @@ import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateNextNumber } from "@/lib/services/number-generator";
-import { postToGL } from "@/lib/services/coa-posting";
+import { postSalesInvoiceToGL } from "@/lib/services/gl-posting-service";
+import { defaultGlAccounts } from "@/db/schema";
 
 // --- Types ---
 
@@ -156,56 +157,48 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
         );
       }
 
-      // 5. Automatic COA Posting (Service) - Dynamic Lookup
+      // 5. Automatic COA Posting (GL Service)
+      // Fetch GL Mapping
       const defaults = await tx.query.defaultGlAccounts.findMany({
           where: eq(defaultGlAccounts.companyId, companyId)
       });
       const getDef = (key: string) => defaults.find(d => d.mappingKey === key)?.accountId;
 
-      const salesAccount = getDef("DEFAULT_SALES");
-      const vatAccount = getDef("VAT_PAYABLE");  // Output Tax
-      const arAccount = getDef("DEFAULT_RECEIVABLE") || getAccountId("1130"); // Fallback if not set
+      // Map to service interface
+      const glMapping = {
+        salesRevenue: getDef("DEFAULT_SALES") || "",
+        salesVat: getDef("VAT_PAYABLE") || "",
+        accountsReceivable: getDef("DEFAULT_RECEIVABLE") || "",
+        inventory: getDef("DEFAULT_INVENTORY") || "",
+        costOfGoodsSold: getDef("DEFAULT_COGS") || "",
+        accountsPayable: getDef("DEFAULT_PAYABLE") || "",
+        purchaseVat: getDef("VAT_RECEIVABLE") || "",
+        bank: getDef("DEFAULT_BANK") || "",
+        cash: getDef("DEFAULT_CASH") || "",
+        payrollExpense: getDef("PAYROLL_EXPENSE") || "",
+        payrollPayable: getDef("PAYROLL_PAYABLE") || ""
+      };
 
-      // Note: In real engine, we pass these IDs to postToGL which handles journal creation
-      // For now, we assume postToGL uses its own logic OR we update postToGL to accept explicit accounts.
-      // Let's assume postToGL has been updated or we pass overrides. 
-      // Actually, let's keep it simple: postToGL currently is a black box service in this context.
-      // To strictly follow "Auto Linking", postToGL should look these up.
-      // But for this file, let's just make sure we are "using" them if we were to construct the journal here.
-      // Since postToGL is imported, let's peek into it or just pass these as context if supported.
-      
-      // Assuming postToGL reads defaults internally or we pass them? 
-      // Let's pass them as "accountOverrides" if the signature allowed, but since I can't see postToGL def fully here...
-      // I will assume postToGL needs to be updated. 
-      
-      const postingResult = await postToGL({
-        companyId,
-        documentType: "SALES_INVOICE",
-        documentId: newInvoice.id,
-        documentNumber: invoiceNumber,
-        totalAmount: grandTotal,
-        vatAmount: totalTax,
-        postingDate: new Date(data.invoiceDate),
-        description: `Invoice ${invoiceNumber}`,
-        createdBy: "system",
-        overrides: {
-           "accounts_receivable": arAccount || "", // Type safety need check
-           "sales_revenue": salesAccount || "",
-           "tax_payable": vatAccount || ""
-        }
-      });
-
-      if (!postingResult.success) {
-         // Should we block creation? Yes, for strict ERP integrity.
-         // Or just log warning if COA not setup?
-         console.warn("GL Posting Failed:", postingResult.error);
-         // For now, allow but mark not posted
-      } else {
-         // Mark as posted
-         await tx.update(salesInvoices)
-           .set({ isPosted: true })
-           .where(eq(salesInvoices.id, newInvoice.id));
+      // Check for critical missing accounts (optional, relying on service validation)
+      if (!glMapping.salesRevenue || !glMapping.accountsReceivable) {
+        console.warn("GL Posting Warning: Missing default sales/AR accounts.");
       }
+
+      await postSalesInvoiceToGL(
+        newInvoice.id,
+        invoiceNumber,
+        new Date(data.invoiceDate),
+        data.customerId,
+        Number(subTotal),
+        Number(totalTax),
+        Number(grandTotal),
+        glMapping
+      );
+
+      // Always mark as posted if we reached here without error (service throws if fails)
+      await tx.update(salesInvoices)
+        .set({ isPosted: true })
+        .where(eq(salesInvoices.id, newInvoice.id));
 
       return { 
           success: true, 
