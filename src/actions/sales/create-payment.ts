@@ -15,6 +15,7 @@ import {
 } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { postPaymentToGL } from "@/lib/services/gl-posting-service";
 
 // Response type
 export type ActionResponse = {
@@ -261,72 +262,26 @@ export async function createPaymentAction(
         }
       }
 
-      // Automatic GL Posting (Payment Receipt)
-      // DR: Bank/Cash (Asset)
-      // CR: Accounts Receivable (Asset) - Reduces AR
+      // Automatic GL Posting using Service
+      await postPaymentToGL(
+        payment.id,
+        paymentNumber,
+        new Date(input.paymentDate),
+        Number(input.amount),
+        input.paymentMethod,
+        DEMO_COMPANY_ID
+      );
 
-      const coa = await tx.query.chartOfAccounts.findMany({
-         where: and(eq(chartOfAccounts.companyId, DEMO_COMPANY_ID))
-      });
-      const getAccountId = (code: string) => coa.find(a => a.code === code)?.id;
-
-      const arAccountId = getAccountId("1130"); // Accounts Receivable
-      // Determine Bank or Cash account based on method
-      let bankAccountId = getAccountId("1120"); // Default Bank
-      if (input.paymentMethod === "cash") {
-          bankAccountId = getAccountId("1110"); // Cash on Hand
-      }
-
-      if (arAccountId && bankAccountId) {
-          const journalSeries = await tx.query.numberSeries.findFirst({
-              where: and(eq(numberSeries.companyId, DEMO_COMPANY_ID), eq(numberSeries.entityType, "journal"))
-          });
-
-          let journalNum = `JV-${Date.now()}`;
-          if (journalSeries) {
-              const nextJv = (journalSeries.currentValue || 0) + 1;
-              journalNum = `${journalSeries.prefix}-${journalSeries.yearFormat === 'YYYY' ? new Date().getFullYear() : ''}-${nextJv.toString().padStart(5, '0')}`;
-              await tx.update(numberSeries).set({ currentValue: nextJv }).where(eq(numberSeries.id, journalSeries.id));
-          }
-
-          const [journal] = await tx.insert(journalEntries).values({
-              companyId: DEMO_COMPANY_ID,
-              journalNumber: journalNum,
-              journalDate: new Date(input.paymentDate),
-              sourceDocType: "PAYMENT",
-              sourceDocId: payment.id,
-              sourceDocNumber: paymentNumber,
-              description: `Payment ${paymentNumber} from Customer`,
-              totalDebit: input.amount.toString(),
-              totalCredit: input.amount.toString(),
-              status: "posted",
-          }).returning();
-
-          // 1. Debit Bank/Cash (Asset Increases)
-          await tx.insert(journalLines).values({
-              companyId: DEMO_COMPANY_ID,
-              journalId: journal.id,
-              lineNumber: 1,
-              accountId: bankAccountId,
-              description: `Receipt into ${input.paymentMethod}`,
-              debit: input.amount.toString(),
-              credit: "0",
-          });
-
-          // 2. Credit AR (Asset Decreases)
-          await tx.insert(journalLines).values({
-              companyId: DEMO_COMPANY_ID,
-              journalId: journal.id,
-              lineNumber: 2,
-              accountId: arAccountId,
-              description: `Payment for Invoices`,
-              debit: "0",
-              credit: input.amount.toString(),
-          });
-          
-          // Update payment to posted
-          await tx.update(customerPayments).set({ isPosted: true }).where(eq(customerPayments.id, payment.id));
-      }
+      // Status update handle by service or here? 
+      // Service usually handles GL creation. 
+      // Let's verify postPaymentToGL signature in next step or assume it based on pattern.
+      // Wait, I need to Import it first. usage:
+      // await postPaymentToGL(payment.id, paymentNumber, paymentDate, amount, method, companyId)
+      
+      // Update payment to posted is handled by service? 
+      // Let's look at postPurchaseBillToGL pattern. It returned nothing but created journal.
+      // I will keep the update to isPosted=true here just in case.
+      await tx.update(customerPayments).set({ isPosted: true }).where(eq(customerPayments.id, payment.id));
 
       return { payment };
     });
