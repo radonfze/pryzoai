@@ -14,12 +14,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -282,7 +282,7 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
 
                     return (
                     <div key={field.id} className="grid gap-4 grid-cols-12 items-end border p-3 rounded-md bg-muted/20">
-                      <div className="col-span-12 md:col-span-4">
+                      <div className="col-span-12 md:col-span-3">
                         <FormField
                           control={form.control}
                           name={`lines.${index}.itemId`}
@@ -293,11 +293,38 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
                                 field.onChange(val);
                                 handleItemChange(index, val);
                               }} defaultValue={field.value}>
+                                
                                 <FormControl>
-                                  <SelectTrigger className="w-full truncate">
-                                    <SelectValue placeholder="Select..." />
-                                  </SelectTrigger>
+                                  <div>
+                                    <HoverCard>
+                                      <HoverCardTrigger asChild>
+                                          <SelectTrigger className="w-full truncate text-left">
+                                            <SelectValue placeholder="Select..." />
+                                          </SelectTrigger>
+                                      </HoverCardTrigger>
+                                      <HoverCardContent className="w-80 p-4 border shadow-lg bg-popover text-popover-foreground z-50">
+                                         {field.value ? (() => {
+                                            const selected = items.find(i => i.id === field.value);
+                                            if (!selected) return <p className="text-sm">No item selected</p>;
+                                            return (
+                                              <div className="space-y-2">
+                                                 <h4 className="text-sm font-semibold">{selected.name}</h4>
+                                                 <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                                                    <div>Code: <span className="text-foreground">{selected.code}</span></div>
+                                                    <div>Cost: <span className="text-foreground">{Number(selected.costPrice || 0).toFixed(2)}</span></div>
+                                                    <div>Price: <span className="text-foreground">{Number(selected.sellingPrice || 0).toFixed(2)}</span></div>
+                                                    <div>Tax: <span className="text-foreground">{Number(selected.taxPercent || 0)}%</span></div>
+                                                 </div>
+                                              </div>
+                                            );
+                                         })() : (
+                                            <p className="text-sm text-muted-foreground">Select an item to see details</p>
+                                         )}
+                                      </HoverCardContent>
+                                    </HoverCard>
+                                  </div>
                                 </FormControl>
+                                
                                 <SelectContent>
                                   {items.map((item) => (
                                     <SelectItem key={item.id} value={item.id}>
@@ -311,7 +338,7 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
                           )}
                         />
                       </div>
-                      <div className="col-span-6 md:col-span-1">
+                      <div className="col-span-6 md:col-span-2">
                         <FormField
                           control={form.control}
                           name={`lines.${index}.quantity`}

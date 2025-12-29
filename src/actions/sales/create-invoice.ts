@@ -172,25 +172,40 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
         console.warn("GL Posting Warning: Missing default sales/AR accounts.");
       }
 
-      await postSalesInvoiceToGL(
-        newInvoice.id,
-        invoiceNumber,
-        new Date(data.invoiceDate),
-        data.customerId,
-        Number(subTotal),
-        Number(totalTax),
-        Number(grandTotal),
-        glMapping
-      );
+      let glStatus = "posted";
+      let glMessage = "";
 
-      // Always mark as posted if we reached here without error (service throws if fails)
-      await tx.update(salesInvoices)
-        .set({ isPosted: true })
-        .where(eq(salesInvoices.id, newInvoice.id));
+      try {
+        await postSalesInvoiceToGL(
+          newInvoice.id,
+          invoiceNumber,
+          new Date(data.invoiceDate),
+          data.customerId,
+          Number(subTotal),
+          Number(totalTax),
+          Number(grandTotal),
+          glMapping
+        );
+
+        // Mark as posted only if success
+        await tx.update(salesInvoices)
+          .set({ isPosted: true })
+          .where(eq(salesInvoices.id, newInvoice.id));
+          
+      } catch (glError: any) {
+         console.warn("GL Posting Failed:", glError);
+         glStatus = "draft";
+         glMessage = ` (GL Posting Failed: ${glError.message || "Unknown error"})`;
+         
+         // Revert posted status just in case (though it defaults to false)
+         await tx.update(salesInvoices)
+          .set({ isPosted: false })
+          .where(eq(salesInvoices.id, newInvoice.id));
+      }
 
       return { 
           success: true, 
-          message: "Invoice created successfully", 
+          message: "Invoice created successfully" + glMessage, 
           invoiceId: newInvoice.id 
       };
 
@@ -212,7 +227,7 @@ export async function getInvoiceMasterData() {
     }),
     db.query.items.findMany({ 
         where: eq(items.isActive, true),
-        columns: { id: true, name: true, code: true, sellingPrice: true, taxPercent: true } 
+        columns: { id: true, name: true, code: true, sellingPrice: true, costPrice: true, taxPercent: true } 
     }),
     db.query.warehouses.findMany({ 
         where: eq(warehouses.isActive, true),
