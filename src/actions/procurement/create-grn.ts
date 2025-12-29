@@ -73,9 +73,13 @@ async function generateGRNNumber(companyId: string, receiptDate: Date): Promise<
   return parts.join(series.separator || "-");
 }
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function createGRNAction(input: GRNInput): Promise<ActionResponse> {
   try {
-    const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, message: "Unauthorized: No active company" };
+    const DEMO_COMPANY_ID = companyId;
 
     // Validation
     if (!input.supplierId) return { success: false, message: "Supplier is required" };

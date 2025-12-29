@@ -63,9 +63,13 @@ async function generateJournalNumber(companyId: string, entryDate: Date): Promis
   return parts.join(series.separator || "-");
 }
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function createJournalEntryAction(input: JournalInput): Promise<ActionResponse> {
   try {
-    const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, message: "Unauthorized: No active company" };
+    const DEMO_COMPANY_ID = companyId;
 
     // Validation
     if (!input.entryDate) return { success: false, message: "Entry date is required" };

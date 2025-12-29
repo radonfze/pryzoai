@@ -152,11 +152,15 @@ async function getSalesOrderMasterData(companyId: string) {
   };
 }
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function createSalesOrderAction(
   input: SalesOrderInput
 ): Promise<ActionResponse> {
   try {
-    const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, message: "Unauthorized" };
+    const DEMO_COMPANY_ID = companyId;
 
     // Permission Check
     const user = await getUser();

@@ -23,9 +23,13 @@ async function generateAdjustmentNumber(companyId: string, adjustmentDate: Date)
   return parts.join(series.separator || "-");
 }
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function createStockAdjustmentAction(input: StockAdjustmentInput): Promise<ActionResponse> {
   try {
-    const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, message: "Unauthorized: No active company" };
+    const DEMO_COMPANY_ID = companyId;
     if (!input.adjustmentDate || !input.lines?.length) return { success: false, message: "Invalid input" };
     
     // Validate and Fetch Costs

@@ -5,9 +5,12 @@ import { journalEntries, approvalRequests, approvalRules } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function submitJournalForApproval(journalId: string, userId: string): Promise<{ success: boolean; message: string }> {
   try {
-    const companyId = "00000000-0000-0000-0000-000000000000"; 
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, message: "Unauthorized" }; 
 
     const journal = await db.query.journalEntries.findFirst({
         where: eq(journalEntries.id, journalId)

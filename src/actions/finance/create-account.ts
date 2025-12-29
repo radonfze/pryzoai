@@ -22,9 +22,13 @@ export type AccountInput = {
   // For now, we just insert as regular account.
 };
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function createAccountAction(input: AccountInput): Promise<ActionResponse> {
   try {
-    const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, message: "Unauthorized" };
+    const DEMO_COMPANY_ID = companyId;
 
     // 1. Validation
     if (!input.code || !input.name || !input.type || !input.group) {

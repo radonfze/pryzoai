@@ -41,9 +41,13 @@ export type CreditNoteInput = {
     notes?: string;
 };
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function createCreditNoteAction(input: CreditNoteInput): Promise<ActionResponse> {
     try {
-        const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+        const companyId = await getCompanyId();
+        if (!companyId) return { success: false, message: "Unauthorized: No active company" };
+        const DEMO_COMPANY_ID = companyId;
 
         if (!input.customerId || !input.lines.length) {
             return { success: false, message: "Customer and lines are required" };

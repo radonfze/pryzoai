@@ -22,9 +22,13 @@ export type PayrollInput = {
     notes?: string;
 };
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function processPayrollAction(input: PayrollInput): Promise<ActionResponse> {
     try {
-        const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+        const companyId = await getCompanyId();
+        if (!companyId) return { success: false, message: "Unauthorized" };
+        const DEMO_COMPANY_ID = companyId; // Alias for minimal refactor impact
 
         // 1. Check if run exists
         const existingRun = await db.query.payrollRuns.findFirst({

@@ -34,9 +34,13 @@ export type DeliveryNoteInput = {
     shippingAddress?: string;
 };
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function createDeliveryNoteAction(input: DeliveryNoteInput): Promise<ActionResponse> {
     try {
-        const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+        const companyId = await getCompanyId();
+        if (!companyId) return { success: false, message: "Unauthorized: No active company" };
+        const DEMO_COMPANY_ID = companyId;
 
         if (!input.customerId || !input.lines.length || !input.warehouseId) {
             return { success: false, message: "Customer, Warehouse, and Lines are required" };

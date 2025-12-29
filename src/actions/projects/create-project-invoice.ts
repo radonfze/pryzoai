@@ -21,9 +21,13 @@ export type ProjectBillingInput = {
     invoiceDate: string;
 };
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function createProjectInvoiceAction(input: ProjectBillingInput): Promise<ActionResponse> {
     try {
-        const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+        const companyId = await getCompanyId();
+        if (!companyId) return { success: false, message: "Unauthorized" };
+        const DEMO_COMPANY_ID = companyId;
 
         if (!input.projectId || !input.timeEntryIds.length) {
             return { success: false, message: "Project and time entries required" };

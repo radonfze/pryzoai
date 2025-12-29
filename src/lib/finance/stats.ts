@@ -10,7 +10,7 @@ export interface FinanceStats {
   expensesYTD: number;
 }
 
-const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+
 
 export async function getFinanceStats(companyId: string): Promise<FinanceStats> {
   // 1. Receivables (Simplified: Sum of pending invoices)

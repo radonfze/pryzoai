@@ -19,10 +19,7 @@ const nextConfig: NextConfig = {
     },
   },
   
-  // ESLint: Ignore during builds (handle separately)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+
 };
 
 // Sentry SDK v8+ - minimal valid options only

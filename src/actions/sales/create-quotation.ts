@@ -151,12 +151,16 @@ async function getQuotationMasterData(companyId: string) {
   };
 }
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function createQuotationAction(
   input: QuotationInput
 ): Promise<ActionResponse> {
   try {
-    // 1. Hardcoded company ID for demo
-    const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+    // 1. Get company from session
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, message: "Unauthorized" };
+    const DEMO_COMPANY_ID = companyId;
 
     // 2. Server-side validation
     if (!input.customerId) {

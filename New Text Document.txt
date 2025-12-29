@@ -25,5 +25,84 @@ postgresql://postgres.bddveetxtckdyefnlsdo:[YOUR-PASSWORD]@aws-1-ap-northeast-2.
 implementation plan v1 to v90 anything pending , missing ui?? , missing gaps?, missing dependencies??, any suggestions? missing Logics??, missing links??, missing pages,?? missing forms? add & edit, update? List? , select all ? delete all?? action buttons??export??sidebar auto linking, coa auto linking ??,missing tables?? missing schemas.???, missing routes??,all 404 erro, all 500 error.,
  finish them all , fixi ,no hot fixes, only roots , build & push , commit & deploy as you go 
 
-task v1 to v100 , p0 to p15 check everywhere , every features, microfeatures, modules & so and soo . etccc.  anything pending , missing ui?? , missing gaps?, misssing api ??missing dependencies??, any suggestions? missing Logics??, missing links??, missing pages,?? missing forms? add & edit, update? List? , select all ? delete all?? action buttons??export??sidebar auto linking, coa auto linking ??,missing tables?? missing schemas.???, missing routes??,all 404 erro, all 500 error.,
+task v1 to v100 , p0 to p15 check everywhere , every features, microfeatures, modules & so and soo . etccc.  anything pending , missing ui?? , missing gaps?, misssing api ??missing dependencies??, any suggestions? missing Logics??, missing links??, missing pages,?? missing forms? add & edit, update? List? , select all ? delete all?? action buttons??export??sidebar auto linking, coa auto linking ??,missing tables?? missing schemas.???, missing routes?? Page & form  Components???,Schema & Enum Fixes??,API Routes & Services???all 404 erro, all 500 error.?? authentication missing??roles missing???
  finish them all , fix it ,no hot fixes, only roots causes , build & push , commit & deploy as you go 
+---------------------------------------------------------------------------------
+You are now acting as a SYSTEM AUDITOR, not a developer.
+Do NOT implement or fix anything.
+Your ONLY task is to FIND, LIST, and CLASSIFY gaps.
+
+Assume this is a production ERP system.
+Assume missing features are bugs.
+Assume unlinked UI is a defect.
+Assume undocumented logic is missing logic.
+List ALL modules detected in:
+- Sidebar
+- Routes
+- API folders
+- DB schemas
+- Feature flags
+- Permissions
+Break the module into:
+- Core Features
+- Sub-features
+- Micro-features (buttons, toggles, auto logic)
+Micro-Feature Checklist (MANDATORY)
+Auto numbering
+Draft vs Posted states
+Lock after posting
+Reverse / Cancel logic
+Approval flow
+Validation rules
+Cross-module impact (Inventory, GL)
+For every page:
+- Create form exists?
+- Edit form exists?
+- View-only mode exists?
+- Delete confirmation exists?
+- Bulk actions exist?
+- Select All checkbox?
+- Pagination?
+- Search?
+- Filter?
+- Export?
+List ALL frontend routes.
+For each route:
+- Page file exists?
+- Layout applied?
+- Auth guard applied?
+- Permission guard applied?
+List ALL API endpoints.
+Map each endpoint to:
+- UI page
+- Service function
+- DB transaction
+- Error handling
+For each table:
+- Primary key?
+- Soft delete?
+- Audit fields?
+- Status enum?
+- Foreign keys?
+For each transaction:
+- Draft logic
+- Submit logic
+- Approval logic
+- Posting logic
+- Reversal logic
+Force checks:
+COA auto-linking?
+Tax auto-posting?
+Inventory impact?
+Customer/Vendor balance update?
+Ledger entries created?
+List ALL:
+- 404 sources
+- 500 sources
+- Unhandled promise rejections
+- Try/catch missing
+Missing env variables
+Feature flags unused
+Package.json unused deps
+DB migrations missing
+Seed data incomplete

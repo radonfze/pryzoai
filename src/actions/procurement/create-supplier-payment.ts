@@ -25,9 +25,13 @@ export type SupplierPaymentInput = {
     billId?: string; // Optional: Pay specific bill
 };
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function createSupplierPaymentAction(input: SupplierPaymentInput): Promise<ActionResponse> {
     try {
-        const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+        const companyId = await getCompanyId();
+        if (!companyId) return { success: false, message: "Unauthorized" };
+        const DEMO_COMPANY_ID = companyId;
 
         if (!input.supplierId || !input.amount || input.amount <= 0) {
             return { success: false, message: "Valid supplier and positive amount required" };
