@@ -56,11 +56,12 @@ type InvoiceFormValues = z.infer<typeof formSchema>;
 interface InvoiceFormProps {
   customers: any[];
   items: any[];
+  warehouses: any[];
   taxes?: any[];
   initialData?: any;
 }
 
-export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFormProps) {
+export function InvoiceForm({ customers, items, warehouses, taxes, initialData }: InvoiceFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [reservedNumber, setReservedNumber] = useState<string>("");
@@ -197,9 +198,8 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
         };
       });
       
-      // Fetch a valid default warehouse (temporary until UI supports warehouse selection)
-      const warehousesData = await fetch('/api/settings/warehouses').then(r => r.json());
-      const defaultWarehouse = warehousesData?.warehouses?.[0]?.id;
+      // Use passed warehouses prop
+      const defaultWarehouse = warehouses?.[0]?.id;
       
       if (!defaultWarehouse) {
         toast.error("No warehouse configured. Please add a warehouse in Settings.");

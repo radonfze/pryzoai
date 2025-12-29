@@ -51,6 +51,10 @@ export interface ActionResponse {
 // --- Action ---
 
 export async function createInvoiceAction(data: InvoiceFormState): Promise<ActionResponse> {
+  console.log("createInvoiceAction called with:", { 
+    ...data, 
+    items: data.items.length + " items" 
+  });
   try {
     // 0. Preliminary Validation
     if (!data.customerId || !data.items.length) {
@@ -137,6 +141,7 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
 
       // 4. Insert Invoice Lines
       if (lineItems.length > 0) {
+        console.log(`Inserting ${lineItems.length} lines for invoice ${newInvoice.id}`);
         await tx.insert(salesLines).values(
             lineItems.map((item, idx) => ({
                 companyId,
