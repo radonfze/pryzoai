@@ -84,3 +84,5 @@ export default async function StockLedgerPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

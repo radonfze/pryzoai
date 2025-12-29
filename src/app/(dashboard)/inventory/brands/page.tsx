@@ -72,3 +72,5 @@ export default async function BrandsPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

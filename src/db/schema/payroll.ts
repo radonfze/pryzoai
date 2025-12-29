@@ -49,6 +49,8 @@ export const payrollRuns = pgTable("payroll_runs", {
   approvedBy: uuid("approved_by"),
   approvedAt: timestamp("approved_at"),
   
+  version: integer("version").default(1),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),

@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import { Building } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -75,7 +76,7 @@ export default function NewAssetPage() {
         module="finance"
         title="New Fixed Asset"
         description="Register a new asset"
-        icon="Building"
+        icon={Building}
         backUrl="/finance/assets"
       />
 

@@ -85,3 +85,5 @@ export default async function SalesTargetsPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

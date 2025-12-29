@@ -6,6 +6,7 @@ import {
   timestamp,
   decimal,
   pgEnum,
+  integer,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { companies } from "./companies";
@@ -36,6 +37,8 @@ export const taxes = pgTable("taxes", {
   
   isDefault: boolean("is_default").default(false),
   isActive: boolean("is_active").default(true).notNull(),
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -56,6 +59,8 @@ export const paymentTerms = pgTable("payment_terms", {
   
   isDefault: boolean("is_default").default(false),
   isActive: boolean("is_active").default(true).notNull(),
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -73,6 +78,8 @@ export const currencies = pgTable("currencies", {
   isBaseCurrency: boolean("is_base_currency").default(false),
   isActive: boolean("is_active").default(true).notNull(),
   lastUpdated: timestamp("last_updated").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -94,6 +101,8 @@ export const priceLists = pgTable("price_lists", {
   isActive: boolean("is_active").default(true).notNull(),
   validFrom: timestamp("valid_from"),
   validTo: timestamp("valid_to"),
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

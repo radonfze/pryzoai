@@ -14,12 +14,14 @@ import { BookOpen, Plus } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
 import { CreateAccountDialog } from "./create-account-dialog";
 
+export const dynamic = 'force-dynamic';
+
 const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
 
 export default async function ChartOfAccountsPage() {
   const accounts = await db.query.chartOfAccounts.findMany({
-    where: eq(chartOfAccounts.companyId, DEMO_COMPANY_ID),
-    orderBy: [asc(chartOfAccounts.code)]
+    where: (accounts, { eq }) => eq(accounts.companyId, DEMO_COMPANY_ID),
+    orderBy: (accounts, { asc }) => [asc(accounts.code)],
   });
 
   return (

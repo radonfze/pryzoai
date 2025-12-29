@@ -42,6 +42,7 @@ export const categories = pgTable("categories", {
   name: varchar("name", { length: 100 }).notNull(),
   parentId: uuid("parent_id"), // Self-reference for subcategories
   isActive: boolean("is_active").default(true).notNull(),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -54,6 +55,7 @@ export const brands = pgTable("brands", {
   code: varchar("code", { length: 20 }).notNull(), // BRD-001
   name: varchar("name", { length: 100 }).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -93,6 +95,7 @@ export const items = pgTable("items", {
   hasExpiry: boolean("has_expiry").default(false),
   
   isActive: boolean("is_active").default(true).notNull(),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
@@ -108,6 +111,7 @@ export const itemUnits = pgTable("item_units", {
   conversionFactor: decimal("conversion_factor", { precision: 18, scale: 6 }).default("1"),
   barcode: varchar("barcode", { length: 50 }),
   isDefault: boolean("is_default").default(false),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

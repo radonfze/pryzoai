@@ -64,6 +64,8 @@ export const kpiMaster = pgTable("kpi_master", {
   weight: decimal("weight", { precision: 5, scale: 2 }).default("1"),
   
   isActive: boolean("is_active").default(true).notNull(),
+  version: integer("version").default(1),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

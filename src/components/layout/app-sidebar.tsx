@@ -144,7 +144,7 @@ const menuItems = [
       { title: "Budgets", href: "/finance/budgets", icon: Banknote },
       { title: "Reconciliation", href: "/finance/reconciliation", icon: ClipboardList },
       { title: "Tax Audit (FAF)", href: "/finance/tax-audit", icon: ShieldCheck },
-      { title: "Financial Reports", href: "/finance/reports", icon: ClipboardList },
+      { title: "Reports Dashboard", href: "/reports", icon: PieChart },
     ],
   },
   {
@@ -288,7 +288,7 @@ export function AppSidebar() {
       <SidebarFooter>
          {/* Footer content can be used for user profile or version later */}
          <div className="px-4 py-2 text-xs text-muted-foreground text-center">
-             v5.40 (Phase 23)
+             v5.26 (Phase 26)
          </div>
       </SidebarFooter>
       <SidebarRail />

@@ -16,6 +16,8 @@ import GradientHeader from "@/components/ui/gradient-header";
 
 const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
 
+export const dynamic = 'force-dynamic';
+
 export default async function JournalEntriesPage() {
   const journals = await db.query.journalEntries.findMany({
     where: eq(journalEntries.companyId, DEMO_COMPANY_ID),

@@ -55,3 +55,5 @@ export default async function WarrantyPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

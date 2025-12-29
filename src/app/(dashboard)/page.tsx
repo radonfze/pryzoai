@@ -21,6 +21,8 @@ import { Separator } from "@/components/ui/separator";
 
 const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   // 1. Fetch Key Metrics
   const [revenueData] = await db

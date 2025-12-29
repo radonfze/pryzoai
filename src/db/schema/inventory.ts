@@ -56,6 +56,8 @@ export const stockLedger = pgTable("stock_ledger", {
   lastPurchaseDate: timestamp("last_purchase_date"),
   lastSaleDate: timestamp("last_sale_date"),
   
+  version: integer("version").default(1),
+  deletedAt: timestamp("deleted_at"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 

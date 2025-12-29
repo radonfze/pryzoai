@@ -4,9 +4,11 @@ import { DataTable } from "@/components/ui/data-table";
 import { createActionColumn } from "@/components/ui/data-table-columns";
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Building } from "lucide-react";
 import Link from "next/link";
 import { getAssets } from "@/actions/finance/assets";
+
+export const dynamic = 'force-dynamic';
 
 export default async function AssetsPage() {
   const assets = await getAssets();
@@ -41,7 +43,7 @@ export default async function AssetsPage() {
         module="finance"
         title="Fixed Assets"
         description="Track assets and depreciation"
-        icon="Building"
+        icon={Building}
       >
         <Link href="/finance/assets/new">
           <Button size="sm" className="gap-2">

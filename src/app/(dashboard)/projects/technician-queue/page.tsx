@@ -46,3 +46,5 @@ export default async function TechnicianQueuePage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

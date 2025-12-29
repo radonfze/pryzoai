@@ -79,3 +79,5 @@ export default async function ModelsPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

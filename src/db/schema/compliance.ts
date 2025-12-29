@@ -54,6 +54,8 @@ export const vatReturns = pgTable("vat_returns", {
   ftaReferenceNo: varchar("fta_reference_no", { length: 50 }),
   
   notes: text("notes"),
+  version: integer("version").default(1),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),

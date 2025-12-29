@@ -47,6 +47,7 @@ export const customers = pgTable("customers", {
   preferredLanguage: varchar("preferred_language", { length: 2 }).default("en"), // en, ar
   
   isActive: boolean("is_active").default(true).notNull(),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),

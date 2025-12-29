@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Printer, Download, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 export default async function InvoiceViewPage({ params }: { params: Promise<{ id: string }> }) {
   const id = (await params).id;
 

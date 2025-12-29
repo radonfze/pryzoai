@@ -20,6 +20,7 @@ import { taxes, paymentTerms, currencies } from "./finance-masters";
 export const purchaseStatusEnum = pgEnum("purchase_status", [
   "draft",
   "sent",
+  "pending_approval",
   "issued",
   "partial",
   "completed",
@@ -41,6 +42,8 @@ export const purchaseRequests = pgTable("purchase_requests", {
   notes: text("notes"),
   status: purchaseStatusEnum("status").default("draft").notNull(),
   
+  version: integer("version").default(1),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
@@ -99,6 +102,7 @@ export const goodsReceipts = pgTable("goods_receipts", {
   notes: text("notes"),
   status: purchaseStatusEnum("status").default("draft").notNull(),
   
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
@@ -161,6 +165,7 @@ export const purchaseReturns = pgTable("purchase_returns", {
   status: purchaseStatusEnum("status").default("draft").notNull(),
   isPosted: boolean("is_posted").default(false),
   
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
@@ -224,6 +229,7 @@ export const supplierPayments = pgTable("supplier_payments", {
   status: varchar("status", { length: 20 }).default("draft").notNull(),
   isPosted: boolean("is_posted").default(false),
   
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),

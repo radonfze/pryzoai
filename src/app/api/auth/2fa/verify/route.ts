@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyTwoFactorToken, verifyBackupCode } from "@/lib/auth/two-factor";
 
+export const dynamic = 'force-dynamic';
+
 // POST /api/auth/2fa/verify - Verify TOTP token or backup code
 export async function POST(request: NextRequest) {
   try {

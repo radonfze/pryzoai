@@ -87,3 +87,5 @@ export default async function ApprovalRulesPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

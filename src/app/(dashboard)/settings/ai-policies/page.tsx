@@ -41,3 +41,5 @@ export default async function AiPoliciesPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

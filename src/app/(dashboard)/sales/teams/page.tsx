@@ -73,3 +73,5 @@ export default async function SalesTeamsPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

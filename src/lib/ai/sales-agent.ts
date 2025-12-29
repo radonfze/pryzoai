@@ -1,34 +1,40 @@
-
 import { BaseAgent, AgentResult } from "./base-agent";
+import { ReportingService } from "@/lib/services/reporting-service";
 
 export class SalesAgent extends BaseAgent {
     canHandle(prompt: string): boolean {
-        const keywords = ["sales", "invoice", "order", "customer", "revenue", "selling", "quote"];
+        const keywords = ["sales", "invoice", "order", "customer", "revenue", "selling", "quote", "top customer"];
         return keywords.some(k => prompt.toLowerCase().includes(k));
     }
 
     async execute(prompt: string): Promise<AgentResult> {
-        // Mock Implementation logic for V120
-        // Ideally this would use an LLM or SQL generation based on schema
+        const salesData = await ReportingService.getSalesAnalysis(this.context.companyId);
         
-        if (prompt.includes("last month")) {
+        if (prompt.toLowerCase().includes("total sales") || prompt.toLowerCase().includes("how much")) {
+             const total = Number(salesData.summary.total || 0);
+             const count = Number(salesData.summary.count || 0);
              return {
-                answer: "Total sales for last month: AED 125,000 across 45 Invoices.",
-                data: { total: 125000, count: 45 },
-                citations: ["sales_invoices"]
+                answer: `Total issued sales: **AED ${total.toLocaleString()}** across **${count}** orders.`,
+                data: salesData.summary,
+                citations: ["sales_orders"]
             };
         }
         
-        if (prompt.includes("top customer")) {
+        if (prompt.toLowerCase().includes("top customer")) {
+            const top = salesData.topCustomers[0]; 
              return {
-                answer: "Your top customer is 'Al Futtaim Group' with AED 450,000 YTD.",
-                data: { customer: "Al Futtaim Group", amount: 450000 },
-                citations: ["customers", "sales_invoices"]
+                answer: top 
+                    ? `Your top customer is **${top.name}** with **AED ${Number(top.value).toLocaleString()}** in sales.`
+                    : "No customer sales data available yet.",
+                data: salesData.topCustomers,
+                citations: ["sales_orders", "customers"]
             };
         }
-
+        
+        // Generic Sales Help
         return {
-            answer: "I can help with Sales data. Try asking about 'last month sales' or 'top customers'.",
+            answer: `I found ${Number(salesData.summary.count || 0)} issued orders totaling AED ${Number(salesData.summary.total || 0).toLocaleString()}. Ask about 'total sales' or 'top customer'.`,
+            data: salesData.summary
         };
     }
 }

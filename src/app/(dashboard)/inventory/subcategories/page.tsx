@@ -75,3 +75,5 @@ export default async function SubcategoriesPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

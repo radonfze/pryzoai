@@ -7,6 +7,8 @@ import { DataTable } from "@/components/ui/data-table";
 import { notFound } from "next/navigation";
 import { getCompanyId } from "@/lib/auth";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProjectDashboardPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const companyId = await getCompanyId();

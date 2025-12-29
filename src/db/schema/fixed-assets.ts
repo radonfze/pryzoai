@@ -52,6 +52,8 @@ export const assetCategories = pgTable("asset_categories", {
   defaultUsefulLife: decimal("default_useful_life", { precision: 5, scale: 2 }), // Years
   
   isActive: boolean("is_active").default(true),
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -86,6 +88,9 @@ export const fixedAssets = pgTable("fixed_assets", {
   custodianId: uuid("custodian_id").references(() => users.id), // Employee holding the asset
   
   status: assetStatusEnum("status").default("draft").notNull(),
+  
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

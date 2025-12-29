@@ -20,6 +20,7 @@ import { taxes, paymentTerms, currencies } from "./finance-masters";
 export const salesStatusEnum = pgEnum("sales_status", [
   "draft",
   "sent",
+  "pending_approval",
   "issued",
   "partial",
   "completed",
@@ -58,6 +59,8 @@ export const salesQuotations = pgTable("sales_quotations", {
   convertedToSo: boolean("converted_to_so").default(false),
   
   // Audit
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
@@ -98,6 +101,7 @@ export const salesOrders = pgTable("sales_orders", {
   // Status
   status: salesStatusEnum("status").default("draft").notNull(),
   
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
@@ -142,6 +146,7 @@ export const salesInvoices = pgTable("sales_invoices", {
   status: salesStatusEnum("status").default("draft").notNull(),
   isPosted: boolean("is_posted").default(false), // Posted to COA
   
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
@@ -169,7 +174,7 @@ export const salesReturns = pgTable("sales_returns", {
   // Status
   status: salesStatusEnum("status").default("draft").notNull(),
   isPosted: boolean("is_posted").default(false),
-  
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
@@ -243,7 +248,7 @@ export const customerPayments = pgTable("customer_payments", {
   // Status
   status: varchar("status", { length: 20 }).default("draft").notNull(),
   isPosted: boolean("is_posted").default(false),
-  
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),

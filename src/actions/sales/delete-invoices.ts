@@ -21,7 +21,6 @@ export async function deleteInvoicesAction(ids: string[]) {
       return { success: false, message: "Only Draft invoices can be deleted" };
     }
 
-    // Delete lines first (cascade usually handles this but manual is safer)
     await db.delete(salesLines).where(inArray(salesLines.invoiceId, ids));
     await db.delete(salesInvoices).where(inArray(salesInvoices.id, ids));
 

@@ -55,6 +55,8 @@ export const projects = pgTable("projects", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
 });
 
 // Project Tasks
@@ -117,6 +119,8 @@ export const amcContracts = pgTable("amc_contracts", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
 });
 
 // AMC Visits
@@ -174,6 +178,8 @@ export const workOrders = pgTable("work_orders", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
 });
 
 // Employee Attendance

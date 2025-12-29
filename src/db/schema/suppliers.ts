@@ -52,6 +52,7 @@ export const suppliers = pgTable("suppliers", {
   defaultCurrency: varchar("default_currency", { length: 3 }).default("AED"),
   
   isActive: boolean("is_active").default(true).notNull(),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
@@ -69,6 +70,7 @@ export const supplierContacts = pgTable("supplier_contacts", {
   phone: varchar("phone", { length: 20 }),
   isPrimary: boolean("is_primary").default(false),
   isActive: boolean("is_active").default(true).notNull(),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

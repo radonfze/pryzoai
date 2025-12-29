@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateTwoFactorSecret, enableTwoFactor } from "@/lib/auth/two-factor";
 
+export const dynamic = 'force-dynamic';
+
 // POST /api/auth/2fa/setup - Generate 2FA secret and QR code
 export async function POST(request: NextRequest) {
   try {

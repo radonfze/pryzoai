@@ -8,6 +8,8 @@ import {
   decimal,
   date,
   pgEnum,
+
+  integer,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { companies, branches } from "./companies";
@@ -87,6 +89,8 @@ export const employees = pgTable("employees", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
 });
 
 // Employee Relations

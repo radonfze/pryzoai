@@ -10,6 +10,8 @@ import { ArrowLeft, Printer, Edit, ShoppingCart } from "lucide-react";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
 import GradientHeader from "@/components/ui/gradient-header";
+import { approvalRequests } from "@/db/schema/approvals";
+import { ApprovalActions } from "@/components/approvals/approval-actions";
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +26,13 @@ export default async function SalesOrderDetailPage({ params }: { params: { id: s
           }
       },
     },
+  });
+
+  const approvalRequest = await db.query.approvalRequests.findFirst({
+    where: (req, { eq, and }) => and(
+        eq(req.documentId, params.id),
+        eq(req.status, 'PENDING')
+    ),
   });
 
   if (!order) {
@@ -49,6 +58,9 @@ export default async function SalesOrderDetailPage({ params }: { params: { id: s
              <Link href={`/sales/orders/${order.id}/print`}>
                 <Button variant="outline"><Printer className="mr-2 h-4 w-4" /> Print</Button>
              </Link>
+             {approvalRequest && (
+                 <ApprovalActions requestId={approvalRequest.id} />
+             )}
         </div>
       </div>
 

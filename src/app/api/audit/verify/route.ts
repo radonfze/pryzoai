@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuditChain } from "@/lib/audit";
+import { verifyAuditChain } from "@/lib/audit/audit-service";
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const companyId = request.nextUrl.searchParams.get("companyId");

@@ -25,3 +25,5 @@ export default async function GlMappingPage() {
         </div>
     )
 }
+
+export const dynamic = 'force-dynamic';

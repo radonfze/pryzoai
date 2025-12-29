@@ -13,6 +13,10 @@ import {
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { ApprovalService } from "@/lib/services/approval-service";
+import { InventoryService } from "@/lib/services/inventory-service";
+import { getUser } from "@/lib/auth/get-user";
+import { requirePermission } from "@/lib/auth/permissions";
 
 // Response type
 export type ActionResponse = {
@@ -154,6 +158,10 @@ export async function createSalesOrderAction(
   try {
     const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
 
+    // Permission Check
+    const user = await getUser();
+    await requirePermission(user.id, "sales.orders.create");
+
     // Validation
     if (!input.customerId) {
       return { success: false, message: "Customer is required" };
@@ -246,6 +254,36 @@ export async function createSalesOrderAction(
           status: "draft",
         })
         .returning();
+
+      // Request Approval Logic
+      const currentUser = await getUser();
+      const approvalCheck = await ApprovalService.requestApproval({
+        companyId: DEMO_COMPANY_ID,
+        documentType: "sales_order",
+        documentId: order.id,
+        documentNumber: orderNumber,
+        requestedBy: currentUser.id,
+        amount: grandTotal,
+      });
+
+      // Update status based on approval check
+      let finalStatus = "draft";
+      if (approvalCheck.required) {
+        finalStatus = "pending_approval";
+      } else {
+        finalStatus = "issued"; // Auto-approved
+      }
+
+      await tx.update(salesOrders)
+        .set({ status: finalStatus as any }) // Type assertion for enum
+        .where(eq(salesOrders.id, order.id));
+      
+      // Update the local order object to reflect status in return if needed
+      
+      // If Auto-Approved (Issued), Reserve Stock Logic
+      if (finalStatus === "issued") {
+          await InventoryService.reserveStockForOrder(order.id);
+      }
 
       // Insert order lines
       await tx.insert(salesLines).values(

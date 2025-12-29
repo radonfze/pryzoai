@@ -20,3 +20,5 @@ export default async function NewInvoicePage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';
