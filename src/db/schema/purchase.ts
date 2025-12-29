@@ -81,6 +81,8 @@ export const purchaseOrders = pgTable("purchase_orders", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
 });
 
 // Goods Receipt Notes (GRN)
@@ -143,6 +145,8 @@ export const purchaseInvoices = pgTable("purchase_invoices", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
+  deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
 });
 
 // Purchase Returns

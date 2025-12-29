@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { journalEntries, journalLines, chartOfAccounts } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { getCompanyId } from "@/lib/auth";
-import { generateNextNumber } from "@/actions/settings/auto-code";
+import { generateNextNumber } from "@/lib/services/number-generator";
 
 /**
  * GL Posting Service

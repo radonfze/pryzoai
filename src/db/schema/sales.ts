@@ -102,6 +102,7 @@ export const salesOrders = pgTable("sales_orders", {
   status: salesStatusEnum("status").default("draft").notNull(),
   
   deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
@@ -147,6 +148,7 @@ export const salesInvoices = pgTable("sales_invoices", {
   isPosted: boolean("is_posted").default(false), // Posted to COA
   
   deletedAt: timestamp("deleted_at"),
+  version: integer("version").default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),

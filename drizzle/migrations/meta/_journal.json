@@ -127,6 +127,20 @@
       "when": 1766998362550,
       "tag": "0017_orange_abomination",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1767000590280,
+      "tag": "0018_same_sugar_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1767000927689,
+      "tag": "0019_greedy_jackpot",
+      "breakpoints": true
     }
   ]
 }

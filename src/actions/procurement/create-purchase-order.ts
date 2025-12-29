@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/db";
+import { getCompanyId } from "@/lib/auth";
 import { 
   purchaseOrders,
   purchaseOrderLines,
@@ -98,7 +99,8 @@ async function getPOMasterData(companyId: string) {
 
 export async function createPurchaseOrderAction(input: PurchaseOrderInput): Promise<ActionResponse> {
   try {
-    const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, message: "Unauthorized: No active company" };
 
     if (!input.supplierId) return { success: false, message: "Supplier is required" };
     if (!input.orderDate) return { success: false, message: "Order date is required" };
@@ -138,7 +140,7 @@ export async function createPurchaseOrderAction(input: PurchaseOrderInput): Prom
     const grandTotal = subtotalAfterDisc + finalTax;
 
     const orderDate = new Date(input.orderDate);
-    const orderNumber = await generatePONumber(DEMO_COMPANY_ID, orderDate);
+    const orderNumber = await generatePONumber(companyId, orderDate);
 
     const deliveryDate = input.deliveryDate 
       ? new Date(input.deliveryDate)
@@ -150,7 +152,7 @@ export async function createPurchaseOrderAction(input: PurchaseOrderInput): Prom
 
     const result = await db.transaction(async (tx) => {
       const [po] = await tx.insert(purchaseOrders).values({
-        companyId: DEMO_COMPANY_ID,
+        companyId: companyId,
         supplierId: input.supplierId,
         warehouseId: input.warehouseId,
         orderNumber,
@@ -165,14 +167,14 @@ export async function createPurchaseOrderAction(input: PurchaseOrderInput): Prom
         taxAmount: finalTax.toFixed(2),
         totalAmount: grandTotal.toFixed(2),
         receivedQty: "0",
-        billedQty: "0",
+        invoicedQty: "0",
         notes: input.notes,
         status: "draft",
       }).returning();
 
       await tx.insert(purchaseOrderLines).values(
         processedLines.map((line) => ({
-          companyId: DEMO_COMPANY_ID,
+          companyId: companyId,
           purchaseOrderId: po.id,
           lineNumber: line.lineNumber,
           itemId: line.itemId,
@@ -185,7 +187,7 @@ export async function createPurchaseOrderAction(input: PurchaseOrderInput): Prom
           taxAmount: line.taxAmount,
           lineTotal: line.lineTotal,
           receivedQty: "0",
-          billedQty: "0",
+          invoicedQty: "0",
         }))
       );
 

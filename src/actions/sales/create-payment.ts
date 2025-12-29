@@ -143,11 +143,15 @@ export async function getCustomerOutstandingInvoices(customerId: string) {
   return invoices;
 }
 
+import { getCompanyId } from "@/lib/auth";
+
 export async function createPaymentAction(
   input: PaymentInput
 ): Promise<ActionResponse> {
   try {
-    const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, message: "Unauthorized: No active company found" };
+    const DEMO_COMPANY_ID = companyId; // Alias for minimal refactor impact
 
     // Validation
     if (!input.customerId) {

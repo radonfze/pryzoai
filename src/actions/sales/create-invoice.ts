@@ -16,7 +16,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateNextNumber } from "@/lib/services/number-generator";
 import { postSalesInvoiceToGL } from "@/lib/services/gl-posting-service";
-import { defaultGlAccounts } from "@/db/schema";
+
 
 // --- Types ---
 
