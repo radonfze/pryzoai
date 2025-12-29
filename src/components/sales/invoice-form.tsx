@@ -344,8 +344,8 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
                     const currentSubtotal = (currentQty * currentPrice);
 
                     return (
-                    <div key={field.id} className="grid gap-4 grid-cols-12 items-end border p-3 rounded-md bg-muted/20">
-                      <div className="col-span-12 md:col-span-3">
+                    <div key={field.id} className="grid gap-2 grid-cols-12 items-end border p-3 rounded-md bg-muted/20">
+                      <div className="col-span-12 md:col-span-5">
                         <FormField
                           control={form.control}
                           name={`lines.${index}.itemId`}
@@ -401,7 +401,7 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
                           )}
                         />
                       </div>
-                      <div className="col-span-6 md:col-span-2">
+                      <div className="col-span-4 md:col-span-1">
                         <FormField
                           control={form.control}
                           name={`lines.${index}.quantity`}
@@ -416,7 +416,7 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
                           )}
                         />
                       </div>
-                      <div className="col-span-6 md:col-span-2">
+                      <div className="col-span-4 md:col-span-2">
                         <FormField
                           control={form.control}
                           name={`lines.${index}.unitPrice`}
@@ -453,7 +453,7 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
                          </FormItem>
                       </div>
 
-                      <div className="col-span-6 md:col-span-2">
+                      <div className="col-span-4 md:col-span-1">
                         <FormField
                           control={form.control}
                           name={`lines.${index}.discountPercent`}
