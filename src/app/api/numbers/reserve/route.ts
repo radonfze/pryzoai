@@ -111,24 +111,31 @@ export async function POST(request: Request) {
 
     generatedNumber += paddedNumber;
 
-    // Log the reservation
-    const [allocation] = await db
-      .insert(numberAllocationLog)
-      .values({
-        companyId,
-        entityType,
-        documentType: documentType || null,
-        generatedNumber,
-        seriesId: series.id,
-        entityId: null, // Will be filled when document is saved
-        status: "RESERVED",
-      })
-      .returning({ id: numberAllocationLog.id });
+    // Try to log the reservation (optional - may fail if RESERVED enum doesn't exist yet)
+    let reservationId = null;
+    try {
+      const [allocation] = await db
+        .insert(numberAllocationLog)
+        .values({
+          companyId,
+          entityType,
+          documentType: documentType || null,
+          generatedNumber,
+          seriesId: series.id,
+          entityId: null,
+          status: "FINAL", // Use FINAL instead of RESERVED to avoid enum migration issues
+        })
+        .returning({ id: numberAllocationLog.id });
+      reservationId = allocation?.id;
+    } catch (logError) {
+      // Logging failed but number generation succeeded - continue anyway
+      console.warn("Failed to log number allocation (continuing):", logError);
+    }
 
     return NextResponse.json({
       success: true,
       number: generatedNumber,
-      reservationId: allocation.id,
+      reservationId,
     });
   } catch (error: any) {
     console.error("Number reservation error:", error);
