@@ -63,6 +63,8 @@ interface InvoiceFormProps {
 export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [reservedNumber, setReservedNumber] = useState<string>("");
+  const [numberLoading, setNumberLoading] = useState(!initialData);
 
   const defaultValues: Partial<InvoiceFormValues> = initialData ? {
     customerId: initialData.customerId,
@@ -86,6 +88,42 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
     name: "lines",
     control: form.control,
   });
+
+  // Reserve document number on mount (only for new invoices)
+  useEffect(() => {
+    if (initialData) {
+      // Editing existing invoice - use its number
+      setReservedNumber(initialData.invoiceNumber || "");
+      setNumberLoading(false);
+      return;
+    }
+
+    // Reserve a new number for new invoice
+    const reserveNumber = async () => {
+      try {
+        const response = await fetch('/api/numbers/reserve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entityType: 'invoice', documentType: 'INV' })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.number) {
+          setReservedNumber(data.number);
+        } else {
+          toast.error(data.error || "Failed to reserve invoice number");
+        }
+      } catch (error) {
+        console.error("Number reservation error:", error);
+        toast.error("Failed to reserve invoice number. Please refresh.");
+      } finally {
+        setNumberLoading(false);
+      }
+    };
+
+    reserveNumber();
+  }, []); // Empty deps - only run once on mount
 
   // Watchers for Logic
   const watchCustomerId = form.watch("customerId");
@@ -175,7 +213,8 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
         invoiceDate: data.invoiceDate,
         dueDate: data.dueDate,
         notes: data.notes,
-        items: mappedItems
+        items: mappedItems,
+        invoiceNumber: reservedNumber || undefined,
       });
       
       if (result.success) {
@@ -279,7 +318,15 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Line Items</CardTitle>
+                  <div className="flex items-center gap-4">
+                    <CardTitle>Line Items</CardTitle>
+                    {reservedNumber && (
+                      <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-primary/10 border border-primary/20">
+                        <span className="text-xs text-muted-foreground">Invoice #:</span>
+                        <span className="text-sm font-mono font-bold">{reservedNumber}</span>
+                      </div>
+                    )}
+                  </div>
                   <Button type="button" variant="outline" size="sm" onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 })}>
                     <Plus className="mr-2 h-4 w-4" /> Add Item
                   </Button>

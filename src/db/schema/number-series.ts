@@ -15,7 +15,7 @@ import { companies } from "./companies";
 export const yearFormatEnum = pgEnum("year_format", ["YYYY", "YY", "NONE"]);
 export const resetRuleEnum = pgEnum("reset_rule", ["NONE", "YEARLY", "MONTHLY"]);
 export const seriesScopeEnum = pgEnum("series_scope", ["COMPANY", "BRANCH", "GLOBAL"]);
-export const allocationStatusEnum = pgEnum("allocation_status", ["FINAL", "CANCELLED"]);
+export const allocationStatusEnum = pgEnum("allocation_status", ["FINAL", "CANCELLED", "RESERVED"]);
 
 // Number Series - Auto-numbering engine
 export const numberSeries = pgTable("number_series", {

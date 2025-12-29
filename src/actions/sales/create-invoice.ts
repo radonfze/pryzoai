@@ -39,6 +39,7 @@ export interface InvoiceFormState {
   dueDate: string;     // ISO Date String
   notes?: string;
   items: InvoiceItemInput[];
+  invoiceNumber?: string; // Optional: pre-reserved number from UI
 }
 
 export interface ActionResponse {
@@ -61,22 +62,30 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
       const companyId = await getCompanyId();
       if (!companyId) throw new Error("Unauthorized: No active company session.");
 
-      // 1b. Generate Invoice Number (Gapless Service)
-      const numResult = await generateNextNumber({
-        companyId,
-        entityType: "invoice",
-        documentType: "INV", // Optional sub-type
-        created_by: "system" 
-      });
-
-      if (!numResult.success || !numResult.number) {
-         if (numResult.error?.includes("No active number series")) {
-            throw new Error("Missing Number Series for Invoices. Please configure in Settings.");
-         }
-         throw new Error(numResult.error || "Failed to generate invoice number");
-      }
+      // 1b. Use provided invoice number or generate new one
+      let invoiceNumber: string;
       
-      const invoiceNumber = numResult.number;
+      if (data.invoiceNumber) {
+        // Number was pre-reserved by the UI
+        invoiceNumber = data.invoiceNumber;
+      } else {
+        // Fallback: Generate number now (legacy flow)
+        const numResult = await generateNextNumber({
+          companyId,
+          entityType: "invoice",
+          documentType: "INV",
+          created_by: "system" 
+        });
+
+        if (!numResult.success || !numResult.number) {
+          if (numResult.error?.includes("No active number series")) {
+            throw new Error("Missing Number Series for Invoices. Please configure in Settings.");
+          }
+          throw new Error(numResult.error || "Failed to generate invoice number");
+        }
+        
+        invoiceNumber = numResult.number;
+      }
 
       // 2. Calculate Totals
       let subTotal = 0;
