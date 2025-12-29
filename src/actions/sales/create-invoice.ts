@@ -16,6 +16,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateNextNumber } from "@/lib/services/number-generator";
 import { postSalesInvoiceToGL } from "@/lib/services/gl-posting-service";
+import { getCompanyId } from "@/lib/auth";
 
 
 // --- Types ---
@@ -57,35 +58,22 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
 
     // 1. Transaction Wrapper
     return await db.transaction(async (tx) => {
-      // 1a. Fetch Context
-      const company = await tx.query.companies.findFirst({
-         where: eq(companies.active, true),
-         with: { baseCurrency: true }
-      });
+      const companyId = await getCompanyId();
+      if (!companyId) throw new Error("Unauthorized: No active company session.");
 
-      if (!company) {
-          throw new Error("System Error: No active company found for context.");
-      }
-
-      const companyId = company.id;
-      
       // 1b. Generate Invoice Number (Gapless Service)
       const numResult = await generateNextNumber({
         companyId,
         entityType: "invoice",
         documentType: "INV", // Optional sub-type
-        created_by: "system" // Todo: get user ID
+        created_by: "system" 
       });
 
       if (!numResult.success || !numResult.number) {
-        // Fallback or Error
-        // If service fails (e.g. no series), we *could* fallback, but for Phase 4 strictness we should error or auto-seed.
-        // For now, let's create dynamic fallback to prevent blockers if series missing
-        console.warn("Number Series Error:", numResult.error);
-        if (numResult.error?.includes("No active number series")) {
+         if (numResult.error?.includes("No active number series")) {
             throw new Error("Missing Number Series for Invoices. Please configure in Settings.");
-        }
-        throw new Error(numResult.error || "Failed to generate invoice number");
+         }
+         throw new Error(numResult.error || "Failed to generate invoice number");
       }
       
       const invoiceNumber = numResult.number;
@@ -220,7 +208,7 @@ export async function getInvoiceMasterData() {
   const [allCustomers, allItems, allWarehouses] = await Promise.all([
     db.query.customers.findMany({ 
         where: eq(customers.isActive, true),
-        columns: { id: true, name: true } 
+        columns: { id: true, name: true, paymentTermDays: true } 
     }),
     db.query.items.findMany({ 
         where: eq(items.isActive, true),

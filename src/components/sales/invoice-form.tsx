@@ -23,9 +23,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { createInvoiceAction } from "@/actions/sales/create-invoice";
+import { addDays, format, parseISO } from "date-fns";
 
 const formSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
@@ -48,7 +49,7 @@ type InvoiceFormValues = z.infer<typeof formSchema>;
 interface InvoiceFormProps {
   customers: any[];
   items: any[];
-  taxes: any[];
+  taxes?: any[];
   initialData?: any;
 }
 
@@ -59,12 +60,13 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
   const defaultValues: Partial<InvoiceFormValues> = initialData ? {
     customerId: initialData.customerId,
     invoiceDate: initialData.invoiceDate ? new Date(initialData.invoiceDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : "",
+    dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     salesOrderId: initialData.salesOrderId || "",
     notes: initialData.notes || "",
     lines: initialData.lines || [{ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 }],
   } : {
     invoiceDate: new Date().toISOString().split('T')[0],
+    dueDate: new Date().toISOString().split('T')[0], // Default to same as invoice date
     lines: [{ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 }],
   };
 
@@ -77,6 +79,42 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
     name: "lines",
     control: form.control,
   });
+
+  // Watchers for Logic
+  const watchCustomerId = form.watch("customerId");
+  const watchInvoiceDate = form.watch("invoiceDate");
+
+  // Logic: Auto-calculate Due Date based on Customer Terms
+  useEffect(() => {
+    // Only run if we have both customer and invoice date
+    if (watchCustomerId && watchInvoiceDate) {
+        const customer = customers.find(c => c.id === watchCustomerId);
+        if (customer && customer.paymentTermDays) {
+            const days = Number(customer.paymentTermDays);
+            if (!isNaN(days) && days > 0) {
+               try {
+                 const baseDate = parseISO(watchInvoiceDate);
+                 const newDue = addDays(baseDate, days);
+                 form.setValue("dueDate", format(newDue, "yyyy-MM-dd"));
+                 return;
+               } catch (e) {
+                 // Invalid date format safety
+               }
+            }
+        }
+        // If no terms or 0 days, default to Invoice Date (Net 0)
+        // BUT only if user hasn't explicitly set a different due date? 
+        // User request: "due date must be same as invoice date unless..."
+        // So we enforce this logic on change. 
+        // If user wants custom, they can change Due Date *after* this effect runs? 
+        // Or this effect runs on every render? No, dependency array.
+        // It runs when customerId or invoiceDate changes.
+        // So if I change invoice date -> due date updates.
+        // If I change customer -> due date updates.
+        // If I change Due Date manually -> This effect does NOT run. Perfect.
+        form.setValue("dueDate", watchInvoiceDate);
+    }
+  }, [watchCustomerId, watchInvoiceDate, customers, form]);
 
   const watchLines = form.watch("lines");
   const subtotal = watchLines.reduce((sum, line) => {
@@ -127,11 +165,13 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
       if (result.success) {
         toast.success(result.message);
         router.push("/sales/invoices");
+        router.refresh(); // Ensure list updates
       } else {
         toast.error(result.message);
       }
     } catch (error) {
-      toast.error("Failed to save invoice");
+      console.error(error);
+      toast.error("Failed to save invoice. Ensure network connection.");
     } finally {
       setLoading(false);
     }
@@ -230,10 +270,19 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {fields.map((field, index) => (
+                  <div className="space-y-4">
+                  {fields.map((field, index) => {
+                    // Watch values for this specific row to handle bidirectional logic
+                    // We must use form.getValues() or watch outside? 
+                    // To avoid perf issues, we can just defer to the Input's logic or use basic watch for calculations
+                    // But for "value" prop, we need current state.
+                    const currentQty = form.watch(`lines.${index}.quantity`) || 0;
+                    const currentPrice = form.watch(`lines.${index}.unitPrice`) || 0;
+                    const currentSubtotal = (currentQty * currentPrice);
+
+                    return (
                     <div key={field.id} className="grid gap-4 grid-cols-12 items-end border p-3 rounded-md bg-muted/20">
-                      <div className="col-span-4">
+                      <div className="col-span-12 md:col-span-4">
                         <FormField
                           control={form.control}
                           name={`lines.${index}.itemId`}
@@ -245,13 +294,15 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
                                 handleItemChange(index, val);
                               }} defaultValue={field.value}>
                                 <FormControl>
-                                  <SelectTrigger>
+                                  <SelectTrigger className="w-full truncate">
                                     <SelectValue placeholder="Select..." />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
                                   {items.map((item) => (
-                                    <SelectItem key={item.id} value={item.id}>{item.code} - {item.name}</SelectItem>
+                                    <SelectItem key={item.id} value={item.id}>
+                                       <span className="truncate block max-w-[300px]">{item.code} - {item.name}</span>
+                                    </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -260,7 +311,7 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
                           )}
                         />
                       </div>
-                      <div className="col-span-2">
+                      <div className="col-span-6 md:col-span-1">
                         <FormField
                           control={form.control}
                           name={`lines.${index}.quantity`}
@@ -275,7 +326,7 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
                           )}
                         />
                       </div>
-                      <div className="col-span-2">
+                      <div className="col-span-6 md:col-span-2">
                         <FormField
                           control={form.control}
                           name={`lines.${index}.unitPrice`}
@@ -290,7 +341,29 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
                           )}
                         />
                       </div>
-                      <div className="col-span-2">
+                      
+                      {/* Editable Subtotal Column */}
+                      <div className="col-span-6 md:col-span-2">
+                         <FormItem>
+                            <FormLabel className={index > 0 ? "sr-only" : ""}>Subtotal</FormLabel>
+                            <FormControl>
+                               <Input 
+                                  type="number" 
+                                  step="0.01" 
+                                  value={currentSubtotal.toFixed(2)} // Display calculated value
+                                  onChange={(e) => {
+                                      const newTotal = parseFloat(e.target.value);
+                                      if (!isNaN(newTotal) && currentQty !== 0) {
+                                          const newPrice = newTotal / currentQty;
+                                          form.setValue(`lines.${index}.unitPrice`, Number(newPrice.toFixed(4))); // Update price, keeping precision
+                                      }
+                                  }}
+                               />
+                            </FormControl>
+                         </FormItem>
+                      </div>
+
+                      <div className="col-span-6 md:col-span-2">
                         <FormField
                           control={form.control}
                           name={`lines.${index}.discountPercent`}
@@ -305,13 +378,14 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
                           )}
                         />
                       </div>
-                      <div className="col-span-2 flex justify-end">
+                      <div className="col-span-12 md:col-span-1 flex justify-end">
                         <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                           <Trash className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     </div>
-                  ))}
+                  );
+                 })}
                   {fields.length === 0 && (
                     <div className="text-center py-4 text-muted-foreground text-sm">
                       No items added. Click &quot;Add Item&quot; to start.
