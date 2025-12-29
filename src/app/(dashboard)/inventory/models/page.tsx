@@ -1,12 +1,10 @@
-import { db } from "@/db";
-import { itemModels } from "@/db/schema/item-hierarchy";
+import { getModels, deleteModel } from "@/actions/inventory/models";
 import { DataTable } from "@/components/ui/data-table";
 import { createActionColumn } from "@/components/ui/data-table-columns";
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { getModels } from "@/actions/inventory/models";
 
 export default async function ModelsPage() {
   const models = await getModels();
@@ -51,6 +49,7 @@ export default async function ModelsPage() {
       basePath: "/inventory/models",
       hasEdit: true,
       hasDelete: true,
+      onDelete: deleteModel
     }),
   ];
 

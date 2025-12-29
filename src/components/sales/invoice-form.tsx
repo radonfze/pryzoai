@@ -159,10 +159,19 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
         };
       });
       
-      // For now using placeholder warehouseId
+      // Fetch a valid default warehouse (temporary until UI supports warehouse selection)
+      const warehousesData = await fetch('/api/settings/warehouses').then(r => r.json());
+      const defaultWarehouse = warehousesData?.warehouses?.[0]?.id;
+      
+      if (!defaultWarehouse) {
+        toast.error("No warehouse configured. Please add a warehouse in Settings.");
+        setLoading(false);
+        return;
+      }
+      
       const result = await createInvoiceAction({
         customerId: data.customerId,
-        warehouseId: "00000000-0000-0000-0000-000000000000",
+        warehouseId: defaultWarehouse,
         invoiceDate: data.invoiceDate,
         dueDate: data.dueDate,
         notes: data.notes,
@@ -176,9 +185,9 @@ export function InvoiceForm({ customers, items, taxes, initialData }: InvoiceFor
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to save invoice. Ensure network connection.");
+    } catch (error: any) {
+      console.error("Invoice submission error:", error);
+      toast.error(error.message || "Failed to create invoice. Please try again.");
     } finally {
       setLoading(false);
     }

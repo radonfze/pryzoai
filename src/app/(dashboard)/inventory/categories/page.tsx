@@ -1,32 +1,72 @@
+import { getCategories, deleteCategory } from "@/actions/inventory/categories";
+import { DataTable } from "@/components/ui/data-table";
+import { createActionColumn } from "@/components/ui/data-table-columns";
+import { GradientHeader } from "@/components/ui/gradient-header";
 import { Button } from "@/components/ui/button";
-import { Plus, Boxes, Tags } from "lucide-react";
-import GradientHeader from "@/components/ui/gradient-header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Plus } from "lucide-react";
+import Link from "next/link";
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const categories = await getCategories();
+
+  const columns = [
+    {
+      accessorKey: "code",
+      header: "Code",
+    },
+    {
+      accessorKey: "name",
+      header: "Name",
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+    },
+    {
+      accessorKey: "isActive",
+      header: "Status",
+      cell: ({ row }: any) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs ${
+            row.original.isActive
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {row.original.isActive ? "Active" : "Inactive"}
+        </span>
+      ),
+    },
+    createActionColumn({
+      basePath: "/inventory/categories",
+      onDelete: deleteCategory
+    }),
+  ];
+
   return (
-    <div className="flex flex-col gap-6 p-4 pt-0">
+    <div className="space-y-6">
       <GradientHeader
         module="inventory"
         title="Item Categories"
-        description="Organize your inventory with product categories and sub-categories"
-        icon={Tags}
-      />
-      
-      <div className="flex items-center justify-end">
-         <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Category
-         </Button>
-      </div>
+        description="Organize your inventory with product categories"
+        icon="Tags"
+      >
+        <Link href="/inventory/categories/new">
+          <Button size="sm" className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Category
+          </Button>
+        </Link>
+      </GradientHeader>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-         <Card className="col-span-full py-10 flex flex-col items-center justify-center text-center border-dashed">
-            <Tags className="h-10 w-10 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold">No Categories Found</h3>
-            <p className="text-muted-foreground">Start by creating your first item category.</p>
-         </Card>
-      </div>
+      <DataTable
+        columns={columns}
+        data={categories}
+        searchKey="name"
+        exportName="categories"
+      />
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

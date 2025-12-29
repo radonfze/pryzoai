@@ -1,18 +1,18 @@
-import { BrandForm } from "@/components/inventory/brand-form";
+import { CategoryForm } from "@/components/inventory/category-form";
 import { GradientHeader } from "@/components/ui/gradient-header";
 
-export default function NewBrandPage() {
+export default function NewCategoryPage() {
   return (
     <div className="space-y-6">
       <GradientHeader
         module="inventory"
-        title="New Brand"
-        description="Create a new item brand"
+        title="New Category"
+        description="Create a new item category"
         icon="Plus"
-        backLink="/inventory/brands"
+        backLink="/inventory/categories"
       />
       <div className="max-w-2xl mx-auto">
-        <BrandForm />
+        <CategoryForm />
       </div>
     </div>
   );

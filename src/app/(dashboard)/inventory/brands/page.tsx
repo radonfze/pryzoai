@@ -1,12 +1,10 @@
-import { db } from "@/db";
-import { itemBrands } from "@/db/schema/item-hierarchy";
+import { getBrands, deleteBrand } from "@/actions/inventory/brands";
 import { DataTable } from "@/components/ui/data-table";
 import { createActionColumn } from "@/components/ui/data-table-columns";
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { getBrands } from "@/actions/inventory/brands";
 
 export default async function BrandsPage() {
   const brands = await getBrands();
@@ -44,6 +42,7 @@ export default async function BrandsPage() {
       basePath: "/inventory/brands",
       hasEdit: true,
       hasDelete: true,
+      onDelete: deleteBrand,
     }),
   ];
 

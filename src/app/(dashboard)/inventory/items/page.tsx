@@ -1,4 +1,5 @@
 import { db } from "@/db";
+import { getCompanyId } from "@/lib/auth";
 import { items } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
@@ -13,7 +14,8 @@ import { deleteItemsAction } from "@/actions/inventory/delete-items";
 export const dynamic = 'force-dynamic';
 
 export default async function ItemsPage() {
-  const companyId = "00000000-0000-0000-0000-000000000000";
+  const companyId = await getCompanyId();
+  if (!companyId) return null;
 
   const data = await db.query.items.findMany({
     where: eq(items.companyId, companyId),

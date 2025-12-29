@@ -1,12 +1,10 @@
-import { db } from "@/db";
-import { itemSubcategories } from "@/db/schema/item-hierarchy";
+import { getSubcategories, deleteSubcategory } from "@/actions/inventory/subcategories";
 import { DataTable } from "@/components/ui/data-table";
 import { createActionColumn } from "@/components/ui/data-table-columns";
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { getSubcategories } from "@/actions/inventory/subcategories";
 
 export default async function SubcategoriesPage() {
   const subcategories = await getSubcategories();
@@ -47,6 +45,7 @@ export default async function SubcategoriesPage() {
       basePath: "/inventory/subcategories",
       hasEdit: true,
       hasDelete: true,
+      onDelete: deleteSubcategory
     }),
   ];
 

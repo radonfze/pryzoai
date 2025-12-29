@@ -4,29 +4,98 @@ import { db } from "@/db";
 import { itemCategories, itemSubcategories } from "@/db/schema/item-hierarchy";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
-import { eq, and } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
+import { z } from "zod";
 
-// Define simpler schema structure for list
+const subcategorySchema = z.object({
+  code: z.string().min(1, "Code is required"),
+  name: z.string().min(1, "Name is required"),
+  categoryId: z.string().min(1, "Category is required"),
+  nameAr: z.string().optional(),
+  description: z.string().optional(),
+  isActive: z.boolean().default(true),
+});
+
 export async function getSubcategories() {
   const companyId = await getCompanyId();
-  return db.query.itemSubcategories.findMany({
+  if (!companyId) return [];
+
+  return await db.query.itemSubcategories.findMany({
     where: eq(itemSubcategories.companyId, companyId),
     with: {
       category: true,
     },
+    orderBy: [desc(itemSubcategories.createdAt)],
   });
 }
 
-export async function createSubcategory(data: any) {
+export async function getSubcategory(id: string) {
+  const companyId = await getCompanyId();
+  if (!companyId) return null;
+
+  return await db.query.itemSubcategories.findFirst({
+    where: eq(itemSubcategories.id, id),
+  });
+}
+
+export async function createSubcategory(data: z.infer<typeof subcategorySchema>) {
+  const companyId = await getCompanyId();
+  if (!companyId) throw new Error("Unauthorized");
+
+  const validation = subcategorySchema.safeParse(data);
+  if (!validation.success) {
+    return { success: false, error: validation.error.flatten().fieldErrors };
+  }
+
   try {
-    const companyId = await getCompanyId();
-    await db.insert(itemSubcategories).values({
-      ...data,
+    const [newSub] = await db.insert(itemSubcategories).values({
       companyId,
-    });
+      ...validation.data,
+    }).returning();
+
+    revalidatePath("/inventory/subcategories");
+    return { success: true, id: newSub.id };
+  } catch (error: any) {
+    console.error("Failed to create subcategory:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateSubcategory(id: string, data: z.infer<typeof subcategorySchema>) {
+  const companyId = await getCompanyId();
+  if (!companyId) throw new Error("Unauthorized");
+
+  const validation = subcategorySchema.safeParse(data);
+  if (!validation.success) {
+    return { success: false, error: validation.error.flatten().fieldErrors };
+  }
+
+  try {
+    await db.update(itemSubcategories)
+      .set({
+        ...validation.data,
+        updatedAt: new Date(),
+      })
+      .where(eq(itemSubcategories.id, id));
+
     revalidatePath("/inventory/subcategories");
     return { success: true };
-  } catch (error) {
-    return { success: false, error: "Failed to create subcategory" };
+  } catch (error: any) {
+    console.error("Failed to update subcategory:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteSubcategory(id: string) {
+  const companyId = await getCompanyId();
+  if (!companyId) throw new Error("Unauthorized");
+
+  try {
+    await db.delete(itemSubcategories).where(eq(itemSubcategories.id, id));
+    revalidatePath("/inventory/subcategories");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to delete subcategory:", error);
+    return { success: false, error: "Cannot delete subcategory in use" };
   }
 }
