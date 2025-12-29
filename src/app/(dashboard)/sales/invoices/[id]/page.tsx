@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Printer, Download, ArrowLeft } from "lucide-react";
+import { Printer, Download, ArrowLeft, Edit, Home } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
@@ -38,6 +38,11 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
             </Link>
+            <Link href="/">
+                <Button variant="ghost" size="icon">
+                    <Home className="h-4 w-4" />
+                </Button>
+            </Link>
             <h2 className="text-3xl font-bold tracking-tight">{invoice.invoiceNumber}</h2>
             {/* Use valid status values - confirmed/completed are equivalent to "posted" */}
             <Badge variant={invoice.status === "issued" || invoice.status === "completed" ? "default" : "outline"}>
@@ -45,6 +50,12 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
             </Badge>
         </div>
         <div className="flex items-center gap-2">
+            <Link href={`/sales/invoices/${id}/edit`}>
+                <Button variant="outline">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                </Button>
+            </Link>
             <a href={`/api/sales/invoices/${id}/pdf`} target="_blank" rel="noreferrer">
                 <Button variant="outline">
                     <Printer className="mr-2 h-4 w-4" />

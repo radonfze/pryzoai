@@ -309,3 +309,13 @@ export const paymentAllocationsRelations = relations(paymentAllocations, ({ one 
   payment: one(customerPayments, { fields: [paymentAllocations.paymentId], references: [customerPayments.id] }),
   invoice: one(salesInvoices, { fields: [paymentAllocations.invoiceId], references: [salesInvoices.id] }),
 }));
+
+// Sales Lines Relations - Critical for ORM to properly join line items
+export const salesLinesRelations = relations(salesLines, ({ one }) => ({
+  quotation: one(salesQuotations, { fields: [salesLines.quotationId], references: [salesQuotations.id] }),
+  salesOrder: one(salesOrders, { fields: [salesLines.salesOrderId], references: [salesOrders.id] }),
+  invoice: one(salesInvoices, { fields: [salesLines.invoiceId], references: [salesInvoices.id] }),
+  return: one(salesReturns, { fields: [salesLines.returnId], references: [salesReturns.id] }),
+  item: one(items, { fields: [salesLines.itemId], references: [items.id] }),
+  tax: one(taxes, { fields: [salesLines.taxId], references: [taxes.id] }),
+}));

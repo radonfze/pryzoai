@@ -1,0 +1,1 @@
+ALTER TYPE "public"."allocation_status" ADD VALUE 'RESERVED';

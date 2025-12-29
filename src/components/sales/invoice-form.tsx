@@ -28,7 +28,8 @@ import {
 
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash, Loader2 } from "lucide-react";
+import { Plus, Trash, Loader2, ArrowLeft, Home } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -89,6 +90,21 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
     name: "lines",
     control: form.control,
   });
+
+  // Track form dirty state for unsaved changes warning
+  const isDirty = form.formState.isDirty;
+
+  // Warn user when leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty && !loading) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty, loading]);
 
   // Reserve document number on mount (only for new invoices)
   useEffect(() => {
@@ -242,6 +258,34 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Navigation Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="ghost" size="icon" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <Link href="/sales/invoices">
+              <Button type="button" variant="ghost" size="icon">
+                <Home className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="border-l pl-4 ml-2">
+              <h2 className="text-xl font-semibold">
+                {initialData ? `Edit Invoice: ${reservedNumber}` : "New Invoice"}
+              </h2>
+              {!initialData && reservedNumber && (
+                <p className="text-sm text-muted-foreground">Reserved: {reservedNumber}</p>
+              )}
+            </div>
+          </div>
+          {isDirty && (
+            <span className="text-sm text-amber-600 flex items-center gap-1">
+              <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+              Unsaved changes
+            </span>
+          )}
+        </div>
+
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-4">
             <Card>

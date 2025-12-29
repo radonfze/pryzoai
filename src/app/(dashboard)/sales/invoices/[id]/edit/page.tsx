@@ -1,56 +1,62 @@
 import { db } from "@/db";
-import { salesInvoices, salesLines, customers, items, taxes } from "@/db/schema";
+import { salesInvoices, customers, items, taxes, warehouses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import GradientHeader from "@/components/ui/gradient-header";
-import { FileText } from "lucide-react";
 import { InvoiceForm } from "@/components/sales/invoice-form";
+import { getCompanyId } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 
-export default async function EditInvoicePage({ params }: { params: { id: string } }) {
-  const companyId = "00000000-0000-0000-0000-000000000000";
+export default async function EditInvoicePage({ params }: { params: Promise<{ id: string }> }) {
+  const id = (await params).id;
+  const companyId = await getCompanyId();
+
+  if (!companyId) {
+    throw new Error("Unauthorized: No active company session");
+  }
 
   const invoice = await db.query.salesInvoices.findFirst({
-    where: eq(salesInvoices.id, params.id),
+    where: eq(salesInvoices.id, id),
     with: {
-      lines: true,
+      lines: {
+        with: { item: true }
+      },
       customer: true
     }
   });
 
   if (!invoice) notFound();
 
-  const customersList = await db.query.customers.findMany({
-    where: eq(customers.companyId, companyId),
-    columns: { id: true, name: true, code: true }
-  });
-
-  const itemsList = await db.query.items.findMany({
-    where: eq(items.companyId, companyId),
-    columns: { id: true, name: true, code: true, sellingPrice: true, uom: true }
-  });
-
-  const taxesList = await db.query.taxes.findMany({
-    where: eq(taxes.companyId, companyId),
-    columns: { id: true, name: true, rate: true }
-  });
+  // Fetch master data
+  const [customersList, itemsList, taxesList, warehousesList] = await Promise.all([
+    db.query.customers.findMany({
+      where: eq(customers.isActive, true),
+      columns: { id: true, name: true, code: true, paymentTermDays: true }
+    }),
+    db.query.items.findMany({
+      where: eq(items.isActive, true),
+      columns: { id: true, name: true, code: true, sellingPrice: true, costPrice: true, taxPercent: true }
+    }),
+    db.query.taxes.findMany({
+      where: eq(taxes.companyId, companyId),
+      columns: { id: true, name: true, rate: true }
+    }),
+    db.query.warehouses.findMany({
+      where: eq(warehouses.isActive, true),
+      columns: { id: true, name: true }
+    })
+  ]);
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-      <GradientHeader
-        module="sales"
-        title={`Edit Invoice: ${invoice.invoiceNumber}`}
-        description="Modify invoice details and line items"
-        icon={FileText}
-      />
-
+    <div className="flex-1 p-4 md:p-8">
       <InvoiceForm
         customers={customersList}
         items={itemsList}
+        warehouses={warehousesList}
         taxes={taxesList}
         initialData={{
           ...invoice,
+          invoiceNumber: invoice.invoiceNumber,
           lines: invoice.lines.map((l: any) => ({
             itemId: l.itemId,
             quantity: Number(l.quantity),
