@@ -121,8 +121,8 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
         companyId,
         invoiceNumber,
         customerId: data.customerId,
-        invoiceDate: new Date(data.invoiceDate),
-        dueDate: new Date(data.dueDate),
+        invoiceDate: data.invoiceDate, // Already in YYYY-MM-DD string format
+        dueDate: data.dueDate,         // Already in YYYY-MM-DD string format
         warehouseId: data.warehouseId,
         
         // Financials
