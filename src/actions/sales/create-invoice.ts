@@ -201,15 +201,37 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
           glMapping
         );
 
+        // 6. [NEW] Auto-Deduct Inventory (Fix applied)
+        // Deduct stock for each line item
+        if (lineItems.length > 0) {
+            const { createStockMovement } = await import("@/lib/services/inventory-movement-service");
+            
+            for(const item of lineItems) {
+                await createStockMovement({
+                    transactionType: "issue", // Sale = Issue
+                    companyId,
+                    warehouseId: data.warehouseId,
+                    itemId: item.itemId,
+                    quantity: item.quantity,
+                    uom: "PCS",
+                    documentType: "INV",
+                    documentId: newInvoice.id,
+                    documentNumber: invoiceNumber,
+                    notes: `Invoice Sale: ${invoiceNumber}`,
+                    tx // Pass transaction
+                });
+            }
+        }
+
         // Mark as posted only if success
         await tx.update(salesInvoices)
           .set({ isPosted: true })
           .where(eq(salesInvoices.id, newInvoice.id));
           
       } catch (glError: any) {
-         console.warn("GL Posting Failed:", glError);
+         console.warn("GL/Inventory Posting Failed:", glError);
          glStatus = "draft";
-         glMessage = ` (GL Posting Failed: ${glError.message || "Unknown error"})`;
+         glMessage = ` (Posting Failed: ${glError.message || "Unknown error"})`;
          
          // Revert posted status just in case (though it defaults to false)
          await tx.update(salesInvoices)

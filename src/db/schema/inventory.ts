@@ -345,4 +345,57 @@ export const stockTransferLinesRelations = relations(stockTransferLines, ({ one 
   item: one(items, { fields: [stockTransferLines.itemId], references: [items.id] }),
 }));
 
+// Stock Count (Physical Inventory)
+export const stockCountStatusEnum = pgEnum("stock_count_status", [
+  "draft",
+  "in_progress",
+  "completed",
+  "cancelled",
+]);
+
+export const stockCounts = pgTable("stock_counts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("company_id").notNull().references(() => companies.id),
+  branchId: uuid("branch_id").references(() => companies.id), // Assuming branch links to companies or branches table? Fixed to match script but cleaner if branches imported.
+  warehouseId: uuid("warehouse_id").notNull().references(() => warehouses.id),
+  
+  countNumber: varchar("count_number", { length: 50 }).notNull(),
+  countDate: date("count_date").notNull(),
+  description: text("description"),
+  
+  status: stockCountStatusEnum("status").default("draft").notNull(),
+  isPosted: boolean("is_posted").default(false),
+  
+  version: integer("version").default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdBy: uuid("created_by"),
+  deletedAt: timestamp("deleted_at"),
+});
+
+export const stockCountLines = pgTable("stock_count_lines", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("company_id").notNull().references(() => companies.id),
+  countId: uuid("count_id").notNull().references(() => stockCounts.id),
+  itemId: uuid("item_id").notNull().references(() => items.id),
+  
+  systemQty: decimal("system_qty", { precision: 18, scale: 3 }).default("0"),
+  countedQty: decimal("counted_qty", { precision: 18, scale: 3 }).default("0"),
+  varianceQty: decimal("variance_qty", { precision: 18, scale: 3 }).default("0"),
+  
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const stockCountsRelations = relations(stockCounts, ({ one, many }) => ({
+  company: one(companies, { fields: [stockCounts.companyId], references: [companies.id] }),
+  warehouse: one(warehouses, { fields: [stockCounts.warehouseId], references: [warehouses.id] }),
+  lines: many(stockCountLines),
+}));
+
+export const stockCountLinesRelations = relations(stockCountLines, ({ one }) => ({
+  count: one(stockCounts, { fields: [stockCountLines.countId], references: [stockCounts.id] }),
+  item: one(items, { fields: [stockCountLines.itemId], references: [items.id] }),
+}));
+
 

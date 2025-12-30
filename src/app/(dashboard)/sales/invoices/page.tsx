@@ -8,6 +8,7 @@ import Link from "next/link";
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "./columns";
 import { deleteInvoicesAction } from "@/actions/sales/delete-invoices";
+import { ExportButton } from "@/components/ui/export-button";
 
 
 export const dynamic = 'force-dynamic';
@@ -39,7 +40,8 @@ export default async function InvoicesPage() {
         icon={FileText}
       />
       
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end gap-2">
+         <ExportButton data={invoices} filename="Sales_Invoices" />
          <Link href="/sales/invoices/new">
            <Button><Plus className="mr-2 h-4 w-4" /> Create Invoice</Button>
          </Link>
