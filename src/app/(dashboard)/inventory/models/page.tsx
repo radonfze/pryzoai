@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { createActionColumn } from "@/components/ui/data-table-columns";
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Boxes } from "lucide-react";
 import Link from "next/link";
 
 export default async function ModelsPage() {
@@ -59,7 +59,7 @@ export default async function ModelsPage() {
         module="inventory"
         title="Models"
         description="Manage item models and variants"
-        icon="Boxes"
+        icon={Boxes}
       >
         <Link href="/inventory/models/new">
           <Button size="sm" className="gap-2">

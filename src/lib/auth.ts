@@ -1,24 +1,84 @@
 import { db } from "@/db";
-import { companies } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { companies, userRoles, roles } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import { validateSession } from "./auth/auth-service";
 
 /**
- * Get the current company ID from the session or context
- * For Phase 3/4, this might default to the first active company
+ * Get the current company ID from the authenticated user's session
  */
 export async function getCompanyId(): Promise<string> {
-  // TODO: Implement actual session retrieval
-  // e.g. const session = await auth(); return session.companyId;
+  const session = await validateSession();
   
-  // Fallback: Get first active company
-  const company = await db.query.companies.findFirst({
-    where: eq(companies.isActive, true),
-  });
-  
-  if (!company) {
-    // Return a fallback demo ID to allow build to succeed
-    return "00000000-0000-0000-0000-000000000000";
+  if (!session) {
+    throw new Error("Unauthorized: No active session");
   }
   
-  return company.id;
+  return session.companyId;
+}
+
+/**
+ * Get the current user ID from session
+ */
+export async function getUserId(): Promise<string> {
+  const session = await validateSession();
+  
+  if (!session) {
+    throw new Error("Unauthorized: No active session");
+  }
+  
+  return session.userId;
+}
+
+/**
+ * Get current session or null if not authenticated
+ */
+export async function getSession() {
+  return await validateSession();
+}
+
+/**
+ * Check if user has required permission
+ * Returns TRUE if allowed, FALSE otherwise
+ */
+export async function checkPermission(requiredPermission: string): Promise<boolean> {
+  const session = await validateSession();
+  if (!session) return false;
+
+  // 1. Fetch User Roles with Permissions
+  const assigned = await db.select({
+      permissions: roles.permissions
+  })
+  .from(userRoles)
+  .innerJoin(roles, eq(userRoles.roleId, roles.id))
+  .where(eq(userRoles.userId, session.userId));
+
+  // 2. Flatten permissions
+  const allPermissions = assigned.flatMap(r => r.permissions || []);
+
+  // 3. Check for exact match or wildcard '*'
+  return allPermissions.includes(requiredPermission) || allPermissions.includes('*');
+}
+
+/**
+ * Require a permission - throws Error if not allowed
+ * Use this at the top of Server Actions
+ */
+export async function requirePermission(permission: string): Promise<void> {
+  const isAllowed = await checkPermission(permission);
+  if (!isAllowed) {
+    throw new Error(`Forbidden: Missing '${permission}' permission`);
+  }
+}
+
+/**
+ * Check if user has required role (Deprecated: Switch to Permissions)
+ */
+export async function requireRole(allowedRoles: string[]): Promise<boolean> {
+  const session = await validateSession();
+  
+  if (!session) {
+    return false;
+  }
+  
+  return allowedRoles.includes(session.role);
 }

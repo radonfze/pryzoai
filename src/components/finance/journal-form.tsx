@@ -72,7 +72,8 @@ export default function JournalEntryForm({ accounts }: { accounts: any[] }) {
 
     setLoading(true);
     try {
-        const res = await createManualJournal(data, "00000000-0000-0000-0000-000000000000");
+        // @ts-ignore
+        const res = await createManualJournal({ ...data, status: "posted" });
         if (res.success) {
             router.push("/finance/journals");
         } else {

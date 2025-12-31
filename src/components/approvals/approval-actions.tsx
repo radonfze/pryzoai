@@ -1,49 +1,88 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { approveDocumentAction } from "@/actions/approvals/manage-approval";
+import { manageApprovalRequest } from "@/actions/approvals/manage-approval";
+import { useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle, XCircle } from "lucide-react";
+import { Check, X, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
-export function ApprovalActions({ requestId }: { requestId: string }) {
+export default function ApprovalActions({ requestId }: { requestId: string }) {
   const [loading, setLoading] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [comments, setComments] = useState("");
   const router = useRouter();
 
-  async function handleAction(action: "approve" | "reject") {
+  const handleAction = async (action: "APPROVE" | "REJECT") => {
     setLoading(true);
     try {
-      // Logic for reject can be added to manage-approval later or use same action with status arg
-      // For now assuming approveDocumentAction handles approval.
-      // If we need reject, we should implement it. 
-      // Current implementation only has approve.
-      
-      const res = await approveDocumentAction(requestId, "Approved via UI");
+      const res = await manageApprovalRequest(requestId, action, comments);
       if (res.success) {
-        toast.success(`Request ${action}d successfully`);
-        router.refresh();
+        toast.success(`Request ${action === "APPROVE" ? "Approved" : "Rejected"}`);
+        setRejectOpen(false);
+        router.refresh(); 
       } else {
-        toast.error(res.error || "Action failed");
+        toast.error("Action Failed: " + res.message);
       }
-    } catch (error) {
-      toast.error("An error occurred");
+    } catch (e) {
+        toast.error("Error occurred");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex items-center gap-2">
+      {/* Approve Button */}
       <Button 
-        onClick={() => handleAction("approve")} 
+        size="sm" 
+        onClick={() => handleAction("APPROVE")} 
         disabled={loading}
         className="bg-green-600 hover:bg-green-700 text-white"
       >
-        <CheckCircle className="mr-2 h-4 w-4" />
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="mr-1 h-4 w-4" />}
         Approve
       </Button>
-      {/* Reject button omitted until implemented */}
+
+      {/* Reject Dialog */}
+      <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="destructive" disabled={loading}>
+                <X className="mr-1 h-4 w-4" /> Reject
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Reject Request?</DialogTitle>
+                  <DialogDescription>
+                      Please provide a reason for rejecting this request. The document will be reverted to Draft.
+                  </DialogDescription>
+              </DialogHeader>
+              <div className="py-2">
+                  <Textarea 
+                    placeholder="Reason for rejection..." 
+                    value={comments}
+                    onChange={(e) => setComments(e.target.value)}
+                  />
+              </div>
+              <DialogFooter>
+                  <Button variant="outline" onClick={() => setRejectOpen(false)}>Cancel</Button>
+                  <Button variant="destructive" onClick={() => handleAction("REJECT")} disabled={loading || !comments.trim()}>
+                      Confirm Rejection
+                  </Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
     </div>
   );
 }

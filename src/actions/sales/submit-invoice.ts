@@ -1,13 +1,12 @@
-"use server";
+import { getCompanyId, requirePermission, getUserId } from "@/lib/auth";
 
-import { db } from "@/db";
-import { salesInvoices, approvalRequests, approvalRules } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
-
-export async function submitInvoiceForApproval(invoiceId: string, userId: string): Promise<{ success: boolean; message: string }> {
+export async function submitInvoiceForApproval(invoiceId: string): Promise<{ success: boolean; message: string }> {
   try {
-    const companyId = "00000000-0000-0000-0000-000000000000"; // Generic Demo ID
+    const companyId = await getCompanyId();
+    const userId = await getUserId();
+    
+    // Check permission to submit (usually creates also submit)
+    await requirePermission("sales.invoices.create");
 
     // 1. Fetch Invoice
     const invoice = await db.query.salesInvoices.findFirst({

@@ -10,6 +10,8 @@ import {
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { getCompanyId } from "@/lib/auth";
+import { createStockMovement } from "@/lib/services/inventory-movement-service";
 
 export type ActionResponse = {
   success: boolean;
@@ -66,7 +68,8 @@ async function generateTransferNumber(companyId: string, transferDate: Date): Pr
 
 export async function createStockTransferAction(input: StockTransferInput): Promise<ActionResponse> {
   try {
-    const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, message: "Unauthorized" };
 
     if (!input.fromWarehouseId) return { success: false, message: "Source warehouse is required" };
     if (!input.toWarehouseId) return { success: false, message: "Destination warehouse is required" };
@@ -79,32 +82,63 @@ export async function createStockTransferAction(input: StockTransferInput): Prom
     }
 
     const transferDate = new Date(input.transferDate);
-    const transferNumber = await generateTransferNumber(DEMO_COMPANY_ID, transferDate);
+    const transferNumber = await generateTransferNumber(companyId, transferDate);
 
     const result = await db.transaction(async (tx) => {
+      // 1. Create Header
       const [transfer] = await tx.insert(stockTransfers).values({
-        companyId: DEMO_COMPANY_ID,
+        companyId,
         transferNumber,
         fromWarehouseId: input.fromWarehouseId,
         toWarehouseId: input.toWarehouseId,
         transferDate: input.transferDate,
         reference: input.reference,
         notes: input.notes,
-        status: "draft",
-        isPosted: false,
+        status: "completed", // Auto-complete for now to trigger movement immediately
+        isPosted: true,
       }).returning();
 
-      await tx.insert(stockTransferLines).values(
-        input.lines.map((line, index) => ({
-          companyId: DEMO_COMPANY_ID,
-          transferId: transfer.id,
-          lineNumber: index + 1,
-          itemId: line.itemId,
-          quantity: line.quantity.toString(),
-          uom: line.uom,
-          notes: line.notes,
-        }))
-      );
+      // 2. Create Lines & Move Stock
+      for (const [index, line] of input.lines.entries()) {
+          // Insert Line
+          await tx.insert(stockTransferLines).values({
+            companyId,
+            transferId: transfer.id,
+            lineNumber: index + 1,
+            itemId: line.itemId,
+            quantity: line.quantity.toString(),
+            uom: line.uom,
+            notes: line.notes,
+          });
+
+          // Move Stock OUT from Source
+          await createStockMovement({
+              companyId,
+              warehouseId: input.fromWarehouseId,
+              itemId: line.itemId,
+              transactionType: "transfer_out",
+              quantityChange: -Math.abs(line.quantity), // Negative
+              documentType: "stock_transfer",
+              documentId: transfer.id,
+              documentNumber: transferNumber,
+              reference: `Transfer to ${input.toWarehouseId}`, // Ideally warehouse Name
+              transactionDate: transferDate
+          }, tx);
+
+          // Move Stock IN to Destination
+          await createStockMovement({
+            companyId,
+            warehouseId: input.toWarehouseId,
+            itemId: line.itemId,
+            transactionType: "transfer_in",
+            quantityChange: Math.abs(line.quantity), // Positive
+            documentType: "stock_transfer",
+            documentId: transfer.id,
+            documentNumber: transferNumber,
+            reference: `Transfer from ${input.fromWarehouseId}`,
+            transactionDate: transferDate
+        }, tx);
+      }
 
       return { transfer };
     });

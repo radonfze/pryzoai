@@ -198,7 +198,8 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
           Number(subTotal),
           Number(totalTax),
           Number(grandTotal),
-          glMapping
+          glMapping,
+          tx // 5b. Pass transaction context
         );
 
         // 6. [NEW] Auto-Deduct Inventory (Fix applied)

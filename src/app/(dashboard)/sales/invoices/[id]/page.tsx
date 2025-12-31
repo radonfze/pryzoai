@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Printer, Download, ArrowLeft, Edit, Home } from "lucide-react";
 import Link from "next/link";
+import InvoiceActions from "@/components/sales/invoice-actions";
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +67,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                 <Download className="mr-2 h-4 w-4" />
                 Email Invoice
             </Button>
+            <InvoiceActions id={id} status={invoice.status} isPosted={invoice.isPosted || false} />
         </div>
       </div>
 

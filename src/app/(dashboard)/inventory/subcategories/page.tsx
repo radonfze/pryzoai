@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { createActionColumn } from "@/components/ui/data-table-columns";
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Layers } from "lucide-react";
 import Link from "next/link";
 
 export default async function SubcategoriesPage() {
@@ -55,7 +55,7 @@ export default async function SubcategoriesPage() {
         module="inventory"
         title="Subcategories"
         description="Manage item subcategories (Level 2)"
-        icon="Layers"
+        icon={Layers}
       >
         <Link href="/inventory/subcategories/new">
           <Button size="sm" className="gap-2">

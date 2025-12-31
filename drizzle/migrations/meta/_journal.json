@@ -148,6 +148,13 @@
       "when": 1767020587062,
       "tag": "0020_cute_rhino",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1767202113375,
+      "tag": "0021_tearful_whistler",
+      "breakpoints": true
     }
   ]
 }

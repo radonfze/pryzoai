@@ -19,8 +19,9 @@ export function middleware(request: NextRequest) {
   // Check if route is public
   const isPublicRoute = PUBLIC_ROUTES.some((route) => path.startsWith(route));
   
-  // Check authentication (simple cookie-based for demo)
-  const isAuthenticated = request.cookies.get("pryzo-auth")?.value === "true";
+  // Check authentication using proper session cookie
+  const sessionCookie = request.cookies.get("pryzoft_session");
+  const isAuthenticated = !!sessionCookie?.value;
 
   // Redirect to login if not authenticated and not on public route
   if (!isAuthenticated && !isPublicRoute) {

@@ -113,6 +113,7 @@ export const salesInvoices = pgTable("sales_invoices", {
   id: uuid("id").primaryKey().defaultRandom(),
   companyId: uuid("company_id").notNull().references(() => companies.id),
   branchId: uuid("branch_id").references(() => branches.id),
+  warehouseId: uuid("warehouse_id").references(() => warehouses.id),
   customerId: uuid("customer_id").notNull().references(() => customers.id),
   salesOrderId: uuid("sales_order_id").references(() => salesOrders.id),
   

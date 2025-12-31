@@ -5,6 +5,7 @@ import { journalEntries, journalLines, chartOfAccounts } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { getCompanyId } from "@/lib/auth";
 import { generateNextNumber } from "@/lib/services/number-generator";
+import { validatePostingPeriod } from "@/lib/services/period-service";
 
 /**
  * GL Posting Service
@@ -30,6 +31,7 @@ export interface GLPostingParams {
   branchId?: string;
   isReversal?: boolean;
   originalJournalId?: string;
+  tx?: any; // Transaction context
 }
 
 export interface GLPostingResult {
@@ -44,7 +46,20 @@ export interface GLPostingResult {
  */
 export async function createGLPosting(params: GLPostingParams): Promise<GLPostingResult> {
   try {
+    const database = params.tx || db;
     const companyId = await getCompanyId();
+
+    // 0. Validate Fiscal Period (New Security Layer)
+    // We only validate period for new postings, not necessarily for historical migrations or system overrides if needed later.
+    // But for standard flow, this is critical.
+    if (params.sourceType !== 'reversal') { 
+        // Reversals might need special handling, but generally even reversals should only happen in OPEN periods (current period).
+        // Let's enforce it for everything for now.
+        await validatePostingPeriod(params.postingDate, companyId, database);
+    } else {
+        // Even for reversals, the "Reveral Entry" date must be in an open period.
+        await validatePostingPeriod(params.postingDate, companyId, database);
+    }
     
     // Validate lines balance (debits = credits)
     const totalDebits = params.lines.reduce((sum, line) => sum + (line.debit || 0), 0);
@@ -59,7 +74,7 @@ export async function createGLPosting(params: GLPostingParams): Promise<GLPostin
     
     // Validate all accounts exist
     for (const line of params.lines) {
-      const account = await db.query.chartOfAccounts.findFirst({
+      const account = await database.query.chartOfAccounts.findFirst({
         where: eq(chartOfAccounts.id, line.accountId)
       });
       
@@ -75,7 +90,7 @@ export async function createGLPosting(params: GLPostingParams): Promise<GLPostin
     const journalNumber = await generateNextNumber(companyId, "JV", "journal_entries");
     
     // Create journal entry
-    const [journal] = await db.insert(journalEntries).values({
+    const [journal] = await database.insert(journalEntries).values({
       companyId,
       branchId: params.branchId,
       entryNumber: journalNumber,
@@ -103,12 +118,12 @@ export async function createGLPosting(params: GLPostingParams): Promise<GLPostin
       costCenterId: line.costCenterId,
     }));
     
-    await db.insert(journalLines).values(lineValues);
+    await database.insert(journalLines).values(lineValues);
     
     // Update account balances
     for (const line of params.lines) {
       const netAmount = (line.debit || 0) - (line.credit || 0);
-      await db.update(chartOfAccounts)
+      await database.update(chartOfAccounts)
         .set({
           currentBalance: sql`${chartOfAccounts.currentBalance} + ${netAmount}`,
           updatedAt: new Date(),
@@ -137,13 +152,15 @@ export async function createGLPosting(params: GLPostingParams): Promise<GLPostin
 export async function createReversalPosting(
   originalJournalId: string,
   reversalDate: Date,
-  reason: string
+  reason: string,
+  tx?: any
 ): Promise<GLPostingResult> {
   try {
+    const database = tx || db;
     const companyId = await getCompanyId();
     
     // Get original journal with lines
-    const originalJournal = await db.query.journalEntries.findFirst({
+    const originalJournal = await database.query.journalEntries.findFirst({
       where: eq(journalEntries.id, originalJournalId),
       with: { lines: true }
     });
@@ -174,6 +191,7 @@ export async function createReversalPosting(
       branchId: originalJournal.branchId || undefined,
       isReversal: true,
       originalJournalId: originalJournalId,
+      tx // Pass transaction
     });
     
   } catch (error: any) {
@@ -222,7 +240,8 @@ export async function postSalesInvoiceToGL(
   subtotal: number,
   vatAmount: number,
   total: number,
-  glMapping: GLAccountMapping
+  glMapping: GLAccountMapping,
+  tx?: any
 ): Promise<GLPostingResult> {
   const lines: GLLine[] = [
     // Debit: Accounts Receivable
@@ -255,6 +274,7 @@ export async function postSalesInvoiceToGL(
     postingDate: invoiceDate,
     description: `Sales Invoice ${invoiceNumber}`,
     lines,
+    tx // Pass transaction
   });
 }
 
@@ -269,7 +289,8 @@ export async function postPurchaseBillToGL(
   subtotal: number,
   vatAmount: number,
   total: number,
-  glMapping: GLAccountMapping
+  glMapping: GLAccountMapping,
+  tx?: any
 ): Promise<GLPostingResult> {
   const lines: GLLine[] = [
     // Debit: Inventory/Expense
@@ -303,6 +324,7 @@ export async function postPurchaseBillToGL(
     postingDate: billDate,
     description: `Purchase Bill ${billNumber}`,
     lines,
+    tx // Pass transaction
   });
 }
 
@@ -315,7 +337,8 @@ export async function postPaymentToGL(
   paymentDate: Date,
   amount: number,
   paymentMethod: 'cash' | 'bank' | 'cheque',
-  glMapping: GLAccountMapping
+  glMapping: GLAccountMapping,
+  tx?: any
 ): Promise<GLPostingResult> {
   const bankAccount = paymentMethod === 'cash' ? glMapping.cash : glMapping.bank;
   
@@ -337,5 +360,6 @@ export async function postPaymentToGL(
         description: `Payment ${paymentNumber} - AR Reduction`
       }
     ],
+    tx // Pass transaction
   });
 }

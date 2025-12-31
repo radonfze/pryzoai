@@ -38,6 +38,13 @@ async function main() {
         }
     };
 
+    // Projects & HR (Delete first as they depend on Masters)
+    await safeDelete(schema.projectTasks, "projectTasks");
+    await safeDelete(schema.projects, "projects");
+    await safeDelete(schema.attendance, "attendance");
+    await safeDelete(schema.workOrders, "workOrders");
+    await safeDelete(schema.employees, "employees"); // Depends on User/Company
+    
     // Sales
     await safeDelete(schema.salesLines, "salesLines");
     await safeDelete(schema.salesInvoices, "salesInvoices");
@@ -54,28 +61,16 @@ async function main() {
     await safeDelete(schema.stockTransactions, "stockTransactions");
     await safeDelete(schema.stockLedger, "stockLedger");
     await safeDelete(schema.items, "items");
-    console.log("Deleted items");
-
-    // CRM
-    await safeDelete(schema.customers, "customers");
-    console.log("Deleted customers");
-    await safeDelete(schema.suppliers, "suppliers");
-    console.log("Deleted suppliers");
     
-    // Projects & HR
-    await safeDelete(schema.projectTasks, "projectTasks");
-    console.log("Deleted projectTasks");
-    await safeDelete(schema.workOrders, "workOrders");
-    console.log("Deleted workOrders");
-    await safeDelete(schema.projects, "projects");
-    console.log("Deleted projects");
-    await safeDelete(schema.attendance, "attendance");
-    await safeDelete(schema.employees, "employees");
+    // CRM (Masters)
+    await safeDelete(schema.customers, "customers"); // Projects depend on this
+    await safeDelete(schema.suppliers, "suppliers");
     
     // Settings
     await safeDelete(schema.warehouses, "warehouses");
     await safeDelete(schema.chartOfAccounts, "chartOfAccounts");
     await safeDelete(schema.bankAccounts, "bankAccounts");
+    await safeDelete(schema.fiscalPeriods, "fiscalPeriods");
     await safeDelete(schema.taxes, "taxes");
     await safeDelete(schema.paymentTerms, "paymentTerms");
     await safeDelete(schema.currencies, "currencies");
@@ -86,7 +81,14 @@ async function main() {
     // Clear Core
     await safeDelete(schema.roles, "roles");
     await safeDelete(schema.users, "users");
-    // Don't delete company if possible, or delete last
+    // Core & Logs
+    try {
+        await safeDelete(schema["numberAllocationLog"], "numberAllocationLog"); // Might not be exported directly
+    } catch (e) { console.log("Skipping numberAllocationLog delete (maybe not identifying correctly)"); }
+
+    await safeDelete(schema.glMappings, "glMappings");
+    await safeDelete(schema.numberSeries, "numberSeries");
+
     await safeDelete(schema.companies, "companies");
 
     console.log("✅ Data cleared");
@@ -147,6 +149,7 @@ async function main() {
         companyId: COMPANY_ID,
         role: "admin",
         isActive: true,
+        passwordHash: hashedPassword,
         createdAt: new Date(),
       },
       {
@@ -156,6 +159,7 @@ async function main() {
         companyId: COMPANY_ID,
         role: "user",
         isActive: true,
+        passwordHash: hashedPassword,
         createdAt: new Date(),
       }
     ]);
@@ -178,6 +182,20 @@ async function main() {
       symbol: "AED",
       isBaseCurrency: true,
       isActive: true
+    });
+
+    // 4b. Create Fiscal Year
+    console.log("Creating Fiscal Periods...");
+    await db.insert(schema.fiscalPeriods).values({
+      id: uuidv4(),
+      companyId: COMPANY_ID,
+      periodName: "FY 2025",
+      startDate: "2025-01-01",
+      endDate: "2025-12-31",
+      fiscalYear: 2025,
+      periodNumber: 1,
+      status: "open",
+      createdAt: new Date()
     });
 
     // 5. Create Warehouses

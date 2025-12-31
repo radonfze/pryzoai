@@ -1,9 +1,10 @@
 "use server";
 
 import { db } from "@/db";
-import { payrollRuns, payrollDetails, employees } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { payrollRuns, payrollDetails, employees, attendance, employeeLoans } from "@/db/schema";
+import { eq, and, between, sum, sql } from "drizzle-orm";
 import { getCompanyId } from "@/lib/auth";
+import { startOfMonth, endOfMonth, format } from "date-fns";
 
 export async function processPayrollRun(month: number, year: number): Promise<{ success: boolean; runId?: string; message: string }> {
     try {
@@ -46,16 +47,60 @@ export async function processPayrollRun(month: number, year: number): Promise<{ 
         let totalNet = 0;
 
         // 4. Calculate Pay for Each Employee
-        // (Simplified: Gross = Basic + Allowances. Deductions = 0 for now. Real engine would fetch attendance)
+        const startDate = startOfMonth(new Date(year, month - 1));
+        const endDate = endOfMonth(new Date(year, month - 1));
+        const formattedStart = format(startDate, 'yyyy-MM-dd');
+        const formattedEnd = format(endDate, 'yyyy-MM-dd');
+
+        // Fetch Attendance stats per employee for this month
+        // Group by employeeId -> Sum OT hours, count Absences
+        // Since Drizzle query builder grouping is tricky, we might loop or use raw sql. 
+        // For distinct employees, let's just query inside the loop for MVP or fetch all and map.
+        // Fetching all attendance logic:
+        const attendanceRecords = await db.query.attendance.findMany({
+            where: and(
+                eq(attendance.companyId, companyId),
+                between(attendance.attendanceDate, formattedStart, formattedEnd)
+            )
+        });
+
+        // Fetch Active Loans
+        const activeLoans = await db.query.employeeLoans.findMany({
+            where: and(
+                eq(employeeLoans.companyId, companyId),
+                eq(employeeLoans.status, 'active')
+            )
+        });
+
         const detailsData = activeEmployees.map(emp => {
+             // A. Earnings
             const basic = Number(emp.basicSalary || 0);
             const housing = Number(emp.housingAllowance || 0);
             const transport = Number(emp.transportAllowance || 0);
             const other = Number(emp.otherAllowance || 0);
             
-            const gross = basic + housing + transport + other;
-            const deductions = 0; // TODO: Integrate Leave/Loan deductions
-            const net = gross - deductions;
+            // B. Attendance Calculations
+            const empAttendance = attendanceRecords.filter(a => a.employeeId === emp.id);
+            
+            // B1. Overtime
+            const totalOTHours = empAttendance.reduce((acc, curr) => acc + Number(curr.overtimeHours || 0), 0);
+            // Formula: (Basic / 240 hours) * 1.5 * OT Hours. Assuming 30 days * 8 hrs = 240.
+            const hourlyRate = basic / 240; 
+            const overtimePay = Number((hourlyRate * 1.5 * totalOTHours).toFixed(2));
+
+            // B2. Absences (Unpaid)
+            // Count 'absent' status days
+            const absentDays = empAttendance.filter(a => a.status === 'absent').length;
+            const dailyRate = (basic + housing + transport + other) / 30; // Gross / 30
+            const absenceDeduction = Number((dailyRate * absentDays).toFixed(2));
+
+            // C. Loans
+            const empLoan = activeLoans.find(l => l.employeeId === emp.id);
+            const loanDeduction = empLoan ? Number(empLoan.monthlyDeduction) : 0;
+
+            const gross = basic + housing + transport + other + overtimePay;
+            const totalDeductions = absenceDeduction + loanDeduction;
+            const net = gross - totalDeductions;
 
             totalNet += net;
 
@@ -67,8 +112,11 @@ export async function processPayrollRun(month: number, year: number): Promise<{ 
                 housingAllowance: housing.toFixed(2),
                 transportAllowance: transport.toFixed(2),
                 otherAllowance: other.toFixed(2),
+                overtime: overtimePay.toFixed(2), // NEW
                 totalEarnings: gross.toFixed(2),
-                totalDeductions: deductions.toFixed(2),
+                absenceDeduction: absenceDeduction.toFixed(2), // NEW
+                loanDeduction: loanDeduction.toFixed(2), // NEW
+                totalDeductions: totalDeductions.toFixed(2),
                 netPay: net.toFixed(2),
                 paymentMethod: "wps"
             };

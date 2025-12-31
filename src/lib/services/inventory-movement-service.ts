@@ -111,6 +111,13 @@ export async function createStockMovement(params: StockMovementParams) {
   const currentQty = Number(ledger.quantityOnHand);
   const newQty = currentQty + quantityChange; 
   
+  // NEGATIVE STOCK CHECK
+  // By default, we BLOCK negative stock unless explicitly allowed (feature flag or param)
+  // For now, hardBlock = true.
+  if (newQty < 0) {
+      throw new Error(`Insufficient stock for Item ${itemId} in Warehouse ${warehouseId}. Current: ${currentQty}, Required: ${Math.abs(quantityChange)}`);
+  }
+
   // New Value
   const currentValue = Number(ledger.totalValue);
   const transactionValue = Math.abs(quantityChange) * costPerUnit;

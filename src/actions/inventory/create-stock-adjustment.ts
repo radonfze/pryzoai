@@ -5,6 +5,8 @@ import { stockAdjustments, stockAdjustmentLines, numberSeries, items, chartOfAcc
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { postStockAdjustmentToGL } from "@/lib/services/gl-posting-service";
+import { getCompanyId } from "@/lib/auth";
+import { createStockMovement } from "@/lib/services/inventory-movement-service";
 
 export type ActionResponse = { success: boolean; message: string; data?: any };
 type AdjustmentLine = { itemId: string; warehouseId: string; currentQty: number; adjustedQty: number; reason: string };
@@ -23,13 +25,11 @@ async function generateAdjustmentNumber(companyId: string, adjustmentDate: Date)
   return parts.join(series.separator || "-");
 }
 
-import { getCompanyId } from "@/lib/auth";
-
 export async function createStockAdjustmentAction(input: StockAdjustmentInput): Promise<ActionResponse> {
   try {
     const companyId = await getCompanyId();
     if (!companyId) return { success: false, message: "Unauthorized: No active company" };
-    const DEMO_COMPANY_ID = companyId;
+    
     if (!input.adjustmentDate || !input.lines?.length) return { success: false, message: "Invalid input" };
     
     // Validate and Fetch Costs
@@ -52,25 +52,22 @@ export async function createStockAdjustmentAction(input: StockAdjustmentInput): 
         totalVarianceValue += varianceValue;
     }
 
-    const adjustmentNumber = await generateAdjustmentNumber(DEMO_COMPANY_ID, new Date(input.adjustmentDate));
+    const adjustmentNumber = await generateAdjustmentNumber(companyId, new Date(input.adjustmentDate));
     
     // GL Account Fetch (Simulated for this action for now, or fetch standard accounts)
-    // Ideally use a helper to get default accounts.
-    // Simplifying for this "Fix": Hardcode Fetch of accounts for mapping
-    const coaList = await db.query.chartOfAccounts.findMany({ where: eq(chartOfAccounts.companyId, DEMO_COMPANY_ID) });
+    const coaList = await db.query.chartOfAccounts.findMany({ where: eq(chartOfAccounts.companyId, companyId) });
     const getAcc = (code: string) => coaList.find(c => c.code === code)?.id || "";
     
     const glMapping = {
         inventory: getAcc("1200"), // Inventory Asset
         costOfGoodsSold: getAcc("5000"), // COGS / Adjustment Expense
-        // Others not needed for this action
         salesRevenue: "", salesVat: "", accountsReceivable: "", accountsPayable: "", purchaseVat: "", bank: "", cash: "", payrollExpense: "", payrollPayable: ""
     };
 
     const result = await db.transaction(async (tx) => {
       // 1. Create Adjustment Header
       const [adj] = await tx.insert(stockAdjustments).values({ 
-          companyId: DEMO_COMPANY_ID, 
+          companyId, 
           adjustmentNumber, 
           adjustmentDate: input.adjustmentDate, 
           notes: input.notes, 
@@ -78,18 +75,38 @@ export async function createStockAdjustmentAction(input: StockAdjustmentInput): 
           isPosted: true 
       }).returning();
       
-      // 2. Create Adjustment Lines
-      await tx.insert(stockAdjustmentLines).values(input.lines.map((l, i) => ({ 
-          companyId: DEMO_COMPANY_ID, 
-          adjustmentId: adj.id, 
-          lineNumber: i + 1, 
-          itemId: l.itemId, 
-          warehouseId: l.warehouseId, 
-          currentQty: l.currentQty.toString(), 
-          adjustedQty: l.adjustedQty.toString(), 
-          variance: (l.adjustedQty - l.currentQty).toFixed(2), 
-          reason: l.reason 
-      })));
+      // 2. Create Lines & Move Stock
+      for (const [i, l] of input.lines.entries()) {
+           // Insert DB Line
+           await tx.insert(stockAdjustmentLines).values({ 
+              companyId, 
+              adjustmentId: adj.id, 
+              lineNumber: i + 1, 
+              itemId: l.itemId, 
+              warehouseId: l.warehouseId, 
+              currentQty: l.currentQty.toString(), 
+              adjustedQty: l.adjustedQty.toString(), 
+              variance: (l.adjustedQty - l.currentQty).toFixed(3), 
+              reason: l.reason 
+          });
+
+          // Stock Movement
+          const variance = l.adjustedQty - l.currentQty;
+          if (variance !== 0) {
+              await createStockMovement({
+                  companyId,
+                  warehouseId: l.warehouseId,
+                  itemId: l.itemId,
+                  transactionType: variance > 0 ? "adjustment_in" : "adjustment_out",
+                  quantityChange: variance,
+                  documentType: "stock_adjustment",
+                  documentId: adj.id,
+                  documentNumber: adjustmentNumber,
+                  reference: l.reason || "Stock Adjustment",
+                  transactionDate: new Date(input.adjustmentDate)
+              }, tx);
+          }
+      }
       
       // 3. GL Posting
       // Only post if variance value is non-zero and we have accounts mapped
@@ -99,7 +116,8 @@ export async function createStockAdjustmentAction(input: StockAdjustmentInput): 
               adjustmentNumber, 
               new Date(input.adjustmentDate), 
               totalVarianceValue, 
-              glMapping
+              glMapping,
+              tx // Pass transaction
           );
       }
 

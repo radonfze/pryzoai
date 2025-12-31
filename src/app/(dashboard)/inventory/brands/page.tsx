@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { createActionColumn } from "@/components/ui/data-table-columns";
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Tag } from "lucide-react";
 import Link from "next/link";
 
 export default async function BrandsPage() {
@@ -52,7 +52,7 @@ export default async function BrandsPage() {
         module="inventory"
         title="Brands"
         description="Manage item brands"
-        icon="Tag"
+        icon={Tag}
       >
         <Link href="/inventory/brands/new">
           <Button size="sm" className="gap-2">

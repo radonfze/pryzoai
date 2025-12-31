@@ -107,13 +107,15 @@ export default async function PayrollRunDetailPage({ params }: { params: { id: s
       <Card>
           <CardHeader><CardTitle>Employee Payslips</CardTitle></CardHeader>
           <CardContent>
-              <Table>
+                  <Table>
                   <TableHeader>
                       <TableRow>
                           <TableHead>Employee</TableHead>
                           <TableHead className="text-right">Basic</TableHead>
                           <TableHead className="text-right">Allowances</TableHead>
-                          <TableHead className="text-right">Deductions</TableHead>
+                          <TableHead className="text-right">Overtime</TableHead>
+                          <TableHead className="text-right">Absence</TableHead>
+                          <TableHead className="text-right">Other Ded.</TableHead>
                           <TableHead className="text-right">Net Pay</TableHead>
                           <TableHead className="text-center">Paid</TableHead>
                       </TableRow>
@@ -126,8 +128,10 @@ export default async function PayrollRunDetailPage({ params }: { params: { id: s
                                   <div className="text-xs text-muted-foreground">{detail.employee?.code}</div>
                               </TableCell>
                               <TableCell className="text-right text-muted-foreground">{Number(detail.basicSalary).toLocaleString()}</TableCell>
-                              <TableCell className="text-right text-muted-foreground">{Number(detail.totalEarnings - detail.basicSalary).toLocaleString()}</TableCell>
-                              <TableCell className="text-right text-red-500">-{Number(detail.totalDeductions).toLocaleString()}</TableCell>
+                              <TableCell className="text-right text-muted-foreground">{Number(detail.totalEarnings - detail.overtime - detail.basicSalary).toLocaleString()}</TableCell>
+                              <TableCell className="text-right text-blue-600">+{Number(detail.overtime).toLocaleString()}</TableCell>
+                              <TableCell className="text-right text-red-500">-{Number(detail.absenceDeduction).toLocaleString()}</TableCell>
+                              <TableCell className="text-right text-red-400">-{Number(detail.totalDeductions - detail.absenceDeduction).toLocaleString()}</TableCell>
                               <TableCell className="text-right font-bold">{Number(detail.netPay).toLocaleString()}</TableCell>
                               <TableCell className="text-center">
                                   {detail.isPaid ? 

@@ -30,6 +30,7 @@ export const itemCategories = pgTable("item_categories", {
   nameAr: varchar("name_ar", { length: 150 }), // Arabic name
   description: text("description"),
   sortOrder: integer("sort_order").default(0),
+  defaultUomId: varchar("default_uom_id", { length: 20 }), // FK to uoms.code (logical) or we can make it loose
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
