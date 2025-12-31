@@ -26,19 +26,30 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // TODO: Replace with actual authentication
-      // For now, simulate login
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      if (formData.email && formData.password) {
-        // Set a simple session cookie for demo
-        document.cookie = "pryzo-auth=true; path=/; max-age=86400";
-        router.push("/dashboard");
-      } else {
-        setError("Please enter email and password");
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Login failed");
       }
-    } catch {
-      setError("Login failed. Please try again.");
+
+      if (data.success) {
+        // Cookie is set by the server
+        router.push("/dashboard");
+        router.refresh(); // Refresh to update server components with new session
+      } else {
+        setError(data.error || "Login failed");
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred during login");
     } finally {
       setLoading(false);
     }
