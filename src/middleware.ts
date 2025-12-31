@@ -23,8 +23,11 @@ export function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get("pryzoft_session");
   const isAuthenticated = !!sessionCookie?.value;
 
+  console.log(`[Middleware] Path: ${path} | Cookie: ${isAuthenticated ? 'YES' : 'NO'} | Public: ${isPublicRoute}`);
+
   // Redirect to login if not authenticated and not on public route
   if (!isAuthenticated && !isPublicRoute) {
+    console.log(`[Middleware] Redirecting to login: ${path}`);
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", path);
     return NextResponse.redirect(loginUrl);

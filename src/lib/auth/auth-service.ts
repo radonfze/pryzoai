@@ -205,9 +205,9 @@ export async function login(
     const cookieStore = await cookies();
     cookieStore.set(SESSION_COOKIE_NAME, sessionId, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // FORCE FALSE FOR DEBUGGING
       sameSite: "lax",
-      maxAge: SESSION_DURATION_MS / 1000, // Convert to seconds
+      maxAge: 30 * 24 * 60 * 60, // 30 days
       path: "/",
     });
     
