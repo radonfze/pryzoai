@@ -12,6 +12,7 @@ export * from "./schema/items";
 export * from "./schema/coa";
 export * from "./schema/finance-masters";
 export * from "./schema/employees";
+export * from "./schema/attendance";
 export * from "./schema/documents";
 export * from "./schema/inventory";
 export * from "./schema/sales";

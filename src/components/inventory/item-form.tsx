@@ -192,6 +192,7 @@ export default function ItemForm({ initialData, categories, subCategories, brand
                         )} />
                     </div>
                      <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="categoryId" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Category</FormLabel>
                                 <Select onValueChange={(val) => {

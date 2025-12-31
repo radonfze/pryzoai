@@ -1,5 +1,7 @@
 import { db } from "@/db";
-import { items, categories, brands } from "@/db/schema";
+import { items } from "@/db/schema/items";
+import { itemCategories, itemSubcategories, itemBrands, itemModels, brandSubcategories } from "@/db/schema/item-hierarchy";
+import { uoms } from "@/db/schema/items";
 import { eq, and } from "drizzle-orm";
 import { getCompanyId } from "@/lib/auth";
 import ItemForm from "@/components/inventory/item-form";
@@ -17,9 +19,13 @@ export default async function EditItemPage({ params }: { params: { id: string } 
 
     if (!item) notFound();
 
-    const [categoryList, brandList] = await Promise.all([
-        db.query.categories.findMany({ where: and(eq(categories.companyId, companyId), eq(categories.isActive, true)) }),
-        db.query.brands.findMany({ where: and(eq(brands.companyId, companyId), eq(brands.isActive, true)) })
+    const [categoryList, subCategoryList, brandList, modelList, uomList, brandMappings] = await Promise.all([
+        db.query.itemCategories.findMany({ where: and(eq(itemCategories.companyId, companyId), eq(itemCategories.isActive, true)) }),
+        db.query.itemSubcategories.findMany({ where: and(eq(itemSubcategories.companyId, companyId), eq(itemSubcategories.isActive, true)) }),
+        db.query.itemBrands.findMany({ where: and(eq(itemBrands.companyId, companyId), eq(itemBrands.isActive, true)) }),
+        db.query.itemModels.findMany({ where: and(eq(itemModels.companyId, companyId), eq(itemModels.isActive, true)) }),
+        db.query.uoms.findMany({ where: eq(uoms.companyId, companyId) }),
+        db.select().from(brandSubcategories),
     ]);
 
   return (
@@ -30,7 +36,15 @@ export default async function EditItemPage({ params }: { params: { id: string } 
         description="Update item details."
         icon={Edit}
       />
-      <ItemForm initialData={item} categories={categoryList} brands={brandList} />
+      <ItemForm 
+        initialData={item} 
+        categories={categoryList} 
+        subCategories={subCategoryList}
+        brands={brandList} 
+        models={modelList}
+        uoms={uomList}
+        brandMappings={brandMappings}
+      />
     </div>
   );
 }
