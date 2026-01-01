@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ["/login", "/api/auth", "/_next", "/favicon.ico", "/debug-auth"];
+const PUBLIC_ROUTES = ["/login", "/api/auth", "/_next", "/favicon.ico", "/debug-auth", "/api/fix-categories", "/api/fix-db"];
 
 // Define restricted routes and their required permission levels or specific logic
 const RESTRICTED_ROUTES = [
