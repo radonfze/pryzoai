@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, ArrowUpDown, Eye, Edit, Trash, Package } from "lucide-react"
+import { MoreHorizontal, Eye, Edit, Package, AlertTriangle, Lock, Wrench } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +17,13 @@ import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 import { ViewItemDialog } from "@/components/inventory/item-view-dialog"
 import { formatCurrency } from "@/lib/utils"
 import { useState } from "react"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export type Item = {
   id: string
@@ -25,7 +32,12 @@ export type Item = {
   itemType: string
   sellingPrice: string | null
   isActive: boolean
-  // Add loose typing for relations to avoid ts errors without full schema update here
+  reorderLevel?: string | null
+  // Stock data from aggregation
+  stockOnHand?: string
+  stockReserved?: string
+  stockAvailable?: string
+  // Relations
   category?: any
   brand?: any
   subCategory?: any
@@ -35,7 +47,21 @@ export type Item = {
   barcode?: any
 }
 
-import { Checkbox } from "@/components/ui/checkbox"
+// Helper to check low stock
+const isLowStock = (item: Item) => {
+  const available = parseFloat(item.stockAvailable || "0");
+  const reorderLevel = parseFloat(item.reorderLevel || "0");
+  return item.itemType !== "service" && available > 0 && available <= reorderLevel;
+};
+
+const isOutOfStock = (item: Item) => {
+  const available = parseFloat(item.stockAvailable || "0");
+  return item.itemType !== "service" && available <= 0;
+};
+
+const hasReservations = (item: Item) => {
+  return parseFloat(item.stockReserved || "0") > 0;
+};
 
 export const columns: ColumnDef<Item>[] = [
   {
@@ -63,7 +89,7 @@ export const columns: ColumnDef<Item>[] = [
   {
     accessorKey: "code",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Item Code" />
+      <DataTableColumnHeader column={column} title="Code" />
     ),
     cell: ({ row }) => <div className="font-mono text-xs">{row.getValue("code")}</div>,
   },
@@ -73,9 +99,41 @@ export const columns: ColumnDef<Item>[] = [
       <DataTableColumnHeader column={column} title="Item Name" />
     ),
     cell: ({ row }) => {
+      const item = row.original;
       return (
-        <div className="font-medium">
-          {row.getValue("name")}
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{row.getValue("name")}</span>
+          {/* Visual Indicators */}
+          {item.itemType === "service" && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Wrench className="h-3.5 w-3.5 text-purple-500" />
+                </TooltipTrigger>
+                <TooltipContent>Service Item (Non-Stock)</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {isLowStock(item) && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                </TooltipTrigger>
+                <TooltipContent>Low Stock Warning</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {hasReservations(item) && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Lock className="h-3.5 w-3.5 text-blue-500" />
+                </TooltipTrigger>
+                <TooltipContent>Has Reservations</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       )
     },
@@ -85,7 +143,53 @@ export const columns: ColumnDef<Item>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Type" />
     ),
-    cell: ({ row }) => <div className="capitalize">{row.getValue("itemType")}</div>,
+    cell: ({ row }) => <div className="capitalize text-xs">{row.getValue("itemType")}</div>,
+  },
+  {
+    accessorKey: "stockOnHand",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="On Hand" />
+    ),
+    cell: ({ row }) => {
+      const item = row.original;
+      if (item.itemType === "service") return <span className="text-muted-foreground text-xs">N/A</span>;
+      const qty = parseFloat(item.stockOnHand || "0");
+      return <div className="text-right font-medium tabular-nums">{qty.toFixed(0)}</div>;
+    },
+  },
+  {
+    accessorKey: "stockReserved",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Reserved" />
+    ),
+    cell: ({ row }) => {
+      const item = row.original;
+      if (item.itemType === "service") return <span className="text-muted-foreground text-xs">N/A</span>;
+      const qty = parseFloat(item.stockReserved || "0");
+      return (
+        <div className={`text-right font-medium tabular-nums ${qty > 0 ? "text-blue-600" : ""}`}>
+          {qty.toFixed(0)}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "stockAvailable",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Available" />
+    ),
+    cell: ({ row }) => {
+      const item = row.original;
+      if (item.itemType === "service") return <span className="text-muted-foreground text-xs">N/A</span>;
+      const qty = parseFloat(item.stockAvailable || "0");
+      const isLow = isLowStock(item);
+      const isOut = isOutOfStock(item);
+      return (
+        <div className={`text-right font-medium tabular-nums ${isOut ? "text-red-600" : isLow ? "text-amber-600" : "text-green-600"}`}>
+          {qty.toFixed(0)}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "sellingPrice",
@@ -103,12 +207,24 @@ export const columns: ColumnDef<Item>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => {
-      const isActive = row.getValue("isActive")
-      return (
-        <Badge variant={isActive ? "default" : "secondary"}>
-          {isActive ? "Active" : "Inactive"}
-        </Badge>
-      )
+      const item = row.original;
+      const isActive = row.getValue("isActive");
+      const isOut = isOutOfStock(item);
+      const isLow = isLowStock(item);
+      
+      if (!isActive) {
+        return <Badge variant="secondary">Inactive</Badge>;
+      }
+      if (item.itemType === "service") {
+        return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200">Service</Badge>;
+      }
+      if (isOut) {
+        return <Badge variant="destructive">Out of Stock</Badge>;
+      }
+      if (isLow) {
+        return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200">Low Stock</Badge>;
+      }
+      return <Badge className="bg-green-100 text-green-700 hover:bg-green-200">In Stock</Badge>;
     },
   },
   {
