@@ -149,16 +149,16 @@ export default function ItemForm({ initialData, initialCode, categories, subCate
     const model = models.find(m => m.id === selectedModelId);
     const desc = watchedDescription;
 
-    const nameParts = [
-      cat?.name,
-      sub?.name,
-      brand?.name,
-      model?.name,
-      desc ? desc.trim() : null
-    ].filter(Boolean);
+    // Build name parts with proper casing
+    const nameParts: string[] = [];
+    if (cat?.name) nameParts.push(toTitleCase(cat.name));
+    if (sub?.name) nameParts.push(toTitleCase(sub.name));
+    if (brand?.name) nameParts.push(toTitleCase(brand.name));
+    if (model?.name) nameParts.push(model.name.toUpperCase()); // Model in UPPERCASE
+    if (desc?.trim()) nameParts.push(toTitleCase(desc.trim())); // Description in Title Case
 
     if (nameParts.length > 0) {
-      const generatedName = toTitleCase(nameParts.join(' '));
+      const generatedName = nameParts.join(' ');
       form.setValue("name", generatedName);
     }
   }, [selectedCategoryId, selectedSubCategoryId, selectedBrandId, selectedModelId, watchedDescription, categories, subCategories, brands, models, form, isEditing]);
