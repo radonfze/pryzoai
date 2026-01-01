@@ -47,7 +47,7 @@ export type ItemInput = {
     name: string;
     nameAr?: string;
     categoryId?: string;
-    subCategoryId?: string; // Optional if schema supports
+    subCategoryId?: string;
     brandId?: string;
     modelId?: string;
     uom: string;
@@ -59,13 +59,11 @@ export type ItemInput = {
     taxPercent: number;
     
     // Inventory
-    openingStock?: number; // Might handle separately? For now just master data
-    openingStockValue?: number;
     reorderLevel: number;
     reorderQty: number;
     
     // Flags
-    itemType: 'goods' | 'service';
+    itemType: 'stock' | 'service' | 'goods'; // 'goods' maps to 'stock' in DB
     isActive: boolean;
     hasBatchNo: boolean;
     hasSerialNo: boolean;
@@ -86,17 +84,32 @@ export async function createItemAction(input: ItemInput) {
         });
         if (existing) return { success: false, message: "Item code already exists" };
 
+        // Map 'goods' to 'stock' for DB enum
+        const dbItemType = input.itemType === 'goods' ? 'stock' : input.itemType;
+
         const [newItem] = await db.insert(items).values({
             companyId,
-            ...input,
+            code: input.code,
+            name: input.name,
+            nameAr: input.nameAr,
+            barcode: input.barcode,
+            description: input.description,
+            itemType: dbItemType as any,
+            categoryId: input.categoryId || null,
+            subCategoryId: input.subCategoryId || null,
+            brandId: input.brandId || null,
+            modelId: input.modelId || null,
+            uom: input.uom,
             costPrice: input.costPrice.toString(),
             sellingPrice: input.sellingPrice.toString(),
             minSellingPrice: input.minSellingPrice.toString(),
             taxPercent: input.taxPercent.toString(),
             reorderLevel: input.reorderLevel.toString(),
             reorderQty: input.reorderQty.toString(),
-            openingStock: (input.openingStock || 0).toString(),
-            openingStockValue: (input.openingStockValue || 0).toString(),
+            isActive: input.isActive,
+            hasBatchNo: input.hasBatchNo,
+            hasSerialNo: input.hasSerialNo,
+            hasExpiry: input.hasExpiry,
         }).returning();
 
         // TODO: specific handling for opening stock if > 0 (Create Adjustment/Receipt automatically?)
