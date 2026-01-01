@@ -1,6 +1,5 @@
-import { getSubcategories, deleteSubcategory } from "@/actions/inventory/subcategories";
-import { DataTable } from "@/components/ui/data-table";
-import { createActionColumn } from "@/components/ui/data-table-columns";
+import { getSubcategories } from "@/actions/inventory/subcategories";
+import { SubcategoriesClient } from "./client";
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { Button } from "@/components/ui/button";
 import { Plus, Layers } from "lucide-react";
@@ -8,46 +7,6 @@ import Link from "next/link";
 
 export default async function SubcategoriesPage() {
   const subcategories = await getSubcategories();
-
-  const columns = [
-    {
-      accessorKey: "code",
-      header: "Code",
-    },
-    {
-      accessorKey: "name",
-      header: "Name",
-    },
-    {
-      accessorKey: "category.name",
-      header: "Category",
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-    },
-    {
-      accessorKey: "isActive",
-      header: "Status",
-      cell: ({ row }: any) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            row.original.isActive
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          {row.original.isActive ? "Active" : "Inactive"}
-        </span>
-      ),
-    },
-    createActionColumn({
-      basePath: "/inventory/subcategories",
-      hasEdit: true,
-      hasDelete: true,
-      onDelete: deleteSubcategory
-    }),
-  ];
 
   return (
     <div className="space-y-6">
@@ -65,12 +24,7 @@ export default async function SubcategoriesPage() {
         </Link>
       </GradientHeader>
 
-      <DataTable
-        columns={columns}
-        data={subcategories}
-        searchKey="name"
-        exportName="subcategories"
-      />
+      <SubcategoriesClient data={subcategories} />
     </div>
   );
 }

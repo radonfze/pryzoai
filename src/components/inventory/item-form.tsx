@@ -327,13 +327,7 @@ export default function ItemForm({ initialData, categories, subCategories, brand
              <Card>
                 <CardHeader><CardTitle>Inventory Controls</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                     <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                        <div className="space-y-1 leading-none">
-                            <FormLabel>Active Item</FormLabel>
-                            <FormDescription>Item can be used in transactions</FormDescription>
-                        </div>
-                    </div>
+                     {/* Active Field moved below */}
 
                     <FormField control={form.control} name="isActive" render={({ field }) => (
                          <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2">
