@@ -73,3 +73,51 @@ export async function deleteUom(id: string) {
       return { success: false, error: "Cannot delete UOM in use" };
     }
 }
+
+export async function getUom(id: string) {
+  const companyId = await getCompanyId();
+  if (!companyId) return null;
+
+  const [uom] = await db.select().from(uoms)
+    .where(and(eq(uoms.id, id), eq(uoms.companyId, companyId)))
+    .limit(1);
+  
+  return uom || null;
+}
+
+export async function updateUom(id: string, data: z.infer<typeof uomSchema>) {
+  const companyId = await getCompanyId();
+  if (!companyId) throw new Error("Unauthorized");
+
+  const validation = uomSchema.safeParse(data);
+  if (!validation.success) {
+    return { success: false, error: validation.error.flatten().fieldErrors };
+  }
+
+  try {
+    // Check if code exists for another UOM
+    const existing = await db.select().from(uoms)
+      .where(and(
+        eq(uoms.companyId, companyId), 
+        eq(uoms.code, validation.data.code)
+      ))
+      .limit(1);
+    
+    if (existing.length > 0 && existing[0].id !== id) {
+      return { success: false, error: "UOM Code already exists" };
+    }
+
+    await db.update(uoms)
+      .set({
+        ...validation.data,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(uoms.id, id), eq(uoms.companyId, companyId)));
+
+    revalidatePath("/inventory/uom");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to update uom:", error);
+    return { success: false, error: error.message };
+  }
+}

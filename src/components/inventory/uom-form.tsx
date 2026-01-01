@@ -20,7 +20,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { createUom } from "@/actions/inventory/uom";
+import { createUom, updateUom } from "@/actions/inventory/uom";
 import { Loader2, Save, X } from "lucide-react";
 
 const formSchema = z.object({
@@ -32,16 +32,26 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface UomFormProps {
-  initialData?: FormValues & { id: string };
+  initialData?: {
+    id: string;
+    code: string;
+    name: string;
+    isActive: boolean;
+  };
 }
 
 export function UomForm({ initialData }: UomFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const isEditing = !!initialData;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
+    defaultValues: initialData ? {
+      code: initialData.code,
+      name: initialData.name,
+      isActive: initialData.isActive,
+    } : {
       code: "",
       name: "",
       isActive: true,
@@ -51,13 +61,19 @@ export function UomForm({ initialData }: UomFormProps) {
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
-      const result = await createUom(values);
+      let result;
+      if (isEditing) {
+        result = await updateUom(initialData.id, values);
+      } else {
+        result = await createUom(values);
+      }
+      
       if (result.success) {
-        toast.success("UOM created successfully");
+        toast.success(isEditing ? "UOM updated successfully" : "UOM created successfully");
         router.push("/inventory/uom");
         router.refresh();
       } else {
-        toast.error(typeof result.error === 'string' ? result.error : "Failed to create UOM");
+        toast.error(typeof result.error === 'string' ? result.error : "Failed to save UOM");
       }
     } catch (error) {
       console.error(error);
@@ -66,6 +82,7 @@ export function UomForm({ initialData }: UomFormProps) {
       setLoading(false);
     }
   };
+
 
   return (
     <Form {...form}>
