@@ -389,6 +389,35 @@ export default function ItemForm({ initialData, initialCode, categories, subCate
                             </FormItem>
                         )} />
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="alternativeUom" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Alternative UOM</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || "__NONE__"}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select Alt UOM" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="__NONE__">None</SelectItem>
+                                        {uoms && uoms.map(u => (
+                                            <SelectItem key={u.id} value={u.code}>
+                                                {u.code} ({u.name})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="conversionFactor" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Conversion Factor</FormLabel>
+                                <FormControl><Input type="number" placeholder="1 Alt = X Base" {...field} /></FormControl>
+                                <FormDescription>
+                                    1 {form.watch("alternativeUom") && form.watch("alternativeUom") !== "__NONE__" ? form.watch("alternativeUom") : "Alt"} = X {form.watch("uom") || "Base"}
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                    </div>
                     <Separator />
                      <div className="grid grid-cols-2 gap-4">
                         <FormField control={form.control} name="costPrice" render={({ field }) => (
