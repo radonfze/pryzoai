@@ -96,15 +96,79 @@ const menuItems = [
     color: "text-emerald-500",
     gradient: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md",
     items: [
-      { title: "Items", href: "/inventory/items", icon: Boxes },
-      { title: "Categories", href: "/inventory/categories", icon:  Package },
-      { title: "Subcategories", href: "/inventory/subcategories", icon: Layers },
-      { title: "Brands", href: "/inventory/brands", icon: Tag },
-      { title: "Models", href: "/inventory/models", icon: Boxes },
+      { 
+        title: "Items", 
+        href: "/inventory/items", 
+        icon: Boxes,
+        subItems: [
+           { title: "List", href: "/inventory/items" },
+           { title: "New Item", href: "/inventory/items/new" }
+        ]
+      },
+      { 
+        title: "Categories", 
+        href: "/inventory/categories", 
+        icon:  Package,
+        subItems: [
+           { title: "List", href: "/inventory/categories" },
+           { title: "New Category", href: "/inventory/categories/new" }
+        ]
+      },
+      { 
+        title: "Subcategories", 
+        href: "/inventory/subcategories", 
+        icon: Layers,
+        subItems: [
+           { title: "List", href: "/inventory/subcategories" },
+           { title: "New Subcategory", href: "/inventory/subcategories/new" }
+        ]
+      },
+      { 
+        title: "Brands", 
+        href: "/inventory/brands", 
+        icon: Tag,
+        subItems: [
+           { title: "List", href: "/inventory/brands" },
+           { title: "New Brand", href: "/inventory/brands/new" }
+        ]
+      },
+      { 
+        title: "Models", 
+        href: "/inventory/models", 
+        icon: Boxes,
+        subItems: [
+           { title: "List", href: "/inventory/models" },
+           { title: "New Model", href: "/inventory/models/new" }
+        ]
+      },
       { title: "Stock Ledger", href: "/inventory/ledger", icon: BookOpen },
-      { title: "Stock Transfers", href: "/inventory/transfers", icon: ClipboardList },
-      { title: "Adjustments", href: "/inventory/adjustments/new", icon: ClipboardList },
-      { title: "Stock Count", href: "/inventory/count", icon: ClipboardList },
+      { 
+        title: "Stock Transfers", 
+        href: "/inventory/transfers", 
+        icon: ClipboardList,
+         subItems: [
+           { title: "List", href: "/inventory/transfers" },
+           { title: "New Transfer", href: "/inventory/transfers/new" }
+        ]
+      },
+      { 
+        title: "Adjustments", 
+        href: "/inventory/adjustments", 
+        icon: ClipboardList,
+        subItems: [
+           { title: "List", href: "/inventory/adjustments" },
+           { title: "New Adjustment", href: "/inventory/adjustments/new" }
+        ]
+      },
+      { 
+        title: "Stock Count", 
+        href: "/inventory/count", 
+        icon: ClipboardList,
+        subItems: [
+           { title: "List", href: "/inventory/count" },
+           { title: "New Count", href: "/inventory/count/new" }
+        ]
+      },
     ],
   },
   {
@@ -247,21 +311,67 @@ export function AppSidebar() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      {item.items.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild isActive={pathname.startsWith(subItem.href)} className="ring-0 hover:bg-transparent">
-                             <Link href={subItem.href} className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-200 
-                                ${pathname.startsWith(subItem.href) 
-                                  ? `${item.gradient} font-medium translate-x-1 shadow-sm` 
-                                  : "text-muted-foreground hover:text-foreground hover:translate-x-1"
-                                }`}>
-                              <subItem.icon className={`h-3.5 w-3.5 ${pathname.startsWith(subItem.href) ? "text-white" : "text-muted-foreground"}`} />
-                              <span className={pathname.startsWith(subItem.href) ? "text-white" : ""}>
-                                {subItem.title}
-                              </span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
+                      {item.items.map((subItem: any) => (
+                        <div key={subItem.title}>
+                           {subItem.subItems ? (
+                               // 3rd Level Item
+                              <Collapsible key={subItem.title} defaultOpen={pathname.startsWith(subItem.href)} className="group/sub-collapsible">
+                                <SidebarMenuItem>
+                                  <CollapsibleTrigger asChild>
+                                    <SidebarMenuSubButton 
+                                      className={`ring-0 hover:bg-transparent justify-between
+                                        ${pathname.startsWith(subItem.href)
+                                          ? "text-foreground font-medium"
+                                          : "text-muted-foreground hover:text-foreground"
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <subItem.icon className={`h-3.5 w-3.5`} />
+                                        <span>{subItem.title}</span>
+                                      </div>
+                                      <ChevronRight className={`h-3 w-3 transition-transform group-data-[state=open]/sub-collapsible:rotate-90`} />
+                                    </SidebarMenuSubButton>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent>
+                                    <div className="pl-4 border-l ml-2 mt-1 space-y-1">
+                                      {subItem.subItems.map((grandItem: any) => (
+                                          <SidebarMenuButton 
+                                            key={grandItem.title}
+                                            asChild 
+                                            size="sm" 
+                                            className={`h-7 text-xs
+                                              ${pathname === grandItem.href 
+                                              ? "bg-muted text-foreground font-medium" 
+                                              : "text-muted-foreground hover:text-foreground"
+                                            }`}
+                                          >
+                                            <Link href={grandItem.href}>
+                                              <span>{grandItem.title}</span>
+                                            </Link>
+                                          </SidebarMenuButton>
+                                      ))}
+                                    </div>
+                                  </CollapsibleContent>
+                                </SidebarMenuItem>
+                              </Collapsible>
+                           ) : (
+                             // 2nd Level Item (Standard)
+                             <SidebarMenuSubItem>
+                              <SidebarMenuSubButton asChild isActive={pathname.startsWith(subItem.href)} className="ring-0 hover:bg-transparent">
+                                 <Link href={subItem.href} className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-200 
+                                    ${pathname.startsWith(subItem.href) 
+                                      ? `${item.gradient} font-medium translate-x-1 shadow-sm text-white` 
+                                      : "text-muted-foreground hover:text-foreground hover:translate-x-1"
+                                    }`}>
+                                  <subItem.icon className={`h-3.5 w-3.5 ${pathname.startsWith(subItem.href) ? "text-white" : "text-muted-foreground"}`} />
+                                  <span className={pathname.startsWith(subItem.href) ? "text-white" : ""}>
+                                    {subItem.title}
+                                  </span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                           )}
+                        </div>
                       ))}
                     </SidebarMenuSub>
                   </CollapsibleContent>
