@@ -56,6 +56,7 @@ import {
   Lock,
   Coins,
   Calculator,
+  Scale,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -139,6 +140,15 @@ const menuItems = [
         subItems: [
            { title: "List", href: "/inventory/models" },
            { title: "New Model", href: "/inventory/models/new" }
+        ]
+      },
+      { 
+        title: "Units of Measure", 
+        href: "/inventory/uom", 
+        icon: Scale,
+        subItems: [
+           { title: "List", href: "/inventory/uom" },
+           { title: "New UOM", href: "/inventory/uom/new" }
         ]
       },
       { title: "Stock Ledger", href: "/inventory/ledger", icon: BookOpen },
