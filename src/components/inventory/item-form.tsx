@@ -35,6 +35,8 @@ const formSchema = z.object({
   subCategoryId: z.string().optional(),
   brandId: z.string().optional(),
   uom: z.string().min(1, "UOM is required"),
+  alternativeUom: z.string().optional(), // New field
+  conversionFactor: z.coerce.number().optional(), // New field
   itemType: z.enum(["goods", "service"]),
   
   costPrice: z.coerce.number().min(0),
@@ -98,7 +100,9 @@ export default function ItemForm({ initialData, initialCode, categories, subCate
       hasSerialNo: false,
       hasExpiry: false,
       barcode: "",
-      description: ""
+      description: "",
+      alternativeUom: "",
+      conversionFactor: undefined,
     },
   });
 
@@ -256,11 +260,26 @@ export default function ItemForm({ initialData, initialCode, categories, subCate
                                     field.onChange(val);
                                     form.setValue("subCategoryId", ""); // Reset subcat
                                     
-                                    // Dependency: Auto-fill UOM
+                                    // Dependency: Auto-fill UOMs from Category
                                     const selectedCat = categories.find(c => c.id === val);
-                                    if (selectedCat?.defaultUomId) {
-                                        form.setValue("uom", selectedCat.defaultUomId);
-                                        toast.info(`UOM auto-filled: ${selectedCat.defaultUomId}`);
+                                    if (selectedCat) {
+                                      // 1. Base UOM
+                                      if (selectedCat.baseUomId) {
+                                        const baseUom = uoms.find(u => u.id === selectedCat.baseUomId);
+                                        if (baseUom) form.setValue("uom", baseUom.code);
+                                      }
+                                      
+                                      // 2. Alternative UOM & Conversion
+                                      if (selectedCat.alternativeUomId) {
+                                        const altUom = uoms.find(u => u.id === selectedCat.alternativeUomId);
+                                        if (altUom) {
+                                            form.setValue("alternativeUom", altUom.code);
+                                            // Auto-load conversion factor if available
+                                            if (selectedCat.conversionFactor) {
+                                                form.setValue("conversionFactor", Number(selectedCat.conversionFactor));
+                                            }
+                                        }
+                                      }
                                     }
                                 }} defaultValue={field.value}>
                                     <FormControl><SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger></FormControl>

@@ -51,6 +51,8 @@ export type ItemInput = {
     brandId?: string;
     modelId?: string;
     uom: string;
+    alternativeUom?: string; // New
+    conversionFactor?: number; // New
     
     // Pricing
     costPrice: number;
@@ -115,6 +117,17 @@ export async function createItemAction(input: ItemInput) {
         // TODO: specific handling for opening stock if > 0 (Create Adjustment/Receipt automatically?)
         // For now, assume user will post Opening Stock separately or we add logic later.
         
+        if (input.alternativeUom && input.alternativeUom !== '__NONE__' && input.alternativeUom !== input.uom) {
+             // Import itemUnits dynamically if needed, or assume top-level import
+             const { itemUnits } = await import("@/db/schema/items");
+             await db.insert(itemUnits).values({
+                 itemId: newItem.id,
+                 uom: input.alternativeUom,
+                 conversionFactor: input.conversionFactor?.toString() || "1",
+                 isDefault: false
+             });
+        }
+
         revalidatePath("/inventory/items");
         return { success: true, message: "Item created successfully", id: newItem.id };
 
