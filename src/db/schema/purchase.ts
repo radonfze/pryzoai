@@ -133,6 +133,7 @@ export const purchaseInvoices = pgTable("purchase_invoices", {
   
   paidAmount: decimal("paid_amount", { precision: 18, scale: 2 }).default("0"),
   balanceAmount: decimal("balance_amount", { precision: 18, scale: 2 }).default("0"),
+  lastPaymentDate: timestamp("last_payment_date"), // Phase 4 Enhancement
   
   // Withholding tax (UAE)
   withholdingTaxAmount: decimal("withholding_tax_amount", { precision: 18, scale: 2 }).default("0"),

@@ -13,6 +13,8 @@ import {
 import { relations } from "drizzle-orm";
 import { companies, warehouses } from "./companies";
 import { items } from "./items";
+import { projects } from "./projects";
+import { customers } from "./customers";
 
 // Stock transaction type enum
 export const stockTransactionTypeEnum = pgEnum("stock_transaction_type", [
@@ -78,9 +80,12 @@ export const stockTransactions = pgTable("stock_transactions", {
   transactionDate: timestamp("transaction_date").notNull(),
   
   // Document reference
-  documentType: varchar("document_type", { length: 20 }), // GRN, INV, ST, SA
+  documentType: varchar("document_type", { length: 20 }), // GRN, INV, ST, SA, WO
   documentId: uuid("document_id"),
   documentNumber: varchar("document_number", { length: 50 }),
+  
+  // Project linkage (Phase 3 Enhancement)
+  projectId: uuid("project_id").references(() => projects.id),
   
   // Quantities
   quantity: decimal("quantity", { precision: 18, scale: 3 }).notNull(),
@@ -171,7 +176,7 @@ export const stockSerials = pgTable("stock_serials", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Inventory Reservations (for Sales Orders)
+// Inventory Reservations (for Sales Orders, Projects, etc.)
 export const inventoryReservations = pgTable("inventory_reservations", {
   id: uuid("id").primaryKey().defaultRandom(),
   companyId: uuid("company_id")
@@ -184,8 +189,12 @@ export const inventoryReservations = pgTable("inventory_reservations", {
     .notNull()
     .references(() => items.id),
   
-  // Source document (Sales Order)
-  documentType: varchar("document_type", { length: 20 }).notNull(), // SO
+  // Project & Customer linkage (Phase 2 Enhancement)
+  projectId: uuid("project_id").references(() => projects.id),
+  customerId: uuid("customer_id").references(() => customers.id),
+  
+  // Source document (Sales Order, Project Requisition, etc.)
+  documentType: varchar("document_type", { length: 20 }).notNull(), // SO, PR, etc.
   documentId: uuid("document_id").notNull(),
   documentNumber: varchar("document_number", { length: 50 }),
   lineNumber: varchar("line_number", { length: 10 }),
@@ -193,6 +202,7 @@ export const inventoryReservations = pgTable("inventory_reservations", {
   // Reservation details
   quantityReserved: decimal("quantity_reserved", { precision: 18, scale: 3 }).notNull(),
   quantityFulfilled: decimal("quantity_fulfilled", { precision: 18, scale: 3 }).default("0"),
+  reservedPrice: decimal("reserved_price", { precision: 18, scale: 4 }), // Price at reservation time
   
   // Batch/Serial if specific
   batchId: uuid("batch_id"),
@@ -218,6 +228,7 @@ export const stockTransactionsRelations = relations(stockTransactions, ({ one })
   company: one(companies, { fields: [stockTransactions.companyId], references: [companies.id] }),
   warehouse: one(warehouses, { fields: [stockTransactions.warehouseId], references: [warehouses.id] }),
   item: one(items, { fields: [stockTransactions.itemId], references: [items.id] }),
+  project: one(projects, { fields: [stockTransactions.projectId], references: [projects.id] }),
 }));
 
 export const stockBatchesRelations = relations(stockBatches, ({ one }) => ({
@@ -236,6 +247,8 @@ export const inventoryReservationsRelations = relations(inventoryReservations, (
   company: one(companies, { fields: [inventoryReservations.companyId], references: [companies.id] }),
   warehouse: one(warehouses, { fields: [inventoryReservations.warehouseId], references: [warehouses.id] }),
   item: one(items, { fields: [inventoryReservations.itemId], references: [items.id] }),
+  project: one(projects, { fields: [inventoryReservations.projectId], references: [projects.id] }),
+  customer: one(customers, { fields: [inventoryReservations.customerId], references: [customers.id] }),
 }));
 
 // Stock Adjustments (for physical count corrections / write-offs)
