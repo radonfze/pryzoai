@@ -15,6 +15,7 @@ import {
 import Link from "next/link"
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 import { ViewItemDialog } from "@/components/inventory/item-view-dialog"
+import { ItemDrillThroughDialog } from "@/components/inventory/item-drill-through-dialog"
 import { formatCurrency } from "@/lib/utils"
 import { useState } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -250,6 +251,7 @@ export const columns: ColumnDef<Item>[] = [
             <DropdownMenuSeparator />
             
             <ViewDialogItem item={item} />
+            <DrillDialogItem item={item} />
 
             <Link href={`/inventory/items/${item.id}/edit`}>
                 <DropdownMenuItem>
@@ -277,6 +279,26 @@ const ViewDialogItem = ({ item }: { item: Item }) => {
                 </DropdownMenuItem>
             }
         />
+    )
+}
+
+// Helper component here for Drill-Through Dialog in Dropdown
+const DrillDialogItem = ({ item }: { item: Item }) => {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setOpen(true); }}>
+                <Package className="mr-2 h-4 w-4" /> Stock Drill-Through
+            </DropdownMenuItem>
+            <ItemDrillThroughDialog
+                itemId={item.id}
+                itemCode={item.code}
+                itemName={item.name}
+                open={open}
+                onOpenChange={setOpen}
+                initialTab="stock"
+            />
+        </>
     )
 }
 
