@@ -13,7 +13,11 @@ export default async function NewBrandPage() {
         backLink="/inventory/brands"
       />
       <div className="max-w-2xl mx-auto">
-        <BrandForm categories={categories} />
+        <BrandForm categories={categories.map(c => ({ 
+            id: c.id, 
+            code: c.code, 
+            name: c.name 
+        }))} />
       </div>
     </div>
   );
