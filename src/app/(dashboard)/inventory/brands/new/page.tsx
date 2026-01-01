@@ -1,3 +1,5 @@
+import { BrandForm } from "@/components/inventory/brand-form";
+import { GradientHeader } from "@/components/ui/gradient-header";
 import { getCategories } from "@/actions/inventory/categories";
 
 export default async function NewBrandPage() {
