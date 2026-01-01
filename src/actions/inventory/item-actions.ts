@@ -49,7 +49,9 @@ export type ItemInput = {
     categoryId?: string;
     subCategoryId?: string;
     brandId?: string;
+    brandId?: string;
     modelId?: string;
+    partNumber?: string;
     uom: string;
     alternativeUom?: string; // New
     conversionFactor?: number; // New
@@ -100,7 +102,9 @@ export async function createItemAction(input: ItemInput) {
             categoryId: input.categoryId || null,
             subCategoryId: input.subCategoryId || null,
             brandId: input.brandId || null,
+            brandId: input.brandId || null,
             modelId: input.modelId || null,
+            partNumber: input.partNumber || null,
             uom: input.uom,
             costPrice: input.costPrice.toString(),
             sellingPrice: input.sellingPrice.toString(),
@@ -144,6 +148,7 @@ export async function updateItemAction(id: string, input: ItemInput) {
     try {
         await db.update(items).set({
             ...input,
+             partNumber: input.partNumber || null,
              costPrice: input.costPrice.toString(),
             sellingPrice: input.sellingPrice.toString(),
             minSellingPrice: input.minSellingPrice.toString(),

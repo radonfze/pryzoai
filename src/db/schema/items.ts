@@ -52,6 +52,7 @@ export const items = pgTable("items", {
   subCategoryId: uuid("sub_category_id").references(() => itemSubcategories.id),
   brandId: uuid("brand_id").references(() => itemBrands.id),
   modelId: uuid("model_id").references(() => itemModels.id),
+  partNumber: varchar("part_number", { length: 100 }), // New Field
   
   // Dynamic UOM (Linked logically to uoms table, but stored as code/varchar for flexibility)
   uom: varchar("uom", { length: 20 }).default("PCS").notNull(),

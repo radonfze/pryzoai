@@ -34,6 +34,8 @@ const formSchema = z.object({
   categoryId: z.string().optional(),
   subCategoryId: z.string().optional(),
   brandId: z.string().optional(),
+  modelId: z.string().optional(),
+  partNumber: z.string().optional(),
   uom: z.string().min(1, "UOM is required"),
   alternativeUom: z.string().optional(), // New field
   conversionFactor: z.coerce.number().optional(), // New field
@@ -101,6 +103,7 @@ export default function ItemForm({ initialData, initialCode, categories, subCate
       hasExpiry: false,
       barcode: "",
       description: "",
+      partNumber: "",
       alternativeUom: "",
       conversionFactor: undefined,
     },
@@ -151,6 +154,7 @@ export default function ItemForm({ initialData, initialCode, categories, subCate
     const sub = subCategories.find(s => s.id === selectedSubCategoryId);
     const brand = brands.find(b => b.id === selectedBrandId);
     const model = models.find(m => m.id === selectedModelId);
+    const partNum = form.watch("partNumber");
     const desc = watchedDescription;
 
     // Build name parts - ALL UPPERCASE
@@ -159,13 +163,14 @@ export default function ItemForm({ initialData, initialCode, categories, subCate
     if (sub?.name) nameParts.push(sub.name.toUpperCase());
     if (brand?.name) nameParts.push(brand.name.toUpperCase());
     if (model?.name) nameParts.push(model.name.toUpperCase());
+    if (partNum?.trim()) nameParts.push(partNum.trim().toUpperCase());
     if (desc?.trim()) nameParts.push(desc.trim().toUpperCase());
 
     if (nameParts.length > 0) {
       const generatedName = nameParts.join(' ');
       form.setValue("name", generatedName);
     }
-  }, [selectedCategoryId, selectedSubCategoryId, selectedBrandId, selectedModelId, watchedDescription, categories, subCategories, brands, models, form, isEditing]);
+  }, [selectedCategoryId, selectedSubCategoryId, selectedBrandId, selectedModelId, watchedDescription, form.watch("partNumber"), categories, subCategories, brands, models, form, isEditing]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
