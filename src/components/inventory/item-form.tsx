@@ -149,13 +149,13 @@ export default function ItemForm({ initialData, initialCode, categories, subCate
     const model = models.find(m => m.id === selectedModelId);
     const desc = watchedDescription;
 
-    // Build name parts with proper casing
+    // Build name parts - ALL UPPERCASE
     const nameParts: string[] = [];
-    if (cat?.name) nameParts.push(toTitleCase(cat.name));
-    if (sub?.name) nameParts.push(toTitleCase(sub.name));
-    if (brand?.name) nameParts.push(toTitleCase(brand.name));
-    if (model?.name) nameParts.push(model.name.toUpperCase()); // Model in UPPERCASE
-    if (desc?.trim()) nameParts.push(toTitleCase(desc.trim())); // Description in Title Case
+    if (cat?.name) nameParts.push(cat.name.toUpperCase());
+    if (sub?.name) nameParts.push(sub.name.toUpperCase());
+    if (brand?.name) nameParts.push(brand.name.toUpperCase());
+    if (model?.name) nameParts.push(model.name.toUpperCase());
+    if (desc?.trim()) nameParts.push(desc.trim().toUpperCase());
 
     if (nameParts.length > 0) {
       const generatedName = nameParts.join(' ');
@@ -323,6 +323,20 @@ export default function ItemForm({ initialData, initialCode, categories, subCate
                                     <SelectItem value="service">Service (Non-Stock)</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </FormItem>
+                    )} />
+
+                    {/* Description field - contributes to auto-name */}
+                    <FormField control={form.control} name="description" render={({ field }) => (
+                        <FormItem className="mt-4">
+                            <FormLabel>Description (for auto-name)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="e.g., 4MP DOME CAMERA" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormDescription>This will be added to the auto-generated item name</FormDescription>
                         </FormItem>
                     )} />
                 </CardContent>
