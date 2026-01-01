@@ -2,9 +2,45 @@
 
 import { db } from "@/db";
 import { items } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
+
+// Get next sequential item code
+export async function getNextItemCode(): Promise<string> {
+  const companyId = await getCompanyId();
+  if (!companyId) return "1000";
+  
+  try {
+    // Get the highest numeric code
+    const result = await db.select({ code: items.code })
+      .from(items)
+      .where(eq(items.companyId, companyId))
+      .orderBy(desc(items.code))
+      .limit(1);
+    
+    if (result.length === 0) {
+      return "1000"; // Start from 1000
+    }
+    
+    const lastCode = result[0].code;
+    const numericCode = parseInt(lastCode, 10);
+    
+    if (isNaN(numericCode)) {
+      // If the last code isn't numeric, count total items and add 1000
+      const countResult = await db.select({ count: sql<number>`count(*)` })
+        .from(items)
+        .where(eq(items.companyId, companyId));
+      return String(1000 + (countResult[0]?.count || 0) + 1);
+    }
+    
+    return String(numericCode + 1);
+  } catch (error) {
+    console.error("getNextItemCode error:", error);
+    return "1000";
+  }
+}
+
 
 export type ItemInput = {
     code: string;

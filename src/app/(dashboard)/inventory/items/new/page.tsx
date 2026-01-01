@@ -3,6 +3,7 @@ import { itemCategories, itemBrands, itemModels, itemSubcategories, brandSubcate
 import { eq, and } from "drizzle-orm";
 import { getCompanyId } from "@/lib/auth";
 import { getActiveUoms } from "@/actions/inventory/uom";
+import { getNextItemCode } from "@/actions/inventory/item-actions";
 import ItemForm from "@/components/inventory/item-form";
 import GradientHeader from "@/components/ui/gradient-header";
 import { PackagePlus } from "lucide-react";
@@ -12,7 +13,7 @@ export default async function NewItemPage() {
     const companyId = await getCompanyId();
     if (!companyId) return null;
 
-    const [categoryList, subCategoryList, brandList, modelList, uomList, brandMapping, brandCategoryMapping] = await Promise.all([
+    const [categoryList, subCategoryList, brandList, modelList, uomList, brandMapping, brandCategoryMapping, nextCode] = await Promise.all([
         db.query.itemCategories.findMany({ where: and(eq(itemCategories.companyId, companyId), eq(itemCategories.isActive, true)) }),
         db.query.itemSubcategories.findMany({ where: and(eq(itemSubcategories.companyId, companyId), eq(itemSubcategories.isActive, true)) }),
         db.query.itemBrands.findMany({ where: and(eq(itemBrands.companyId, companyId), eq(itemBrands.isActive, true)) }),
@@ -20,6 +21,7 @@ export default async function NewItemPage() {
         getActiveUoms(),
         db.select({ brandId: brandSubcategories.brandId, subcategoryId: brandSubcategories.subcategoryId }).from(brandSubcategories),
         db.select({ brandId: brandCategories.brandId, categoryId: brandCategories.categoryId }).from(brandCategories),
+        getNextItemCode(),
     ]);
 
   return (
@@ -38,6 +40,7 @@ export default async function NewItemPage() {
         uoms={uomList}
         brandMappings={brandMapping}
         brandCategoryMappings={brandCategoryMapping}
+        initialCode={nextCode}
       />
     </div>
   );

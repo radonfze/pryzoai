@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -11,11 +11,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Save, Wand2 } from "lucide-react";
+import { Loader2, Save, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createItemAction, updateItemAction, ItemInput } from "@/actions/inventory/item-actions";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+
+// Helper function to convert text to Title Case
+function toTitleCase(str: string): string {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
 
 const formSchema = z.object({
   code: z.string().min(1, "Code is required"),
@@ -47,6 +56,7 @@ const formSchema = z.object({
 
 interface ItemFormProps {
   initialData?: any;
+  initialCode?: string; // Auto-generated code from server
   categories: any[];
   subCategories: any[];
   brands: any[];
@@ -56,9 +66,10 @@ interface ItemFormProps {
   brandCategoryMappings?: any[]; // New Category Mappings
 }
 
-export default function ItemForm({ initialData, categories, subCategories, brands, models, uoms, brandMappings, brandCategoryMappings }: ItemFormProps) {
+export default function ItemForm({ initialData, initialCode, categories, subCategories, brands, models, uoms, brandMappings, brandCategoryMappings }: ItemFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const isEditing = !!initialData;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -71,7 +82,7 @@ export default function ItemForm({ initialData, categories, subCategories, brand
         reorderLevel: Number(initialData.reorderLevel),
         reorderQty: Number(initialData.reorderQty),
     } : {
-      code: "",
+      code: initialCode || "",
       name: "",
       nameAr: "",
       uom: "PCS",
@@ -124,24 +135,33 @@ export default function ItemForm({ initialData, categories, subCategories, brand
       return true;
   });
 
-  const handleGenerateSku = () => {
-      const cat = categories.find(c => c.id === selectedCategoryId);
-      const sub = subCategories.find(s => s.id === selectedSubCategoryId);
-      const brand = brands.find(b => b.id === selectedBrandId);
-      const model = models.find(m => m.id === form.getValues("modelId")); // Watch logic above might be slow, use getValues
-      
-      const parts = [];
-      if (cat?.code) parts.push(cat.code);
-      if (brand?.code) parts.push(brand.code); // Blueprint skips subcat code in formula usually, but we can add
-      if (model?.code) parts.push(model.code);
-      
-      const sequence = Math.floor(Math.random() * 9000) + 1000; // Random 4 digits for uniqueness for now
-      parts.push(sequence);
-      
-      const sku = parts.join("-").toUpperCase();
-      form.setValue("code", sku);
-      toast.info(`Generated SKU: ${sku}`);
-  };
+  // Watch all fields needed for auto-name generation
+  const watchedDescription = form.watch("description");
+  const selectedModelId = form.watch("modelId");
+
+  // Auto-generate item name from Category + SubCategory + Brand + Model + Description
+  useEffect(() => {
+    if (isEditing) return; // Don't auto-generate for edit mode
+    
+    const cat = categories.find(c => c.id === selectedCategoryId);
+    const sub = subCategories.find(s => s.id === selectedSubCategoryId);
+    const brand = brands.find(b => b.id === selectedBrandId);
+    const model = models.find(m => m.id === selectedModelId);
+    const desc = watchedDescription;
+
+    const nameParts = [
+      cat?.name,
+      sub?.name,
+      brand?.name,
+      model?.name,
+      desc ? desc.trim() : null
+    ].filter(Boolean);
+
+    if (nameParts.length > 0) {
+      const generatedName = toTitleCase(nameParts.join(' '));
+      form.setValue("name", generatedName);
+    }
+  }, [selectedCategoryId, selectedSubCategoryId, selectedBrandId, selectedModelId, watchedDescription, categories, subCategories, brands, models, form, isEditing]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
@@ -188,11 +208,19 @@ export default function ItemForm({ initialData, categories, subCategories, brand
                         <FormItem>
                             <FormLabel>Item Code *</FormLabel>
                             <div className="flex gap-2">
-                                <FormControl><Input placeholder="ITM-001" {...field} /></FormControl>
-                                <Button type="button" variant="outline" size="icon" onClick={handleGenerateSku} title="Auto-Generate SKU">
-                                    <Wand2 className="h-4 w-4" />
-                                </Button>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="Auto-generated" 
+                                    {...field} 
+                                    readOnly 
+                                    className="bg-muted font-mono"
+                                  />
+                                </FormControl>
+                                <div className="flex items-center justify-center w-10 h-10 rounded-md bg-muted">
+                                    <Lock className="h-4 w-4 text-muted-foreground" />
+                                </div>
                             </div>
+                            <FormDescription>Auto-generated, read-only</FormDescription>
                             <FormMessage />
                         </FormItem>
                     )} />
@@ -200,7 +228,15 @@ export default function ItemForm({ initialData, categories, subCategories, brand
                         <FormField control={form.control} name="name" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Name (En) *</FormLabel>
-                                <FormControl><Input {...field} /></FormControl>
+                                <FormControl>
+                                  <Input 
+                                    {...field} 
+                                    readOnly={!isEditing}
+                                    className={!isEditing ? "bg-muted" : ""}
+                                    placeholder="Auto-generated from selections"
+                                  />
+                                </FormControl>
+                                {!isEditing && <FormDescription>Auto-composed from Category + SubCategory + Brand + Model + Description</FormDescription>}
                                 <FormMessage />
                             </FormItem>
                         )} />
