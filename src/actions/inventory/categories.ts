@@ -2,11 +2,28 @@
 
 import { db } from "@/db";
 import { itemCategories } from "@/db/schema/item-hierarchy";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCompanyId } from "@/lib/auth";
+
+// Get next sequential category code (CAT1, CAT2, CAT3...)
+export async function getNextCategoryCode(): Promise<string> {
+  const companyId = await getCompanyId();
+  if (!companyId) return "CAT1";
+  
+  try {
+    const countResult = await db.select({ count: sql<number>`count(*)` })
+      .from(itemCategories)
+      .where(eq(itemCategories.companyId, companyId));
+    const count = Number(countResult[0]?.count || 0);
+    return `CAT${count + 1}`;
+  } catch (error) {
+    console.error("getNextCategoryCode error:", error);
+    return "CAT1";
+  }
+}
+
 
 const categorySchema = z.object({
   code: z.string().min(1, "Code is required"),

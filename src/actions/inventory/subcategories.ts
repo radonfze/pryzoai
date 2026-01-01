@@ -4,8 +4,20 @@ import { db } from "@/db";
 import { itemCategories, itemSubcategories } from "@/db/schema/item-hierarchy";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { z } from "zod";
+
+// Get next sequential subcategory code
+export async function getNextSubcategoryCode(): Promise<string> {
+  const companyId = await getCompanyId();
+  if (!companyId) return "SUB1";
+  try {
+    const countResult = await db.select({ count: sql<number>`count(*)` })
+      .from(itemSubcategories).where(eq(itemSubcategories.companyId, companyId));
+    return `SUB${Number(countResult[0]?.count || 0) + 1}`;
+  } catch { return "SUB1"; }
+}
+
 
 const subcategorySchema = z.object({
   code: z.string().min(1, "Code is required"),

@@ -4,8 +4,20 @@ import { db } from "@/db";
 import { itemBrands } from "@/db/schema/item-hierarchy";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { z } from "zod";
+
+// Get next sequential brand code
+export async function getNextBrandCode(): Promise<string> {
+  const companyId = await getCompanyId();
+  if (!companyId) return "BRD1";
+  try {
+    const countResult = await db.select({ count: sql<number>`count(*)` })
+      .from(itemBrands).where(eq(itemBrands.companyId, companyId));
+    return `BRD${Number(countResult[0]?.count || 0) + 1}`;
+  } catch { return "BRD1"; }
+}
+
 
 const brandSchema = z.object({
   code: z.string().min(1, "Code is required"),

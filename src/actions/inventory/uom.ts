@@ -4,8 +4,20 @@ import { db } from "@/db";
 import { uoms } from "@/db/schema/items";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { z } from "zod";
+
+// Get next sequential UOM code
+export async function getNextUomCode(): Promise<string> {
+  const companyId = await getCompanyId();
+  if (!companyId) return "UOM1";
+  try {
+    const countResult = await db.select({ count: sql<number>`count(*)` })
+      .from(uoms).where(eq(uoms.companyId, companyId));
+    return `UOM${Number(countResult[0]?.count || 0) + 1}`;
+  } catch { return "UOM1"; }
+}
+
 
 const uomSchema = z.object({
   code: z.string().min(1, "Code is required").max(20, "Code too long"),

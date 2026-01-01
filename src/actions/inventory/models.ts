@@ -4,8 +4,20 @@ import { db } from "@/db";
 import { itemModels } from "@/db/schema/item-hierarchy";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { z } from "zod";
+
+// Get next sequential model code
+export async function getNextModelCode(): Promise<string> {
+  const companyId = await getCompanyId();
+  if (!companyId) return "MDL1";
+  try {
+    const countResult = await db.select({ count: sql<number>`count(*)` })
+      .from(itemModels).where(eq(itemModels.companyId, companyId));
+    return `MDL${Number(countResult[0]?.count || 0) + 1}`;
+  } catch { return "MDL1"; }
+}
+
 
 const modelSchema = z.object({
   code: z.string().min(1, "Code is required"),

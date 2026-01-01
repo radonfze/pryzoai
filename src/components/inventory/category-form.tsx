@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Scale } from "lucide-react";
+import { Loader2, Scale, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { createCategory, updateCategory } from "@/actions/inventory/categories";
 import { Switch } from "@/components/ui/switch";
@@ -51,12 +51,14 @@ interface Uom {
 
 interface CategoryFormProps {
   initialData?: any;
+  initialCode?: string;
   uoms?: Uom[];
 }
 
-export function CategoryForm({ initialData, uoms = [] }: CategoryFormProps) {
+export function CategoryForm({ initialData, initialCode, uoms = [] }: CategoryFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const isEditing = !!initialData;
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(formSchema),
@@ -64,7 +66,7 @@ export function CategoryForm({ initialData, uoms = [] }: CategoryFormProps) {
       ...initialData,
       conversionFactor: initialData.conversionFactor ? Number(initialData.conversionFactor) : undefined,
     } : {
-      code: "",
+      code: initialCode || "",
       name: "",
       nameAr: "",
       description: "",
@@ -76,6 +78,11 @@ export function CategoryForm({ initialData, uoms = [] }: CategoryFormProps) {
   });
 
   const alternativeUomId = form.watch("alternativeUomId");
+  const baseUomId = form.watch("baseUomId");
+  
+  // Get selected UOM names for display
+  const baseUomName = uoms.find(u => u.id === baseUomId)?.name || "Base";
+  const altUomName = uoms.find(u => u.id === alternativeUomId)?.name || "Alternative";
 
   const onSubmit = async (data: CategoryFormValues) => {
     setLoading(true);
@@ -130,9 +137,22 @@ export function CategoryForm({ initialData, uoms = [] }: CategoryFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Code *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="CAT-001" {...field} />
-                    </FormControl>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input 
+                          placeholder="CAT1" 
+                          {...field} 
+                          readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted font-mono" : ""}
+                        />
+                      </FormControl>
+                      {!isEditing && (
+                        <div className="flex items-center justify-center w-10 h-10 rounded-md bg-muted">
+                          <Lock className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    {!isEditing && <FormDescription>Auto-generated, read-only</FormDescription>}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -289,9 +309,11 @@ export function CategoryForm({ initialData, uoms = [] }: CategoryFormProps) {
                       />
                     </FormControl>
                     <FormDescription>
-                      {alternativeUomId 
-                        ? "How many base units = 1 alternative unit" 
-                        : "Select alternative UOM first"
+                      {alternativeUomId && baseUomId
+                        ? `How many ${baseUomName} = 1 ${altUomName}` 
+                        : alternativeUomId 
+                          ? "Select base UOM first"
+                          : "Select alternative UOM first"
                       }
                     </FormDescription>
                     <FormMessage />
