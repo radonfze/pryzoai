@@ -1,29 +1,16 @@
 import { NextResponse } from "next/server";
-import { Pool } from "@neondatabase/serverless";
+import { sql } from "drizzle-orm";
+import { db } from "@/db";
 
 export async function GET() {
   try {
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    
-    // Add missing columns to item_categories
-    await pool.query(`
+    // Add missing columns to item_categories using raw SQL
+    await db.execute(sql`
       ALTER TABLE item_categories 
-      ADD COLUMN IF NOT EXISTS base_uom_id UUID REFERENCES uoms(id),
-      ADD COLUMN IF NOT EXISTS alternative_uom_id UUID REFERENCES uoms(id),
-      ADD COLUMN IF NOT EXISTS conversion_factor NUMERIC(10,4);
+      ADD COLUMN IF NOT EXISTS base_uom_id UUID,
+      ADD COLUMN IF NOT EXISTS alternative_uom_id UUID,
+      ADD COLUMN IF NOT EXISTS conversion_factor NUMERIC(10,4)
     `);
-    
-    // Also drop the old default_uom_id column if it exists
-    try {
-      await pool.query(`
-        ALTER TABLE item_categories 
-        DROP COLUMN IF EXISTS default_uom_id;
-      `);
-    } catch (e) {
-      // Ignore if column doesn't exist
-    }
-
-    await pool.end();
 
     return NextResponse.json({ 
       success: true, 
