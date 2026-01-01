@@ -179,6 +179,16 @@ const menuItems = [
            { title: "New Count", href: "/inventory/count/new" }
         ]
       },
+      { 
+        title: "Bill of Materials", 
+        href: "/inventory/bom", 
+        icon: Boxes,
+        subItems: [
+           { title: "List", href: "/inventory/bom" },
+           { title: "New BOM", href: "/inventory/bom/new" }
+        ]
+      },
+      { title: "Reservations", href: "/inventory/reservations", icon: Lock },
     ],
   },
   {
