@@ -245,8 +245,8 @@ export function CategoryForm({ initialData, uoms = [] }: CategoryFormProps) {
                   <FormItem>
                     <FormLabel>Alternative UOM</FormLabel>
                     <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value || undefined}
+                      onValueChange={(value) => field.onChange(value === "__NONE__" ? null : value)} 
+                      value={field.value || "__NONE__"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -254,7 +254,7 @@ export function CategoryForm({ initialData, uoms = [] }: CategoryFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="__NONE__">None</SelectItem>
                         {uoms.map((uom) => (
                           <SelectItem key={uom.id} value={uom.id}>
                             {uom.code} - {uom.name}
@@ -271,6 +271,7 @@ export function CategoryForm({ initialData, uoms = [] }: CategoryFormProps) {
               />
 
               <FormField
+
                 control={form.control}
                 name="conversionFactor"
                 render={({ field }) => (
