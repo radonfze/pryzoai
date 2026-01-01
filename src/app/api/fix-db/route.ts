@@ -6,16 +6,17 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS "brand_categories" (
-        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-        "brand_id" uuid NOT NULL REFERENCES "item_brands"("id"),
-        "category_id" uuid NOT NULL REFERENCES "item_categories"("id")
-      );
-    `);
+    // Verify tables
+    const brandCats = await db.execute(sql`SELECT count(*) FROM "brand_categories"`);
+    const itemCats = await db.execute(sql`SELECT count(*) FROM "item_categories"`);
     
-    return NextResponse.json({ success: true, message: "Table brand_categories created successfully" });
+    return NextResponse.json({ 
+      success: true, 
+      brandCategoriesCount: Number(brandCats[0].count),
+      itemCategoriesCount: Number(itemCats[0].count),
+      message: "Tables verified." 
+    });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message, stack: error.stack }, { status: 500 });
   }
 }
