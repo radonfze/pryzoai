@@ -1,5 +1,12 @@
+import { db } from "@/db";
 import { itemCategories, itemBrands, itemModels, itemSubcategories, brandSubcategories, brandCategories } from "@/db/schema";
-// ... imports
+import { eq, and } from "drizzle-orm";
+import { getCompanyId } from "@/lib/auth";
+import { getActiveUoms } from "@/actions/inventory/uom";
+import ItemForm from "@/components/inventory/item-form";
+import GradientHeader from "@/components/ui/gradient-header";
+import { PackagePlus } from "lucide-react";
+
 
 export default async function NewItemPage() {
     const companyId = await getCompanyId();

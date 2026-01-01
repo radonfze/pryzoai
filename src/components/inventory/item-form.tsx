@@ -57,7 +57,42 @@ interface ItemFormProps {
 }
 
 export default function ItemForm({ initialData, categories, subCategories, brands, models, uoms, brandMappings, brandCategoryMappings }: ItemFormProps) {
-// ... hooks
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: initialData ? {
+        ...initialData,
+        costPrice: Number(initialData.costPrice),
+        sellingPrice: Number(initialData.sellingPrice),
+        minSellingPrice: Number(initialData.minSellingPrice),
+        taxPercent: Number(initialData.taxPercent),
+        reorderLevel: Number(initialData.reorderLevel),
+        reorderQty: Number(initialData.reorderQty),
+    } : {
+      code: "",
+      name: "",
+      nameAr: "",
+      uom: "PCS",
+      itemType: "goods",
+      costPrice: 0,
+      sellingPrice: 0,
+      minSellingPrice: 0,
+      taxPercent: 5,
+      reorderLevel: 0,
+      reorderQty: 0,
+      isActive: true,
+      hasBatchNo: false,
+      hasSerialNo: false,
+      hasExpiry: false,
+      barcode: "",
+      description: ""
+    },
+  });
+
+  const selectedBrandId = form.watch("brandId");
+  const filteredModels = models.filter(m => m.brandId === selectedBrandId);
 
   const selectedCategoryId = form.watch("categoryId");
   const filteredSubCategories = subCategories.filter(sc => sc.categoryId === selectedCategoryId);
