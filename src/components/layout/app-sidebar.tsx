@@ -188,6 +188,8 @@ const menuItems = [
            { title: "New BOM", href: "/inventory/bom/new" }
         ]
       },
+      { title: "Batch Tracking", href: "/inventory/batches", icon: Boxes },
+      { title: "Serial Numbers", href: "/inventory/serials", icon: Tag },
       { title: "Reservations", href: "/inventory/reservations", icon: Lock },
     ],
   },

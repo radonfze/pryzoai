@@ -2,13 +2,49 @@
 
 import { db } from "@/db";
 import { inventoryReservations, stockLedger, items, warehouses } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { getCompanyId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 /**
+ * GET RESERVATIONS: Fetch all reservations for the company
+ */
+export async function getReservations() {
+    const companyId = await getCompanyId();
+    if (!companyId) return [];
+
+    return db.query.inventoryReservations.findMany({
+        where: eq(inventoryReservations.companyId, companyId),
+        with: {
+            item: true,
+            warehouse: true,
+            project: true,
+            customer: true,
+        },
+        orderBy: [desc(inventoryReservations.createdAt)],
+    });
+}
+
+/**
+ * GET RESERVATION BY ID
+ */
+export async function getReservationById(id: string) {
+    const companyId = await getCompanyId();
+    if (!companyId) return null;
+
+    return db.query.inventoryReservations.findFirst({
+        where: and(eq(inventoryReservations.id, id), eq(inventoryReservations.companyId, companyId)),
+        with: {
+            item: true,
+            warehouse: true,
+            project: true,
+            customer: true,
+        },
+    });
+}
+
+/**
  * RESERVE STOCK: Blocks quantity for a specific Order (SO/WO)
- * Updated for Phase 4: On-Click Reservation
  */
 export async function reserveStock(
     itemId: string, 
@@ -16,7 +52,13 @@ export async function reserveStock(
     quantity: number, 
     docType: string, 
     docId: string,
-    docNumber: string
+    docNumber: string,
+    options?: {
+        projectId?: string;
+        customerId?: string;
+        reservedPrice?: number;
+        expiresAt?: Date;
+    }
 ) {
     try {
         const companyId = await getCompanyId();
@@ -36,7 +78,7 @@ export async function reserveStock(
         }
 
         // 2. Create Reservation Record
-        await db.insert(inventoryReservations).values({
+        const [reservation] = await db.insert(inventoryReservations).values({
             companyId,
             warehouseId,
             itemId,
@@ -45,21 +87,24 @@ export async function reserveStock(
             documentNumber: docNumber,
             quantityReserved: quantity.toString(),
             status: "active",
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Default 7 days expiry
-        });
+            projectId: options?.projectId,
+            customerId: options?.customerId,
+            reservedPrice: options?.reservedPrice?.toString(),
+            expiresAt: options?.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Default 7 days expiry
+        }).returning();
 
         // 3. Update Ledger (Increase Reserved, Decrease Available)
-        // Note: available = onHand - reserved. So we just increase reserved.
         if (ledger) {
             await db.update(stockLedger).set({
                 quantityReserved: (Number(ledger.quantityReserved) + quantity).toString(),
-                quantityAvailable: (Number(ledger.quantityAvailable) - quantity).toString(), // derived
+                quantityAvailable: (Number(ledger.quantityAvailable) - quantity).toString(),
                 updatedAt: new Date()
             }).where(eq(stockLedger.id, ledger.id));
         }
 
-        revalidatePath("/inventory/stock");
-        return { success: true, message: `Reserved ${quantity} units for ${docNumber}` };
+        revalidatePath("/inventory/reservations");
+        revalidatePath("/inventory/items");
+        return { success: true, message: `Reserved ${quantity} units for ${docNumber}`, id: reservation.id };
 
     } catch (e: any) {
         return { success: false, message: e.message };
@@ -67,9 +112,112 @@ export async function reserveStock(
 }
 
 /**
- * RELEASE STOCK: Cancel/Expire reservation
+ * RELEASE STOCK: Cancel/Expire reservation and restore ledger
  */
 export async function releaseStock(reservationId: string) {
-    // Logic to find reservation, revert ledger, update status to 'released'
-    // ... Implementation would mirror reserve but reverse math
+    try {
+        const companyId = await getCompanyId();
+        
+        // 1. Find the reservation
+        const reservation = await db.query.inventoryReservations.findFirst({
+            where: and(
+                eq(inventoryReservations.id, reservationId),
+                eq(inventoryReservations.companyId, companyId)
+            )
+        });
+
+        if (!reservation) {
+            return { success: false, message: "Reservation not found" };
+        }
+
+        if (reservation.status !== "active") {
+            return { success: false, message: `Cannot release reservation with status: ${reservation.status}` };
+        }
+
+        const quantityToRelease = Number(reservation.quantityReserved) - Number(reservation.quantityFulfilled || 0);
+
+        if (quantityToRelease <= 0) {
+            // Already fully fulfilled
+            await db.update(inventoryReservations)
+                .set({ status: "fulfilled", updatedAt: new Date() })
+                .where(eq(inventoryReservations.id, reservationId));
+            
+            revalidatePath("/inventory/reservations");
+            return { success: true, message: "Reservation already fulfilled" };
+        }
+
+        // 2. Find and update ledger
+        const ledger = await db.query.stockLedger.findFirst({
+            where: and(
+                eq(stockLedger.companyId, companyId),
+                eq(stockLedger.warehouseId, reservation.warehouseId),
+                eq(stockLedger.itemId, reservation.itemId)
+            )
+        });
+
+        if (ledger) {
+            await db.update(stockLedger).set({
+                quantityReserved: Math.max(0, Number(ledger.quantityReserved) - quantityToRelease).toString(),
+                quantityAvailable: (Number(ledger.quantityAvailable) + quantityToRelease).toString(),
+                updatedAt: new Date()
+            }).where(eq(stockLedger.id, ledger.id));
+        }
+
+        // 3. Update reservation status
+        await db.update(inventoryReservations)
+            .set({ status: "released", updatedAt: new Date() })
+            .where(eq(inventoryReservations.id, reservationId));
+
+        revalidatePath("/inventory/reservations");
+        revalidatePath("/inventory/items");
+        return { success: true, message: `Released ${quantityToRelease} units back to available stock` };
+
+    } catch (e: any) {
+        return { success: false, message: e.message };
+    }
 }
+
+/**
+ * FULFILL RESERVATION: Mark quantity as used/shipped
+ */
+export async function fulfillReservation(reservationId: string, quantityFulfilled: number) {
+    try {
+        const companyId = await getCompanyId();
+
+        const reservation = await db.query.inventoryReservations.findFirst({
+            where: and(
+                eq(inventoryReservations.id, reservationId),
+                eq(inventoryReservations.companyId, companyId)
+            )
+        });
+
+        if (!reservation) {
+            return { success: false, message: "Reservation not found" };
+        }
+
+        const currentFulfilled = Number(reservation.quantityFulfilled || 0);
+        const reserved = Number(reservation.quantityReserved);
+        const newFulfilled = currentFulfilled + quantityFulfilled;
+
+        if (newFulfilled > reserved) {
+            return { success: false, message: "Cannot fulfill more than reserved quantity" };
+        }
+
+        const newStatus = newFulfilled >= reserved ? "fulfilled" : "active";
+
+        await db.update(inventoryReservations)
+            .set({ 
+                quantityFulfilled: newFulfilled.toString(),
+                status: newStatus,
+                updatedAt: new Date()
+            })
+            .where(eq(inventoryReservations.id, reservationId));
+
+        revalidatePath("/inventory/reservations");
+        return { success: true, message: `Fulfilled ${quantityFulfilled} units`, status: newStatus };
+
+    } catch (e: any) {
+        return { success: false, message: e.message };
+    }
+}
+
