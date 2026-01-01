@@ -22,13 +22,6 @@ export async function getBrands() {
 
   return db.query.itemBrands.findMany({
     where: eq(itemBrands.companyId, companyId),
-    with: {
-      categoryMappings: {
-        with: {
-          category: true
-        }
-      }
-    },
     orderBy: [desc(itemBrands.createdAt)],
   });
 }
@@ -39,9 +32,6 @@ export async function getBrand(id: string) {
 
   return db.query.itemBrands.findFirst({
     where: eq(itemBrands.id, id),
-    with: {
-      categoryMappings: true, // Fetch linked categories
-    }
   });
 }
 

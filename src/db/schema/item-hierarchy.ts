@@ -143,7 +143,6 @@ export const itemBrandsRelations = relations(itemBrands, ({ one, many }) => ({
     references: [companies.id],
   }),
   subcategoryMappings: many(brandSubcategories),
-  categoryMappings: many(brandCategories),
   models: many(itemModels),
 }));
 
