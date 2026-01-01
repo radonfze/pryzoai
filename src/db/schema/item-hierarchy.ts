@@ -82,6 +82,17 @@ export const brandSubcategories = pgTable("brand_subcategories", {
     .references(() => itemSubcategories.id),
 });
 
+// Brand-Category mapping (many-to-many) - NEW
+export const brandCategories = pgTable("brand_categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  brandId: uuid("brand_id")
+    .notNull()
+    .references(() => itemBrands.id),
+  categoryId: uuid("category_id")
+    .notNull()
+    .references(() => itemCategories.id),
+});
+
 // Level 4: Models/Variants
 export const itemModels = pgTable("item_models", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -111,6 +122,7 @@ export const itemCategoriesRelations = relations(itemCategories, ({ one, many })
     references: [companies.id],
   }),
   subcategories: many(itemSubcategories),
+  brandMappings: many(brandCategories),
 }));
 
 export const itemSubcategoriesRelations = relations(itemSubcategories, ({ one, many }) => ({
@@ -132,7 +144,19 @@ export const itemBrandsRelations = relations(itemBrands, ({ one, many }) => ({
     references: [companies.id],
   }),
   subcategoryMappings: many(brandSubcategories),
+  categoryMappings: many(brandCategories),
   models: many(itemModels),
+}));
+
+export const brandCategoriesRelations = relations(brandCategories, ({ one }) => ({
+  brand: one(itemBrands, {
+    fields: [brandCategories.brandId],
+    references: [itemBrands.id],
+  }),
+  category: one(itemCategories, {
+    fields: [brandCategories.categoryId],
+    references: [itemCategories.id],
+  }),
 }));
 
 export const brandSubcategoriesRelations = relations(brandSubcategories, ({ one }) => ({

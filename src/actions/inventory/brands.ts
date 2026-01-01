@@ -13,6 +13,7 @@ const brandSchema = z.object({
   nameAr: z.string().optional(),
   website: z.string().optional(),
   isActive: z.boolean().default(true),
+  categoryIds: z.array(z.string()).optional(), // New field
 });
 
 export async function getBrands() {
@@ -21,6 +22,13 @@ export async function getBrands() {
 
   return db.query.itemBrands.findMany({
     where: eq(itemBrands.companyId, companyId),
+    with: {
+      categoryMappings: {
+        with: {
+          category: true
+        }
+      }
+    },
     orderBy: [desc(itemBrands.createdAt)],
   });
 }
@@ -31,6 +39,9 @@ export async function getBrand(id: string) {
 
   return db.query.itemBrands.findFirst({
     where: eq(itemBrands.id, id),
+    with: {
+      categoryMappings: true, // Fetch linked categories
+    }
   });
 }
 
@@ -43,11 +54,27 @@ export async function createBrand(data: z.infer<typeof brandSchema>) {
     return { success: false, error: validation.error.flatten().fieldErrors };
   }
 
+  const { categoryIds, ...brandData } = validation.data;
+
   try {
     const [newItem] = await db.insert(itemBrands).values({
       companyId,
-      ...validation.data,
+      ...brandData,
     }).returning();
+
+    // Link Categories
+    if (categoryIds && categoryIds.length > 0) {
+       // Import brandCategories dynamically or top-level if possible.
+       // Assuming import is handled at top level.
+       const { brandCategories } = await import("@/db/schema/item-hierarchy");
+       
+       await db.insert(brandCategories).values(
+         categoryIds.map((catId) => ({
+           brandId: newItem.id,
+           categoryId: catId
+         }))
+       );
+    }
 
     revalidatePath("/inventory/brands");
     return { success: true, id: newItem.id };
@@ -66,13 +93,33 @@ export async function updateBrand(id: string, data: z.infer<typeof brandSchema>)
     return { success: false, error: validation.error.flatten().fieldErrors };
   }
 
+  const { categoryIds, ...brandData } = validation.data;
+
   try {
     await db.update(itemBrands)
       .set({
-        ...validation.data,
+        ...brandData,
         updatedAt: new Date(),
       })
       .where(eq(itemBrands.id, id));
+    
+    // Manage Categories
+    if (categoryIds !== undefined) {
+         const { brandCategories } = await import("@/db/schema/item-hierarchy");
+         
+         // 1. Delete existing
+         await db.delete(brandCategories).where(eq(brandCategories.brandId, id));
+
+         // 2. Insert new
+         if (categoryIds.length > 0) {
+            await db.insert(brandCategories).values(
+                categoryIds.map((catId) => ({
+                brandId: id,
+                categoryId: catId
+                }))
+            );
+         }
+    }
 
     revalidatePath("/inventory/brands");
     return { success: true };
@@ -87,6 +134,10 @@ export async function deleteBrand(id: string) {
   if (!companyId) throw new Error("Unauthorized");
 
   try {
+    // Delete mappings first (CASCADE might handle this, but safe to be explicit if no Cascade)
+    const { brandCategories } = await import("@/db/schema/item-hierarchy");
+    await db.delete(brandCategories).where(eq(brandCategories.brandId, id));
+    
     await db.delete(itemBrands).where(eq(itemBrands.id, id));
     revalidatePath("/inventory/brands");
     return { success: true };

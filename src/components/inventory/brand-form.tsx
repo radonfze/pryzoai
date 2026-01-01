@@ -21,32 +21,40 @@ import { toast } from "sonner";
 import { createBrand, updateBrand } from "@/actions/inventory/brands";
 import { Switch } from "@/components/ui/switch";
 
+import { Checkbox } from "@/components/ui/checkbox";
+
 const formSchema = z.object({
   code: z.string().min(1, "Code is required"),
   name: z.string().min(1, "Name is required"),
   nameAr: z.string().optional(),
   website: z.string().optional(),
   isActive: z.boolean().default(true),
+  categoryIds: z.array(z.string()).optional(),
 });
 
 type BrandFormValues = z.infer<typeof formSchema>;
 
 interface BrandFormProps {
   initialData?: any;
+  categories: any[];
 }
 
-export function BrandForm({ initialData }: BrandFormProps) {
+export function BrandForm({ initialData, categories = [] }: BrandFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const form = useForm<BrandFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
+    defaultValues: initialData ? {
+      ...initialData,
+      categoryIds: initialData.categoryMappings?.map((m: any) => m.categoryId) || []
+    } : {
       code: "",
       name: "",
       nameAr: "",
       website: "",
       isActive: true,
+      categoryIds: [],
     },
   });
 
@@ -111,6 +119,56 @@ export function BrandForm({ initialData }: BrandFormProps) {
                   </FormItem>
                 )}
               />
+              
+              <FormItem className="col-span-full">
+                <FormLabel>Linked Categories</FormLabel>
+                <Card>
+                    <CardContent className="p-4 h-48 overflow-y-auto grid grid-cols-2 gap-4">
+                         <FormField
+                            control={form.control}
+                            name="categoryIds"
+                            render={() => (
+                                <>
+                                {categories.map((category) => (
+                                    <FormField
+                                        key={category.id}
+                                        control={form.control}
+                                        name="categoryIds"
+                                        render={({ field }) => {
+                                            return (
+                                                <FormItem
+                                                    key={category.id}
+                                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                                >
+                                                    <FormControl>
+                                                        <Checkbox
+                                                            checked={field.value?.includes(category.id)}
+                                                            onCheckedChange={(checked) => {
+                                                                return checked
+                                                                    ? field.onChange([...(field.value || []), category.id])
+                                                                    : field.onChange(
+                                                                        field.value?.filter(
+                                                                            (value) => value !== category.id
+                                                                        )
+                                                                    )
+                                                            }}
+                                                        />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal cursor-pointer">
+                                                        {category.name} ({category.code})
+                                                    </FormLabel>
+                                                </FormItem>
+                                            )
+                                        }}
+                                    />
+                                ))}
+                                </>
+                            )}
+                        />
+                    </CardContent>
+                </Card>
+              </FormItem>
+
               <FormField
                 control={form.control}
                 name="nameAr"

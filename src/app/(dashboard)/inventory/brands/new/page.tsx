@@ -1,7 +1,8 @@
-import { BrandForm } from "@/components/inventory/brand-form";
-import { GradientHeader } from "@/components/ui/gradient-header";
+import { getCategories } from "@/actions/inventory/categories";
 
-export default function NewBrandPage() {
+export default async function NewBrandPage() {
+  const categories = await getCategories();
+  
   return (
     <div className="space-y-6">
       <GradientHeader
@@ -12,7 +13,7 @@ export default function NewBrandPage() {
         backLink="/inventory/brands"
       />
       <div className="max-w-2xl mx-auto">
-        <BrandForm />
+        <BrandForm categories={categories} />
       </div>
     </div>
   );
