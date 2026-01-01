@@ -15,6 +15,7 @@ import {
 import Link from "next/link"
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 import { ViewItemDialog } from "@/components/inventory/item-view-dialog"
+import { formatCurrency } from "@/lib/utils"
 import { useState } from "react"
 
 export type Item = {
@@ -27,7 +28,7 @@ export type Item = {
   // Add loose typing for relations to avoid ts errors without full schema update here
   category?: any
   brand?: any
-  subcategory?: any
+  subCategory?: any
   uom?: any
   model?: any
   costPrice?: any
@@ -92,13 +93,8 @@ export const columns: ColumnDef<Item>[] = [
       <DataTableColumnHeader column={column} title="Price" />
     ),
     cell: ({ row }) => {
-      const price = parseFloat(row.getValue("sellingPrice") || "0")
-      const formatted = new Intl.NumberFormat("en-AE", {
-        style: "currency",
-        currency: "AED",
-      }).format(price)
- 
-      return <div className="text-right font-medium">{formatted}</div>
+      const price = row.getValue("sellingPrice");
+      return <div className="text-right font-medium">{formatCurrency(price as string)}</div>
     },
   },
   {

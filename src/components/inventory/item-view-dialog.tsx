@@ -61,7 +61,7 @@ export function ViewItemDialog({ item, trigger, open, onOpenChange }: ViewItemDi
                 </div>
                 <div className="space-y-1">
                     <p className="text-sm text-muted-foreground font-medium">Subcategory</p>
-                    <p>{item.subcategory?.name || "-"}</p>
+                    <p>{item.subCategory?.name || "-"}</p>
                 </div>
                 <div className="space-y-1">
                     <p className="text-sm text-muted-foreground font-medium">Brand</p>
@@ -89,7 +89,7 @@ export function ViewItemDialog({ item, trigger, open, onOpenChange }: ViewItemDi
                 
                 <div className="space-y-1">
                     <p className="text-sm text-muted-foreground font-medium">Base UOM</p>
-                    <p>{item.uom?.name || item.uomId || "-"}</p>
+                    <p>{typeof item.uom === 'string' ? item.uom : item.uom?.name || "-"}</p>
                 </div>
                 <div className="space-y-1">
                     <p className="text-sm text-muted-foreground font-medium">Barcode</p>

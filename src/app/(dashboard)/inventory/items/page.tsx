@@ -23,8 +23,7 @@ export default async function ItemsPage() {
     with: {
         category: true,
         brand: true,
-        subcategory: true,
-        uom: true,
+        subCategory: true,
     },
     orderBy: [desc(items.createdAt)],
   });
