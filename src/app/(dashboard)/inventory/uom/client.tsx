@@ -2,7 +2,7 @@
 
 import { DataTable } from "@/components/ui/data-table";
 import { createActionColumn } from "@/components/ui/data-table-columns";
-import { deleteModel, deleteModels } from "@/actions/inventory/models";
+import { deleteUom, deleteUoms } from "@/actions/inventory/uom";
 import { Checkbox } from "@/components/ui/checkbox";
 
 // Define helper for status badge
@@ -16,7 +16,7 @@ const StatusBadge = ({ isActive }: { isActive: boolean }) => (
   </span>
 );
 
-export function ModelsClient({ data }: { data: any[] }) {
+export function UomsClient({ data }: { data: any[] }) {
   const columns = [
     {
       id: "select",
@@ -46,27 +46,15 @@ export function ModelsClient({ data }: { data: any[] }) {
       header: "Name",
     },
     {
-      accessorKey: "brand.name",
-      header: "Brand",
-    },
-    {
-      accessorKey: "subcategory.name",
-      header: "Subcategory",
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-    },
-    {
       accessorKey: "isActive",
       header: "Status",
       cell: ({ row }: any) => <StatusBadge isActive={row.original.isActive} />,
     },
     createActionColumn({
-      basePath: "/inventory/models",
+      basePath: "/inventory/uom",
       hasEdit: true,
       hasDelete: true,
-      onDelete: deleteModel,
+      onDelete: deleteUom,
     }),
   ];
 
@@ -75,8 +63,8 @@ export function ModelsClient({ data }: { data: any[] }) {
       columns={columns}
       data={data}
       searchKey="name"
-      exportName="models"
-      onDelete={deleteModels}
+      exportName="uoms"
+      onDelete={deleteUoms}
     />
   );
 }

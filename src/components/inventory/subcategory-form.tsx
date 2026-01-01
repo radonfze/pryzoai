@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { createSubcategory, updateSubcategory } from "@/actions/inventory/subcategories";
 import { Switch } from "@/components/ui/switch";
@@ -43,16 +43,17 @@ type SubcategoryFormValues = z.infer<typeof formSchema>;
 interface SubcategoryFormProps {
   initialData?: any;
   categories: { id: string; name: string }[];
+  initialCode?: string;
 }
 
-export function SubcategoryForm({ initialData, categories }: SubcategoryFormProps) {
+export function SubcategoryForm({ initialData, categories, initialCode }: SubcategoryFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const form = useForm<SubcategoryFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
-      code: "",
+      code: initialCode || "",
       name: "",
       categoryId: "",
       nameAr: "",
@@ -127,8 +128,12 @@ export function SubcategoryForm({ initialData, categories }: SubcategoryFormProp
                   <FormItem>
                     <FormLabel>Code *</FormLabel>
                     <FormControl>
-                      <Input placeholder="SUB-001" {...field} />
+                        <div className="relative">
+                            <Input placeholder="SUB-001" {...field} readOnly className="bg-muted pl-10" />
+                            <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        </div>
                     </FormControl>
+                    <FormDescription>Code is auto-generated</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

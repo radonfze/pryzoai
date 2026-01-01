@@ -21,7 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { createUom, updateUom } from "@/actions/inventory/uom";
-import { Loader2, Save, X } from "lucide-react";
+import { Loader2, Save, X, Lock } from "lucide-react";
 
 const formSchema = z.object({
   code: z.string().min(1, "Code is required").max(20, "Code too long"),
@@ -38,9 +38,10 @@ interface UomFormProps {
     name: string;
     isActive: boolean;
   };
+  initialCode?: string;
 }
 
-export function UomForm({ initialData }: UomFormProps) {
+export function UomForm({ initialData, initialCode }: UomFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const isEditing = !!initialData;
@@ -52,7 +53,8 @@ export function UomForm({ initialData }: UomFormProps) {
       name: initialData.name,
       isActive: initialData.isActive,
     } : {
-      code: "",
+    } : {
+      code: initialCode || "",
       name: "",
       isActive: true,
     },
@@ -100,9 +102,12 @@ export function UomForm({ initialData }: UomFormProps) {
                   <FormItem>
                     <FormLabel>Code *</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., PCS, KG, MTR" {...field} />
+                        <div className="relative">
+                            <Input placeholder="e.g., PCS, KG, MTR" {...field} readOnly className="bg-muted pl-10" />
+                            <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        </div>
                     </FormControl>
-                    <FormDescription>Short code for the unit</FormDescription>
+                    <FormDescription>Code is auto-generated</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

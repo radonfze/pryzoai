@@ -2,7 +2,8 @@
 
 import { DataTable } from "@/components/ui/data-table";
 import { createActionColumn } from "@/components/ui/data-table-columns";
-import { deleteBrand } from "@/actions/inventory/brands";
+import { deleteBrand, deleteBrands } from "@/actions/inventory/brands";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Define helper for status badge
 const StatusBadge = ({ isActive }: { isActive: boolean }) => (
@@ -17,6 +18,25 @@ const StatusBadge = ({ isActive }: { isActive: boolean }) => (
 
 export function BrandsClient({ data }: { data: any[] }) {
   const columns = [
+    {
+      id: "select",
+      header: ({ table }: any) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }: any) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "code",
       header: "Code",
@@ -49,6 +69,7 @@ export function BrandsClient({ data }: { data: any[] }) {
       data={data}
       searchKey="name"
       exportName="brands"
+      onDelete={deleteBrands}
     />
   );
 }

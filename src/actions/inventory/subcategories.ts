@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { itemCategories, itemSubcategories } from "@/db/schema/item-hierarchy";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 // Get next sequential subcategory code
@@ -109,5 +109,19 @@ export async function deleteSubcategory(id: string) {
   } catch (error: any) {
     console.error("Failed to delete subcategory:", error);
     return { success: false, error: "Cannot delete subcategory in use" };
+  }
+}
+
+export async function deleteSubcategories(ids: string[]) {
+  const companyId = await getCompanyId();
+  if (!companyId) throw new Error("Unauthorized");
+
+  try {
+    await db.delete(itemSubcategories).where(inArray(itemSubcategories.id, ids));
+    revalidatePath("/inventory/subcategories");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to delete subcategories:", error);
+    return { success: false, error: "Cannot delete selected subcategories" };
   }
 }

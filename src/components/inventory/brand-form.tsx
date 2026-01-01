@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { createBrand, updateBrand } from "@/actions/inventory/brands";
 import { Switch } from "@/components/ui/switch";
@@ -37,9 +37,10 @@ type BrandFormValues = z.infer<typeof formSchema>;
 interface BrandFormProps {
   initialData?: any;
   categories: any[];
+  initialCode?: string;
 }
 
-export function BrandForm({ initialData, categories = [] }: BrandFormProps) {
+export function BrandForm({ initialData, categories = [], initialCode }: BrandFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -49,7 +50,7 @@ export function BrandForm({ initialData, categories = [] }: BrandFormProps) {
       ...initialData,
       categoryIds: initialData.categoryMappings?.map((m: any) => m.categoryId) || []
     } : {
-      code: "",
+      code: initialCode || "",
       name: "",
       nameAr: "",
       website: "",
@@ -100,8 +101,12 @@ export function BrandForm({ initialData, categories = [] }: BrandFormProps) {
                   <FormItem>
                     <FormLabel>Code *</FormLabel>
                     <FormControl>
-                      <Input placeholder="BRD-001" {...field} />
+                      <div className="relative">
+                        <Input placeholder="BRD-001" {...field} readOnly className="bg-muted pl-10" />
+                        <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      </div>
                     </FormControl>
+                    <FormDescription>Code is auto-generated</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

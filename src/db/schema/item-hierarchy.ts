@@ -129,6 +129,14 @@ export const itemCategoriesRelations = relations(itemCategories, ({ one, many })
     references: [companies.id],
   }),
   subcategories: many(itemSubcategories),
+  baseUom: one(uoms, {
+    fields: [itemCategories.baseUomId],
+    references: [uoms.id],
+  }),
+  alternativeUom: one(uoms, {
+    fields: [itemCategories.alternativeUomId],
+    references: [uoms.id],
+  }),
 }));
 
 export const itemSubcategoriesRelations = relations(itemSubcategories, ({ one, many }) => ({

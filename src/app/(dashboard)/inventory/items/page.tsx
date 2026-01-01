@@ -20,6 +20,12 @@ export default async function ItemsPage() {
 
   const data = await db.query.items.findMany({
     where: eq(items.companyId, companyId),
+    with: {
+        category: true,
+        brand: true,
+        subcategory: true,
+        uom: true,
+    },
     orderBy: [desc(items.createdAt)],
   });
 

@@ -2,7 +2,8 @@
 
 import { DataTable } from "@/components/ui/data-table";
 import { createActionColumn } from "@/components/ui/data-table-columns";
-import { deleteCategory } from "@/actions/inventory/categories";
+import { deleteCategory, deleteCategories } from "@/actions/inventory/categories";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Define helper for status badge to keep code clean
 const StatusBadge = ({ isActive }: { isActive: boolean }) => (
@@ -18,6 +19,25 @@ const StatusBadge = ({ isActive }: { isActive: boolean }) => (
 export function CategoriesClient({ data }: { data: any[] }) {
   const columns = [
     {
+      id: "select",
+      header: ({ table }: any) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }: any) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
       accessorKey: "code",
       header: "Code",
     },
@@ -28,6 +48,16 @@ export function CategoriesClient({ data }: { data: any[] }) {
     {
       accessorKey: "description",
       header: "Description",
+    },
+    {
+        accessorKey: "baseUom.name",
+        header: "Base UOM",
+        cell: ({ row }: any) => row.original.baseUom?.code || "-",
+    },
+    {
+        accessorKey: "alternativeUom.name",
+        header: "Alt UOM",
+        cell: ({ row }: any) => row.original.alternativeUom?.code || "-",
     },
     {
       accessorKey: "isActive",
@@ -46,6 +76,7 @@ export function CategoriesClient({ data }: { data: any[] }) {
       data={data}
       searchKey="name"
       exportName="categories"
+      onDelete={deleteCategories}
     />
   );
 }

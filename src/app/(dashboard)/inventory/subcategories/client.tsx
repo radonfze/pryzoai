@@ -2,7 +2,8 @@
 
 import { DataTable } from "@/components/ui/data-table";
 import { createActionColumn } from "@/components/ui/data-table-columns";
-import { deleteSubcategory } from "@/actions/inventory/subcategories";
+import { deleteSubcategory, deleteSubcategories } from "@/actions/inventory/subcategories";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Define helper for status badge
 const StatusBadge = ({ isActive }: { isActive: boolean }) => (
@@ -17,6 +18,25 @@ const StatusBadge = ({ isActive }: { isActive: boolean }) => (
 
 export function SubcategoriesClient({ data }: { data: any[] }) {
   const columns = [
+    {
+      id: "select",
+      header: ({ table }: any) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }: any) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "code",
       header: "Code",
@@ -52,6 +72,7 @@ export function SubcategoriesClient({ data }: { data: any[] }) {
       data={data}
       searchKey="name"
       exportName="subcategories"
+      onDelete={deleteSubcategories}
     />
   );
 }

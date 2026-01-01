@@ -4,7 +4,25 @@ import { db } from "@/db";
 import { itemBrands } from "@/db/schema/item-hierarchy";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, inArray } from "drizzle-orm";
+
+export async function deleteBrands(ids: string[]) {
+  const companyId = await getCompanyId();
+  if (!companyId) throw new Error("Unauthorized");
+
+  try {
+    // Delete mappings first
+    const { brandCategories } = await import("@/db/schema/item-hierarchy");
+    await db.delete(brandCategories).where(inArray(brandCategories.brandId, ids));
+    
+    await db.delete(itemBrands).where(inArray(itemBrands.id, ids));
+    revalidatePath("/inventory/brands");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to delete brands:", error);
+    return { success: false, error: "Cannot delete selected brands" };
+  }
+}
 import { z } from "zod";
 
 // Get next sequential brand code

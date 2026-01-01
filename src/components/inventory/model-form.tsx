@@ -24,7 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { createModel, updateModel } from "@/actions/inventory/models";
 import { Switch } from "@/components/ui/switch";
@@ -46,16 +47,17 @@ interface ModelFormProps {
   initialData?: any;
   brands: { id: string; name: string }[];
   subcategories: { id: string; name: string }[];
+  initialCode?: string;
 }
 
-export function ModelForm({ initialData, brands, subcategories }: ModelFormProps) {
+export function ModelForm({ initialData, brands, subcategories, initialCode }: ModelFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const form = useForm<ModelFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
-      code: "",
+      code: initialCode || "",
       name: "",
       brandId: "",
       subcategoryId: "",
@@ -156,8 +158,12 @@ export function ModelForm({ initialData, brands, subcategories }: ModelFormProps
                   <FormItem>
                     <FormLabel>Code *</FormLabel>
                     <FormControl>
-                      <Input placeholder="MOD-001" {...field} />
+                        <div className="relative">
+                            <Input placeholder="MOD-001" {...field} readOnly className="bg-muted pl-10" />
+                            <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        </div>
                     </FormControl>
+                    <FormDescription>Code is auto-generated</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

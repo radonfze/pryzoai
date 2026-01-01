@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { itemCategories } from "@/db/schema/item-hierarchy";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCompanyId } from "@/lib/auth";
@@ -43,6 +43,10 @@ export async function getCategories() {
 
   return await db.query.itemCategories.findMany({
     where: eq(itemCategories.companyId, companyId),
+    with: {
+        baseUom: true,
+        alternativeUom: true,
+    },
     orderBy: [desc(itemCategories.createdAt)],
   });
 }
@@ -104,6 +108,10 @@ export async function updateCategory(id: string, data: z.infer<typeof categorySc
   }
 }
 
+// ... existing code ...
+
+// ... existing code ...
+
 export async function deleteCategory(id: string) {
   const companyId = await getCompanyId();
   if (!companyId) throw new Error("Unauthorized");
@@ -115,5 +123,19 @@ export async function deleteCategory(id: string) {
   } catch (error: any) {
     console.error("Failed to delete category:", error);
     return { success: false, error: "Cannot delete category in use" };
+  }
+}
+
+export async function deleteCategories(ids: string[]) {
+  const companyId = await getCompanyId();
+  if (!companyId) throw new Error("Unauthorized");
+
+  try {
+    await db.delete(itemCategories).where(inArray(itemCategories.id, ids));
+    revalidatePath("/inventory/categories");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to delete categories:", error);
+    return { success: false, error: "Cannot delete selected categories" };
   }
 }

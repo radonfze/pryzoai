@@ -2,11 +2,13 @@ import { ModelForm } from "@/components/inventory/model-form";
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { getBrands } from "@/actions/inventory/brands";
 import { getSubcategories } from "@/actions/inventory/subcategories";
+import { getNextModelCode } from "@/actions/inventory/models";
 
 export default async function NewModelPage() {
-  const [brands, subcategories] = await Promise.all([
+  const [brands, subcategories, nextCode] = await Promise.all([
     getBrands(),
     getSubcategories(),
+    getNextModelCode(),
   ]);
 
   return (
@@ -19,7 +21,7 @@ export default async function NewModelPage() {
         backLink="/inventory/models"
       />
       <div className="max-w-2xl mx-auto">
-        <ModelForm brands={brands} subcategories={subcategories} />
+        <ModelForm brands={brands} subcategories={subcategories} initialCode={nextCode} />
       </div>
     </div>
   );

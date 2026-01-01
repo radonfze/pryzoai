@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { uoms } from "@/db/schema/items";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 // Get next sequential UOM code
@@ -84,6 +84,20 @@ export async function deleteUom(id: string) {
       console.error("Failed to delete uom:", error);
       return { success: false, error: "Cannot delete UOM in use" };
     }
+}
+
+export async function deleteUoms(ids: string[]) {
+  const companyId = await getCompanyId();
+  if (!companyId) throw new Error("Unauthorized");
+
+  try {
+    await db.delete(uoms).where(and(inArray(uoms.id, ids), eq(uoms.companyId, companyId)));
+    revalidatePath("/inventory/uom");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to delete UOMs:", error);
+    return { success: false, error: "Cannot delete selected UOMs" };
+  }
 }
 
 export async function getUom(id: string) {

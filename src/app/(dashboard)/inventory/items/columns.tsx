@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
+import { ViewItemDialog } from "@/components/inventory/item-view-dialog"
+import { useState } from "react"
 
 export type Item = {
   id: string
@@ -22,6 +24,14 @@ export type Item = {
   itemType: string
   sellingPrice: string | null
   isActive: boolean
+  // Add loose typing for relations to avoid ts errors without full schema update here
+  category?: any
+  brand?: any
+  subcategory?: any
+  uom?: any
+  model?: any
+  costPrice?: any
+  barcode?: any
 }
 
 import { Checkbox } from "@/components/ui/checkbox"
@@ -126,11 +136,9 @@ export const columns: ColumnDef<Item>[] = [
               Copy ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <Link href={`/inventory/items/${item.id}`}>
-                <DropdownMenuItem>
-                    <Eye className="mr-2 h-4 w-4" /> View Details
-                </DropdownMenuItem>
-            </Link>
+            
+            <ViewDialogItem item={item} />
+
             <Link href={`/inventory/items/${item.id}/edit`}>
                 <DropdownMenuItem>
                     <Edit className="mr-2 h-4 w-4" /> Edit Item
@@ -142,3 +150,21 @@ export const columns: ColumnDef<Item>[] = [
     },
   },
 ]
+
+// Helper component to handle Dialog inside Dropdown
+const ViewDialogItem = ({ item }: { item: Item }) => {
+    const [open, setOpen] = useState(false);
+    return (
+        <ViewItemDialog 
+            item={item} 
+            open={open} 
+            onOpenChange={setOpen}
+            trigger={
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Eye className="mr-2 h-4 w-4" /> View Details
+                </DropdownMenuItem>
+            }
+        />
+    )
+}
+

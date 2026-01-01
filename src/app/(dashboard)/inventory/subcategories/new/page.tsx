@@ -1,9 +1,11 @@
 import { SubcategoryForm } from "@/components/inventory/subcategory-form";
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { getCategories } from "@/actions/inventory/categories";
+import { getNextSubcategoryCode } from "@/actions/inventory/subcategories";
 
 export default async function NewSubcategoryPage() {
   const categories = await getCategories();
+  const nextCode = await getNextSubcategoryCode();
 
   return (
     <div className="space-y-6">
@@ -15,7 +17,7 @@ export default async function NewSubcategoryPage() {
         backLink="/inventory/subcategories"
       />
       <div className="max-w-2xl mx-auto">
-        <SubcategoryForm categories={categories} />
+        <SubcategoryForm categories={categories} initialCode={nextCode} />
       </div>
     </div>
   );

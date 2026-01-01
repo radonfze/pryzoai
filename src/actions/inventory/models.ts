@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { itemModels } from "@/db/schema/item-hierarchy";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 // Get next sequential model code
@@ -112,5 +112,19 @@ export async function deleteModel(id: string) {
   } catch (error: any) {
     console.error("Failed to delete model:", error);
     return { success: false, error: "Cannot delete model in use" };
+  }
+}
+
+export async function deleteModels(ids: string[]) {
+  const companyId = await getCompanyId();
+  if (!companyId) throw new Error("Unauthorized");
+
+  try {
+    await db.delete(itemModels).where(inArray(itemModels.id, ids));
+    revalidatePath("/inventory/models");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to delete models:", error);
+    return { success: false, error: "Cannot delete selected models" };
   }
 }
