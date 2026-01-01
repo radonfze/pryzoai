@@ -9,12 +9,13 @@ import GradientHeader from "@/components/ui/gradient-header";
 import { Edit } from "lucide-react";
 import { notFound } from "next/navigation";
 
-export default async function EditItemPage({ params }: { params: { id: string } }) {
+export default async function EditItemPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const companyId = await getCompanyId();
     if (!companyId) return null;
 
     const item = await db.query.items.findFirst({
-        where: and(eq(items.id, params.id), eq(items.companyId, companyId))
+        where: and(eq(items.id, id), eq(items.companyId, companyId))
     });
 
     if (!item) notFound();

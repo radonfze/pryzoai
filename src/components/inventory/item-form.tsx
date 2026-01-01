@@ -68,12 +68,14 @@ interface ItemFormProps {
   uoms: any[];
   brandMappings?: any[]; // SubCategory Mappings
   brandCategoryMappings?: any[]; // New Category Mappings
+  isDuplicate?: boolean; // When duplicating an item
 }
 
-export default function ItemForm({ initialData, initialCode, categories, subCategories, brands, models, uoms, brandMappings, brandCategoryMappings }: ItemFormProps) {
+export default function ItemForm({ initialData, initialCode, categories, subCategories, brands, models, uoms, brandMappings, brandCategoryMappings, isDuplicate }: ItemFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const isEditing = !!initialData;
+  const isEditing = !!initialData?.id && !isDuplicate; // Only editing if has ID and not duplicating
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

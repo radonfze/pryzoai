@@ -13,9 +13,10 @@ import GradientHeader from "@/components/ui/gradient-header";
 
 export const dynamic = 'force-dynamic';
 
-export default async function ItemDetailPage({ params }: { params: { id: string } }) {
+export default async function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const item = await db.query.items.findFirst({
-    where: eq(items.id, params.id),
+    where: eq(items.id, id),
     with: {
         category: true,
         brand: true,

@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Eye, Edit, Package, AlertTriangle, Lock, Wrench } from "lucide-react"
+import { MoreHorizontal, Eye, Edit, Package, AlertTriangle, Lock, Wrench, Copy } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -256,6 +256,11 @@ export const columns: ColumnDef<Item>[] = [
             <Link href={`/inventory/items/${item.id}/edit`}>
                 <DropdownMenuItem>
                     <Edit className="mr-2 h-4 w-4" /> Edit Item
+                </DropdownMenuItem>
+            </Link>
+            <Link href={`/inventory/items/new?duplicate=${item.id}`}>
+                <DropdownMenuItem>
+                    <Copy className="mr-2 h-4 w-4" /> Duplicate Item
                 </DropdownMenuItem>
             </Link>
           </DropdownMenuContent>
