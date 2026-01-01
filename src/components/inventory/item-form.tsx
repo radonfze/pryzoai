@@ -52,46 +52,12 @@ interface ItemFormProps {
   brands: any[];
   models: any[];
   uoms: any[];
-  brandMappings?: any[];
+  brandMappings?: any[]; // SubCategory Mappings
+  brandCategoryMappings?: any[]; // New Category Mappings
 }
 
-export default function ItemForm({ initialData, categories, subCategories, brands, models, uoms, brandMappings }: ItemFormProps) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: initialData ? {
-        ...initialData,
-        costPrice: Number(initialData.costPrice),
-        sellingPrice: Number(initialData.sellingPrice),
-        minSellingPrice: Number(initialData.minSellingPrice),
-        taxPercent: Number(initialData.taxPercent),
-        reorderLevel: Number(initialData.reorderLevel),
-        reorderQty: Number(initialData.reorderQty),
-    } : {
-      code: "",
-      name: "",
-      nameAr: "",
-      uom: "PCS",
-      itemType: "goods",
-      costPrice: 0,
-      sellingPrice: 0,
-      minSellingPrice: 0,
-      taxPercent: 5,
-      reorderLevel: 0,
-      reorderQty: 0,
-      isActive: true,
-      hasBatchNo: false,
-      hasSerialNo: false,
-      hasExpiry: false,
-      barcode: "",
-      description: ""
-    },
-  });
-
-  const selectedBrandId = form.watch("brandId");
-  const filteredModels = models.filter(m => m.brandId === selectedBrandId);
+export default function ItemForm({ initialData, categories, subCategories, brands, models, uoms, brandMappings, brandCategoryMappings }: ItemFormProps) {
+// ... hooks
 
   const selectedCategoryId = form.watch("categoryId");
   const filteredSubCategories = subCategories.filter(sc => sc.categoryId === selectedCategoryId);
@@ -99,9 +65,29 @@ export default function ItemForm({ initialData, categories, subCategories, brand
   const selectedSubCategoryId = form.watch("subCategoryId");
   
   // Dependency: Filter Brands by Category/SubCategory
-  const filteredBrands = selectedSubCategoryId && brandMappings
-    ? brands.filter(b => brandMappings.some(bm => bm.brandId === b.id && bm.subcategoryId === selectedSubCategoryId))
-    : brands; // If no subcat or mapping, show all (or could filter by category if mapped differently)
+  const filteredBrands = brands.filter(b => {
+      // 1. If SubCategory Selected, check SubCategory Mapping
+      if (selectedSubCategoryId && brandMappings && brandMappings.length > 0) {
+          // If mapping exists for this subcat, enforce it.
+          const hasSubCatMapping = brandMappings.some(bm => bm.subcategoryId === selectedSubCategoryId);
+          if (hasSubCatMapping) {
+              return brandMappings.some(bm => bm.brandId === b.id && bm.subcategoryId === selectedSubCategoryId);
+          }
+      }
+
+      // 2. If Category Selected (and passed above check or skipped), check Category Mapping
+      if (selectedCategoryId && brandCategoryMappings && brandCategoryMappings.length > 0) {
+          const hasCatMappings = brandCategoryMappings.some(m => m.categoryId === selectedCategoryId);
+          // If there are ANY brands linked to this category, restrict to those brands.
+          // If NO brands linked to this category, maybe show all? Or show none?
+          // Default to: Show only linked brands if potential links exist.
+          if (hasCatMappings) {
+             return brandCategoryMappings.some(bm => bm.brandId === b.id && bm.categoryId === selectedCategoryId);
+          }
+      }
+
+      return true;
+  });
 
   const handleGenerateSku = () => {
       const cat = categories.find(c => c.id === selectedCategoryId);
