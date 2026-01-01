@@ -101,12 +101,9 @@ export function UomForm({ initialData, initialCode }: UomFormProps) {
                   <FormItem>
                     <FormLabel>Code *</FormLabel>
                     <FormControl>
-                        <div className="relative">
-                            <Input placeholder="e.g., PCS, KG, MTR" {...field} readOnly className="bg-muted pl-10" />
-                            <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                        </div>
+                        <Input placeholder="e.g., PCS, KG, MTR" {...field} />
                     </FormControl>
-                    <FormDescription>Code is auto-generated</FormDescription>
+                    <FormDescription>Code is editable</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
