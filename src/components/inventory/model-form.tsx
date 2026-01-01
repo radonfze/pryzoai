@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Card, CardContent } from "@/components/ui/card";
+
 import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { createModel, updateModel } from "@/actions/inventory/models";

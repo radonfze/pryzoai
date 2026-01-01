@@ -53,7 +53,6 @@ export function UomForm({ initialData, initialCode }: UomFormProps) {
       name: initialData.name,
       isActive: initialData.isActive,
     } : {
-    } : {
       code: initialCode || "",
       name: "",
       isActive: true,
