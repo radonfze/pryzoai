@@ -6,6 +6,7 @@ interface GradientHeaderProps {
   title: string;
   description: string;
   icon: LucideIcon;
+  size?: "default" | "small";
 }
 
 const MODULE_GRADIENTS = {
@@ -18,28 +19,31 @@ const MODULE_GRADIENTS = {
   manufacturing: 'bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500',
 };
 
-export function GradientHeader({ module, title, description, icon: Icon }: GradientHeaderProps) {
+export function GradientHeader({ module, title, description, icon: Icon, size = "default" }: GradientHeaderProps) {
   const gradientClass = MODULE_GRADIENTS[module];
+  const isSmall = size === "small";
 
   return (
-    <div className={`relative ${gradientClass} rounded-2xl p-8 mb-6 overflow-hidden`}>
+    <div className={`relative ${gradientClass} rounded-2xl ${isSmall ? "p-4" : "p-8"} mb-6 overflow-hidden`}>
       {/* Background decoration */}
       <div className="absolute top-0 right-0 opacity-20">
-        <Icon size={200} className="transform rotate-12" />
+        <Icon size={isSmall ? 120 : 200} className="transform rotate-12" />
       </div>
 
       {/* Content */}
       <div className="relative z-10">
         <div className="flex items-center gap-3 mb-2">
-          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
-            <Icon size={24} className="text-white" />
-          </div>
+          {!isSmall && (
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
+                <Icon size={24} className="text-white" />
+            </div>
+          )}
           <span className="text-white/90 text-sm font-medium uppercase tracking-wider">
             {module} Module
           </span>
         </div>
-        <h1 className="text-white text-4xl font-bold mb-2">{title}</h1>
-        <p className="text-white/90 text-lg">{description}</p>
+        <h1 className={`text-white ${isSmall ? "text-2xl" : "text-4xl"} font-bold mb-2`}>{title}</h1>
+        <p className={`text-white/90 ${isSmall ? "text-sm" : "text-lg"}`}>{description}</p>
       </div>
 
       {/* Glassmorphic effect */}

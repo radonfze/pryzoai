@@ -31,6 +31,7 @@ export default async function NewItemPage() {
         title="Create New Item"
         description="Add a new product or service to your master inventory."
         icon={PackagePlus}
+        size="small"
       />
       <ItemForm 
         categories={categoryList} 

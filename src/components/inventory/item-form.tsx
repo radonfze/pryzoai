@@ -208,306 +208,263 @@ export default function ItemForm({ initialData, initialCode, categories, subCate
             </Button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-            {/* General Info */}
-            <Card>
-                <CardHeader><CardTitle>General Information</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-3">
+            {/* Column 1: General Info */}
+            <Card className="h-full">
+                <CardHeader className="py-3 px-4 bg-muted/20 border-b"><CardTitle className="text-base">General Info</CardTitle></CardHeader>
+                <CardContent className="p-4 space-y-3">
                     <FormField control={form.control} name="code" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Item Code *</FormLabel>
+                        <FormItem className="space-y-1">
+                            <FormLabel className="text-xs">Item Code *</FormLabel>
                             <div className="flex gap-2">
                                 <FormControl>
-                                  <Input 
-                                    placeholder="Auto-generated" 
-                                    {...field} 
-                                    readOnly 
-                                    className="bg-muted font-mono"
-                                  />
+                                  <Input placeholder="Auto" {...field} readOnly className="h-8 bg-muted font-mono text-xs" />
                                 </FormControl>
-                                <div className="flex items-center justify-center w-10 h-10 rounded-md bg-muted">
-                                    <Lock className="h-4 w-4 text-muted-foreground" />
+                                <div className="flex items-center justify-center w-8 h-8 rounded-md bg-muted">
+                                    <Lock className="h-3 w-3 text-muted-foreground" />
                                 </div>
                             </div>
-                            <FormDescription>Auto-generated, read-only</FormDescription>
-                            <FormMessage />
                         </FormItem>
                     )} />
-                     <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="name" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Name (En) *</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    {...field} 
-                                    readOnly={!isEditing}
-                                    className={!isEditing ? "bg-muted" : ""}
-                                    placeholder="Auto-generated from selections"
-                                  />
-                                </FormControl>
-                                {!isEditing && <FormDescription>Auto-composed from Category + SubCategory + Brand + Model + Description</FormDescription>}
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                        <FormField control={form.control} name="nameAr" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Name (Ar)</FormLabel>
-                                <FormControl><Input {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                    </div>
-                     <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="categoryId" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Category</FormLabel>
+                    <FormField control={form.control} name="name" render={({ field }) => (
+                        <FormItem className="space-y-1">
+                            <FormLabel className="text-xs">Name (En) *</FormLabel>
+                            <FormControl><Input {...field} readOnly={!isEditing} className={`h-8 ${!isEditing ? "bg-muted" : ""} text-xs`} placeholder="Auto-generated" /></FormControl>
+                        </FormItem>
+                    )} />
+                    <FormField control={form.control} name="nameAr" render={({ field }) => (
+                        <FormItem className="space-y-1">
+                            <FormLabel className="text-xs">Name (Ar)</FormLabel>
+                            <FormControl><Input {...field} className="h-8 text-xs" /></FormControl>
+                        </FormItem>
+                    )} />
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                         <FormField control={form.control} name="categoryId" render={({ field }) => (
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-xs">Category</FormLabel>
                                 <Select onValueChange={(val) => {
                                     field.onChange(val);
-                                    form.setValue("subCategoryId", ""); // Reset subcat
-                                    
-                                    // Dependency: Auto-fill UOMs from Category
+                                    form.setValue("subCategoryId", "");
                                     const selectedCat = categories.find(c => c.id === val);
                                     if (selectedCat) {
-                                      // 1. Base UOM
                                       if (selectedCat.baseUomId) {
                                         const baseUom = uoms.find(u => u.id === selectedCat.baseUomId);
                                         if (baseUom) form.setValue("uom", baseUom.code);
                                       }
-                                      
-                                      // 2. Alternative UOM & Conversion
                                       if (selectedCat.alternativeUomId) {
                                         const altUom = uoms.find(u => u.id === selectedCat.alternativeUomId);
                                         if (altUom) {
                                             form.setValue("alternativeUom", altUom.code);
-                                            // Auto-load conversion factor if available
-                                            if (selectedCat.conversionFactor) {
-                                                form.setValue("conversionFactor", Number(selectedCat.conversionFactor));
-                                            }
+                                            if (selectedCat.conversionFactor) form.setValue("conversionFactor", Number(selectedCat.conversionFactor));
                                         }
                                       }
                                     }
                                 }} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                        {categories.map(c => <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </FormItem>
                         )} />
                         
                         <FormField control={form.control} name="subCategoryId" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>SubCategory</FormLabel>
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-xs">SubCategory</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedCategoryId}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select SubCategory" /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        {filteredSubCategories.map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}
+                                        {filteredSubCategories.map(sc => <SelectItem key={sc.id} value={sc.id} className="text-xs">{sc.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </FormItem>
                         )} />
                     </div>
 
-                     <div className="grid grid-cols-2 gap-4">
+                     <div className="grid grid-cols-2 gap-2">
                         <FormField control={form.control} name="brandId" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Brand</FormLabel>
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-xs">Brand</FormLabel>
                                 <Select onValueChange={(val) => {
                                     field.onChange(val);
-                                    form.setValue("modelId", ""); // Reset model
+                                    form.setValue("modelId", "");
                                 }} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select Brand" /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        {filteredBrands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                                        {filteredBrands.map(b => <SelectItem key={b.id} value={b.id} className="text-xs">{b.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </FormItem>
                         )} />
-                         {/* Model Selection (Cascading) */}
                          <FormField control={form.control} name="modelId" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Model</FormLabel>
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-xs">Model</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedBrandId}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder={selectedBrandId ? "Select Model" : "Select Brand First"} /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        {filteredModels.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                                        {filteredModels.map(m => <SelectItem key={m.id} value={m.id} className="text-xs">{m.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </FormItem>
                         )} />
                     </div>
 
+                     <FormField control={form.control} name="partNumber" render={({ field }) => (
+                        <FormItem className="space-y-1">
+                            <FormLabel className="text-xs">Part Number</FormLabel>
+                            <FormControl><Input placeholder="e.g. SKU-123" {...field} className="h-8 text-xs" /></FormControl>
+                        </FormItem>
+                    )} />
+
                      <FormField control={form.control} name="itemType" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Type</FormLabel>
+                        <FormItem className="space-y-1">
+                            <FormLabel className="text-xs">Type</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger></FormControl>
                                 <SelectContent>
-                                    <SelectItem value="goods">Goods (Stock)</SelectItem>
-                                    <SelectItem value="service">Service (Non-Stock)</SelectItem>
+                                    <SelectItem value="goods" className="text-xs">Goods (Stock)</SelectItem>
+                                    <SelectItem value="service" className="text-xs">Service (Non-Stock)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </FormItem>
                     )} />
-
-                    {/* Description field - contributes to auto-name */}
-                    <FormField control={form.control} name="description" render={({ field }) => (
-                        <FormItem className="mt-4">
-                            <FormLabel>Description (for auto-name)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="e.g., 4MP DOME CAMERA" 
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormDescription>This will be added to the auto-generated item name</FormDescription>
-                        </FormItem>
-                    )} />
                 </CardContent>
             </Card>
 
-            {/* Pricing */}
-            <Card>
-                <CardHeader><CardTitle>Pricing & Units</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                     <div className="grid grid-cols-2 gap-4">
+            {/* Column 2: Pricing & Units */}
+            <Card className="h-full">
+                <CardHeader className="py-3 px-4 bg-muted/20 border-b"><CardTitle className="text-base">Pricing & Units</CardTitle></CardHeader>
+                <CardContent className="p-4 space-y-3">
+                     <div className="grid grid-cols-2 gap-2">
                         <FormField control={form.control} name="uom" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>UOM *</FormLabel>
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-xs">UOM *</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select UOM" /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                                     <SelectContent>
                                         {uoms && uoms.map(u => (
-                                            <SelectItem key={u.id} value={u.code}>
-                                                {u.code} ({u.name})
-                                            </SelectItem>
+                                            <SelectItem key={u.id} value={u.code} className="text-xs">{u.code}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <FormMessage />
                             </FormItem>
                         )} />
                         <FormField control={form.control} name="taxPercent" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Tax Rate (%)</FormLabel>
-                                <FormControl><Input type="number" {...field} /></FormControl>
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-xs">Tax %</FormLabel>
+                                <FormControl><Input type="number" {...field} className="h-8 text-xs" /></FormControl>
                             </FormItem>
                         )} />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    
+                    <div className="grid grid-cols-2 gap-2">
                         <FormField control={form.control} name="alternativeUom" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Alternative UOM</FormLabel>
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-xs">Alt UOM</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value || "__NONE__"}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select Alt UOM" /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="None" /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        <SelectItem value="__NONE__">None</SelectItem>
+                                        <SelectItem value="__NONE__" className="text-xs">None</SelectItem>
                                         {uoms && uoms.map(u => (
-                                            <SelectItem key={u.id} value={u.code}>
-                                                {u.code} ({u.name})
-                                            </SelectItem>
+                                            <SelectItem key={u.id} value={u.code} className="text-xs">{u.code}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <FormMessage />
                             </FormItem>
                         )} />
                         <FormField control={form.control} name="conversionFactor" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Conversion Factor</FormLabel>
-                                <FormControl><Input type="number" placeholder="1 Alt = X Base" {...field} /></FormControl>
-                                <FormDescription>
-                                    1 {form.watch("alternativeUom") && form.watch("alternativeUom") !== "__NONE__" ? form.watch("alternativeUom") : "Alt"} = X {form.watch("uom") || "Base"}
-                                </FormDescription>
-                                <FormMessage />
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-xs">Conv. Factor</FormLabel>
+                                <FormControl><Input type="number" placeholder="1 Alt = X" {...field} className="h-8 text-xs" /></FormControl>
                             </FormItem>
                         )} />
                     </div>
                     <Separator />
-                     <div className="grid grid-cols-2 gap-4">
+                     <div className="grid grid-cols-2 gap-2">
                         <FormField control={form.control} name="costPrice" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Cost Price</FormLabel>
-                                <FormControl><Input type="number" {...field} /></FormControl>
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-xs">Cost Price</FormLabel>
+                                <FormControl><Input type="number" {...field} className="h-8 text-xs" /></FormControl>
                             </FormItem>
                         )} />
                         <FormField control={form.control} name="sellingPrice" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Selling Price</FormLabel>
-                                <FormControl><Input type="number" {...field} /></FormControl>
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-xs">Selling Price</FormLabel>
+                                <FormControl><Input type="number" {...field} className="h-8 text-xs" /></FormControl>
                             </FormItem>
                         )} />
                     </div>
                     <FormField control={form.control} name="minSellingPrice" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Min. Selling Price</FormLabel>
-                            <FormControl><Input type="number" {...field} /></FormControl>
+                        <FormItem className="space-y-1">
+                            <FormLabel className="text-xs">Min. Selling Price</FormLabel>
+                            <FormControl><Input type="number" {...field} className="h-8 text-xs" /></FormControl>
                         </FormItem>
                     )} />
                 </CardContent>
             </Card>
 
-            {/* Controls */}
-             <Card>
-                <CardHeader><CardTitle>Inventory Controls</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                     {/* Active Field moved below */}
-
-                    <FormField control={form.control} name="isActive" render={({ field }) => (
-                         <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2">
-                            <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                            <div className="space-y-1 leading-none"><FormLabel>Active</FormLabel></div>
-                        </div>
-                    )} />
-                    <FormField control={form.control} name="hasBatchNo" render={({ field }) => (
-                         <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2">
-                            <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                            <div className="space-y-1 leading-none"><FormLabel>Batch Tracking</FormLabel></div>
-                        </div>
-                    )} />
-                    <FormField control={form.control} name="hasSerialNo" render={({ field }) => (
-                         <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2">
-                            <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                            <div className="space-y-1 leading-none"><FormLabel>Serial Tracking</FormLabel></div>
-                        </div>
-                    )} />
-                     <FormField control={form.control} name="hasExpiry" render={({ field }) => (
-                         <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2">
-                            <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                            <div className="space-y-1 leading-none"><FormLabel>Expiry Tracking</FormLabel></div>
-                        </div>
-                    )} />
+            {/* Column 3: Controls & Details */}
+             <Card className="h-full">
+                <CardHeader className="py-3 px-4 bg-muted/20 border-b"><CardTitle className="text-base">Controls & Defs</CardTitle></CardHeader>
+                <CardContent className="p-4 space-y-3">
+                     <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="isActive" render={({ field }) => (
+                             <div className="flex flex-row items-center space-x-2 rounded-md border p-2 h-10">
+                                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                <div className="space-y-0 leading-none"><FormLabel className="text-xs">Active</FormLabel></div>
+                            </div>
+                        )} />
+                         <FormField control={form.control} name="hasExpiry" render={({ field }) => (
+                             <div className="flex flex-row items-center space-x-2 rounded-md border p-2 h-10">
+                                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                <div className="space-y-0 leading-none"><FormLabel className="text-xs">Expiry</FormLabel></div>
+                            </div>
+                        )} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="hasBatchNo" render={({ field }) => (
+                             <div className="flex flex-row items-center space-x-2 rounded-md border p-2 h-10">
+                                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                <div className="space-y-0 leading-none"><FormLabel className="text-xs">Batch</FormLabel></div>
+                            </div>
+                        )} />
+                         <FormField control={form.control} name="hasSerialNo" render={({ field }) => (
+                             <div className="flex flex-row items-center space-x-2 rounded-md border p-2 h-10">
+                                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                <div className="space-y-0 leading-none"><FormLabel className="text-xs">Serial</FormLabel></div>
+                            </div>
+                        )} />
+                    </div>
                     
-                     <div className="grid grid-cols-2 gap-4 mt-4">
+                     <div className="grid grid-cols-2 gap-2 pt-2">
                         <FormField control={form.control} name="reorderLevel" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Reorder Level</FormLabel>
-                                <FormControl><Input type="number" {...field} /></FormControl>
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-xs">Reorder Lvl</FormLabel>
+                                <FormControl><Input type="number" {...field} className="h-8 text-xs" /></FormControl>
                             </FormItem>
                         )} />
                         <FormField control={form.control} name="reorderQty" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Reorder Qty</FormLabel>
-                                <FormControl><Input type="number" {...field} /></FormControl>
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-xs">Reorder Qty</FormLabel>
+                                <FormControl><Input type="number" {...field} className="h-8 text-xs" /></FormControl>
                             </FormItem>
                         )} />
                     </div>
-                </CardContent>
-            </Card>
-            
-            <Card>
-                <CardHeader><CardTitle>Details</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
+
+                    <Separator className="my-2" />
+                    
                     <FormField control={form.control} name="barcode" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Barcode</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
+                        <FormItem className="space-y-1">
+                            <FormLabel className="text-xs">Barcode</FormLabel>
+                            <FormControl><Input {...field} className="h-8 text-xs" /></FormControl>
                         </FormItem>
                     )} />
+
                      <FormField control={form.control} name="description" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl><Textarea {...field} /></FormControl>
+                        <FormItem className="space-y-1">
+                            <FormLabel className="text-xs">Description</FormLabel>
+                            <FormControl><Textarea {...field} className="h-16 text-xs resize-none" placeholder="Included in auto-name" /></FormControl>
                         </FormItem>
                     )} />
                 </CardContent>
