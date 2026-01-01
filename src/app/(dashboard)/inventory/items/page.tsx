@@ -1,16 +1,13 @@
 import { db } from "@/db";
 import { getCompanyId } from "@/lib/auth";
-import { items, stockLedger } from "@/db/schema";
+import { items, stockLedger, itemCategories, itemBrands } from "@/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Package } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
-import { DataTable } from "@/components/ui/data-table";
-import { columns } from "./columns";
-import { deleteItemsAction } from "@/actions/inventory/delete-items";
 import { ExportButton } from "@/components/ui/export-button";
-
+import { ItemsClient } from "@/components/inventory/items-client";
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +49,19 @@ export default async function ItemsPage() {
     stockAvailable: stockMap.get(item.id)?.available || "0",
   }));
 
+  // Fetch categories and brands for filters
+  const categories = await db.query.itemCategories.findMany({
+    where: eq(itemCategories.companyId, companyId),
+    columns: { id: true, name: true },
+    orderBy: [itemCategories.name],
+  });
+
+  const brands = await db.query.itemBrands.findMany({
+    where: eq(itemBrands.companyId, companyId),
+    columns: { id: true, name: true },
+    orderBy: [itemBrands.name],
+  });
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <GradientHeader
@@ -68,17 +78,13 @@ export default async function ItemsPage() {
         </Link>
       </div>
 
-      <DataTable 
-        columns={columns} 
-        data={data} 
-        searchKey="name"
-        placeholder="Search items..."
-        onDelete={async (ids) => {
-          "use server";
-          await deleteItemsAction(ids);
-        }}
+      <ItemsClient 
+        items={data as any}
+        categories={categories}
+        brands={brands}
       />
     </div>
   );
 }
+
 
