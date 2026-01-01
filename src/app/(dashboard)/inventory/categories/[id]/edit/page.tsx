@@ -1,11 +1,17 @@
 import { CategoryForm } from "@/components/inventory/category-form";
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { getCategory } from "@/actions/inventory/categories";
+import { getActiveUoms } from "@/actions/inventory/uom";
 import { notFound } from "next/navigation";
+import { Pencil } from "lucide-react";
 
 export default async function EditCategoryPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  const category = await getCategory(resolvedParams.id);
+  
+  const [category, uoms] = await Promise.all([
+    getCategory(resolvedParams.id),
+    getActiveUoms(),
+  ]);
 
   if (!category) {
     notFound();
@@ -17,11 +23,11 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ i
         module="inventory"
         title="Edit Category"
         description={`Edit category: ${category.name}`}
-        icon="Edit"
+        icon={Pencil}
         backLink="/inventory/categories"
       />
       <div className="max-w-2xl mx-auto">
-        <CategoryForm initialData={category} />
+        <CategoryForm initialData={category} uoms={uoms} />
       </div>
     </div>
   );

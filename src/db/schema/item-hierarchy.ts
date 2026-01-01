@@ -6,9 +6,12 @@ import {
   boolean,
   timestamp,
   integer,
+  numeric,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { companies } from "./companies";
+import { uoms } from "./items";
+
 
 /**
  * 4-Level Item Hierarchy Schema
@@ -30,11 +33,15 @@ export const itemCategories = pgTable("item_categories", {
   nameAr: varchar("name_ar", { length: 150 }), // Arabic name
   description: text("description"),
   sortOrder: integer("sort_order").default(0),
-  defaultUomId: varchar("default_uom_id", { length: 20 }), // FK to uoms.code (logical) or we can make it loose
+  // UOM Configuration
+  baseUomId: uuid("base_uom_id").references(() => uoms.id), // Primary unit of measure
+  alternativeUomId: uuid("alternative_uom_id").references(() => uoms.id), // Secondary unit (optional)
+  conversionFactor: numeric("conversion_factor", { precision: 10, scale: 4 }), // How many base units = 1 alternative (e.g., 12 pieces = 1 box)
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
 
 // Level 2: Subcategories
 export const itemSubcategories = pgTable("item_subcategories", {

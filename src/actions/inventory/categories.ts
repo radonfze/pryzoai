@@ -13,8 +13,12 @@ const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),
   nameAr: z.string().optional(),
   description: z.string().optional(),
+  baseUomId: z.string().uuid("Invalid Base UOM").optional().nullable(),
+  alternativeUomId: z.string().uuid("Invalid Alternative UOM").optional().nullable(),
+  conversionFactor: z.coerce.number().positive("Must be > 0").optional().nullable(),
   isActive: z.boolean().default(true),
 });
+
 
 export async function getCategories() {
   const companyId = await getCompanyId();
