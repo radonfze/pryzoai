@@ -25,6 +25,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { EditPasswordDialog, DeleteOtpDialog } from "@/components/security"
+import { useRouter } from "next/navigation"
 
 export type Item = {
   id: string
@@ -259,11 +261,7 @@ export const columns: ColumnDef<Item>[] = [
             {canDrill && <DrillDialogItem item={item} />}
 
             {canEdit && (
-                <Link href={`/inventory/items/${item.id}/edit`}>
-                    <DropdownMenuItem>
-                        <Edit className="mr-2 h-4 w-4" /> Edit Item
-                    </DropdownMenuItem>
-                </Link>
+                <EditDialogItem item={item} userId={(table.options.meta as any)?.userId || ""} />
             )}
             
             {canCreate && (
@@ -316,4 +314,33 @@ const DrillDialogItem = ({ item }: { item: Item }) => {
         </>
     )
 }
+
+// Helper component for Edit with Password Dialog in Dropdown
+const EditDialogItem = ({ item, userId }: { item: Item; userId: string }) => {
+    const router = useRouter();
+    const [showEditPassword, setShowEditPassword] = useState(false);
+
+    const handleEditSuccess = () => {
+        router.push(`/inventory/items/${item.id}/edit`);
+    };
+
+    return (
+        <>
+            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setShowEditPassword(true); }}>
+                <Edit className="mr-2 h-4 w-4" /> Edit Item
+            </DropdownMenuItem>
+            <EditPasswordDialog
+                open={showEditPassword}
+                onOpenChange={setShowEditPassword}
+                userId={userId}
+                action="edit_item"
+                targetTable="items"
+                targetId={item.id}
+                title="Edit Item"
+                description={`Enter your edit password to modify ${item.code} - ${item.name}.`}
+                onSuccess={handleEditSuccess}
+            />
+        </>
+    );
+};
 
