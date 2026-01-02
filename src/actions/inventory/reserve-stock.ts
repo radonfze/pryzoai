@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { inventoryReservations, stockLedger, items, warehouses } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { getCompanyId, requirePermission } from "@/lib/auth";
+import { getCompanyId, getCompanyIdSafe, requirePermission } from "@/lib/auth";
 import { logAuditAction } from "@/lib/services/audit-service";
 import { revalidatePath } from "next/cache";
 
@@ -11,7 +11,7 @@ import { revalidatePath } from "next/cache";
  * GET RESERVATIONS: Fetch all reservations for the company
  */
 export async function getReservations() {
-    const companyId = await getCompanyId();
+    const companyId = await getCompanyIdSafe();
     if (!companyId) return [];
 
     return db.query.inventoryReservations.findMany({
@@ -30,7 +30,7 @@ export async function getReservations() {
  * GET RESERVATION BY ID
  */
 export async function getReservationById(id: string) {
-    const companyId = await getCompanyId();
+    const companyId = await getCompanyIdSafe();
     if (!companyId) return null;
 
     return db.query.inventoryReservations.findFirst({

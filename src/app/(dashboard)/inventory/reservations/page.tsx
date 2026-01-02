@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyIdSafe } from "@/lib/auth";
 import { inventoryReservations } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { Package, Lock } from "lucide-react";
@@ -10,7 +10,7 @@ import { columns } from "./columns";
 export const dynamic = 'force-dynamic';
 
 export default async function ReservationsPage() {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return null;
 
   const data = await db.query.inventoryReservations.findMany({

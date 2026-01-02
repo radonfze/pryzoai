@@ -7,12 +7,12 @@ import { items } from "@/db/schema";
 import { db } from "@/db";
 import { eq, and, sql, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { getCompanyId, requirePermission } from "@/lib/auth";
+import { getCompanyId, getCompanyIdSafe, requirePermission } from "@/lib/auth";
 import { logAuditAction } from "@/lib/services/audit-service";
 
 // Get next sequential item code
 export async function getNextItemCode(): Promise<string> {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return "1000";
   
   try {

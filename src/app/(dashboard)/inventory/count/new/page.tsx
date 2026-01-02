@@ -1,16 +1,15 @@
-
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { ClipboardList } from "lucide-react";
 import { StockCountGenerator } from "@/components/inventory/stock-count-generator";
 import { db } from "@/db";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyIdSafe } from "@/lib/auth";
 import { warehouses, itemCategories, itemBrands } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export const dynamic = 'force-dynamic';
 
 export default async function NewStockCountPage() {
-    const companyId = await getCompanyId();
+    const companyId = await getCompanyIdSafe();
     if (!companyId) return null;
 
     // Fetch dependencies

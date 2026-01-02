@@ -7,12 +7,12 @@ import { StockCountList } from "@/components/inventory/stock-count-list";
 import { db } from "@/db";
 import { stockCounts, warehouses } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { getCompanyId, getUserPermissions } from "@/lib/auth";
+import { getCompanyIdSafe, getUserPermissions } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 
 export default async function StockCountPage() {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return null;
 
   const data = await db.query.stockCounts.findMany({

@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { bom, bomLines, items } from "@/db/schema/items";
 import { revalidatePath } from "next/cache";
-import { getCompanyId, requirePermission } from "@/lib/auth";
+import { getCompanyId, getCompanyIdSafe, requirePermission } from "@/lib/auth";
 import { logAuditAction } from "@/lib/services/audit-service";
 import { eq, desc, and, inArray } from "drizzle-orm";
 import { z } from "zod";
@@ -23,7 +23,7 @@ const bomSchema = z.object({
 });
 
 export async function getBoms() {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return [];
 
   return db.query.bom.findMany({
@@ -41,7 +41,7 @@ export async function getBoms() {
 }
 
 export async function getBomById(id: string) {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return null;
 
   return db.query.bom.findFirst({

@@ -8,12 +8,12 @@ import { GradientHeader } from "@/components/ui/gradient-header"; // Check path
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ExportButton } from "@/components/ui/export-button"; // Check path
-import { getCompanyId, getUserPermissions } from "@/lib/auth";
+import { getCompanyIdSafe, getUserPermissions } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 
 export default async function ItemsPage() {
-    const companyId = await getCompanyId();
+    const companyId = await getCompanyIdSafe();
     if (!companyId) return null;
 
   const data = await db.query.items.findMany({

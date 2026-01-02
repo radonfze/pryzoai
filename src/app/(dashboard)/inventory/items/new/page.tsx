@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { items, itemCategories, itemBrands, itemModels, itemSubcategories, brandSubcategories, brandCategories } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyIdSafe } from "@/lib/auth";
 import { getActiveUoms } from "@/actions/inventory/uom";
 import { getNextItemCode } from "@/actions/inventory/item-actions";
 import ItemForm from "@/components/inventory/item-form";
@@ -15,7 +15,7 @@ interface NewItemPageProps {
 export default async function NewItemPage({ searchParams }: NewItemPageProps) {
     const params = await searchParams;
     const duplicateId = params.duplicate;
-    const companyId = await getCompanyId();
+    const companyId = await getCompanyIdSafe();
     if (!companyId) return null;
 
     const [categoryList, subCategoryList, brandList, modelList, uomList, brandMapping, brandCategoryMapping, nextCode] = await Promise.all([

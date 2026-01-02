@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { stockBatches } from "@/db/schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyId, getCompanyIdSafe } from "@/lib/auth";
 import { z } from "zod";
 
 const batchSchema = z.object({
@@ -21,7 +21,7 @@ const batchSchema = z.object({
 export type BatchInput = z.infer<typeof batchSchema>;
 
 export async function getBatches() {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return [];
 
   return db.query.stockBatches.findMany({
@@ -35,7 +35,7 @@ export async function getBatches() {
 }
 
 export async function getBatchById(id: string) {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return null;
 
   return db.query.stockBatches.findFirst({

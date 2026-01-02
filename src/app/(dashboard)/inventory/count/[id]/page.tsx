@@ -2,7 +2,7 @@
 import { db } from "@/db";
 import { stockCounts } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { getCompanyId, getUserPermissions } from "@/lib/auth";
+import { getCompanyIdSafe, getUserPermissions } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { StockCountSheet } from "@/components/inventory/stock-count-sheet";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ interface ViewStockCountPageProps {
 export const dynamic = 'force-dynamic';
 
 export default async function ViewStockCountPage({ params }: ViewStockCountPageProps) {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return null;
 
   const countData = await db.query.stockCounts.findFirst({

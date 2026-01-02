@@ -5,7 +5,7 @@ import { stockAdjustments, stockAdjustmentLines, numberSeries, items, chartOfAcc
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { postStockAdjustmentToGL } from "@/lib/services/gl-posting-service";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyId, getCompanyIdSafe } from "@/lib/auth";
 import { createStockMovement } from "@/lib/services/inventory-movement-service";
 
 export type ActionResponse = { success: boolean; message: string; data?: any };
@@ -14,7 +14,7 @@ type StockAdjustmentInput = { adjustmentDate: string; lines: AdjustmentLine[]; n
 
 // Get all stock adjustments for the company
 export async function getStockAdjustments() {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return [];
 
   return db.query.stockAdjustments.findMany({

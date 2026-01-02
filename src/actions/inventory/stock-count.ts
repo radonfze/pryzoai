@@ -3,13 +3,13 @@
 import { db } from "@/db";
 import { stockCounts, stockCountLines, stockLedger, items, stockTransactions } from "@/db/schema";
 import { eq, and, desc, inArray, sql } from "drizzle-orm";
-import { getCompanyId, requirePermission, getUserId } from "@/lib/auth";
+import { getCompanyId, getCompanyIdSafe, requirePermission, getUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { logAuditAction } from "@/lib/services/audit-service";
 
 // 1. Get Snapshot of Items in a Warehouse
 export async function getSnapshotItems(warehouseId: string, categoryId?: string, brandId?: string) {
-    const companyId = await getCompanyId();
+    const companyId = await getCompanyIdSafe();
     if (!companyId) return [];
 
     // Base query for stock ledger in this warehouse

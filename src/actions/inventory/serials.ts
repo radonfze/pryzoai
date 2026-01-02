@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { stockSerials } from "@/db/schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyId, getCompanyIdSafe } from "@/lib/auth";
 import { z } from "zod";
 
 const serialSchema = z.object({
@@ -20,7 +20,7 @@ const serialSchema = z.object({
 export type SerialInput = z.infer<typeof serialSchema>;
 
 export async function getSerials() {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return [];
 
   return db.query.stockSerials.findMany({
@@ -34,7 +34,7 @@ export async function getSerials() {
 }
 
 export async function getSerialById(id: string) {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return null;
 
   return db.query.stockSerials.findFirst({

@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { bom, items } from "@/db/schema/items";
 import { eq, and } from "drizzle-orm";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyIdSafe } from "@/lib/auth";
 import BomForm from "@/components/inventory/bom-form";
 import GradientHeader from "@/components/ui/gradient-header";
 import { FileEdit } from "lucide-react";
@@ -12,7 +12,7 @@ interface EditBomPageProps {
 }
 
 export default async function EditBomPage({ params }: EditBomPageProps) {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return null;
 
   const bomData = await db.query.bom.findFirst({

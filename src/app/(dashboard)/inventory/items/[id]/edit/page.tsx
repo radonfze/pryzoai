@@ -3,7 +3,7 @@ import { items } from "@/db/schema/items";
 import { itemCategories, itemSubcategories, itemBrands, itemModels, brandSubcategories } from "@/db/schema/item-hierarchy";
 import { uoms } from "@/db/schema/items";
 import { eq, and } from "drizzle-orm";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyIdSafe } from "@/lib/auth";
 import ItemForm from "@/components/inventory/item-form";
 import GradientHeader from "@/components/ui/gradient-header";
 import { Edit } from "lucide-react";
@@ -11,7 +11,7 @@ import { notFound } from "next/navigation";
 
 export default async function EditItemPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const companyId = await getCompanyId();
+    const companyId = await getCompanyIdSafe();
     if (!companyId) return null;
 
     const item = await db.query.items.findFirst({

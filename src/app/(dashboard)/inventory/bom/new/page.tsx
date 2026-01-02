@@ -1,13 +1,13 @@
 import { db } from "@/db";
 import { items } from "@/db/schema/items";
 import { eq, and } from "drizzle-orm";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyIdSafe } from "@/lib/auth";
 import BomForm from "@/components/inventory/bom-form";
 import GradientHeader from "@/components/ui/gradient-header";
 import { FilePlus } from "lucide-react";
 
 export default async function NewBomPage() {
-    const companyId = await getCompanyId();
+    const companyId = await getCompanyIdSafe();
     if (!companyId) return null;
 
     // Fetch all active items to populate Parent and Component dropdowns
