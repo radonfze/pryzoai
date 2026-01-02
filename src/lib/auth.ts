@@ -23,14 +23,7 @@ export async function getCompanyId(): Promise<string> {
  */
 export async function getCompanyIdSafe(): Promise<string | null> {
   const session = await validateSession();
-  const companyId = session?.companyId;
-  
-  // Return null if no session, no companyId, or if it's the null UUID
-  if (!companyId || companyId === '00000000-0000-0000-0000-000000000000') {
-    return null;
-  }
-  
-  return companyId;
+  return session?.companyId || null;
 }
 
 /**
