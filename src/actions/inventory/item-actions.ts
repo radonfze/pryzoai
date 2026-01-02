@@ -4,7 +4,8 @@ import { db } from "@/db";
 import { items } from "@/db/schema";
 import { eq, and, sql, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyId, requirePermission } from "@/lib/auth";
+import { logAuditAction } from "@/lib/services/audit-service";
 
 // Get next sequential item code
 export async function getNextItemCode(): Promise<string> {
@@ -81,6 +82,9 @@ export async function createItemAction(input: ItemInput) {
     const companyId = await getCompanyId();
     if (!companyId) return { success: false, message: "Unauthorized" };
 
+    // Security Check
+    await requirePermission("inventory.items.create");
+
     try {
         // Check uniqueness
         const existing = await db.query.items.findFirst({
@@ -133,6 +137,15 @@ export async function createItemAction(input: ItemInput) {
         }
 
         revalidatePath("/inventory/items");
+
+        // Audit Log
+        await logAuditAction({
+            entityType: "item",
+            entityId: newItem.id,
+            action: "CREATE",
+            afterValue: newItem
+        });
+
         return { success: true, message: "Item created successfully", id: newItem.id };
 
     } catch (error: any) {
@@ -144,6 +157,9 @@ export async function createItemAction(input: ItemInput) {
 export async function updateItemAction(id: string, input: ItemInput) {
     const companyId = await getCompanyId();
     if (!companyId) return { success: false, message: "Unauthorized" };
+
+    // Security Check
+    await requirePermission("inventory.items.edit"); // Assuming 'edit' permissions maps here or 'manage'
 
     try {
         await db.update(items).set({
@@ -161,6 +177,15 @@ export async function updateItemAction(id: string, input: ItemInput) {
 
         revalidatePath("/inventory/items");
         revalidatePath(`/inventory/items/${id}`);
+
+        // Audit Log
+        await logAuditAction({
+            entityType: "item",
+            entityId: id,
+            action: "UPDATE",
+            afterValue: input // Ideally diff but full input ok for now
+        });
+
         return { success: true, message: "Item updated successfully" };
     } catch (error: any) {
         return { success: false, message: error.message };

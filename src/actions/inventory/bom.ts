@@ -3,7 +3,8 @@
 import { db } from "@/db";
 import { bom, bomLines, items } from "@/db/schema/items";
 import { revalidatePath } from "next/cache";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyId, requirePermission } from "@/lib/auth";
+import { logAuditAction } from "@/lib/services/audit-service";
 import { eq, desc, and, inArray } from "drizzle-orm";
 import { z } from "zod";
 
@@ -60,6 +61,9 @@ export async function createBom(data: z.infer<typeof bomSchema>) {
   const companyId = await getCompanyId();
   if (!companyId) throw new Error("Unauthorized");
 
+  // Security Check
+  await requirePermission("inventory.items.create"); // BOM creation falls under item creation/mgmt permissions
+
   const validation = bomSchema.safeParse(data);
   if (!validation.success) {
     return { success: false, error: validation.error.flatten().fieldErrors };
@@ -87,6 +91,15 @@ export async function createBom(data: z.infer<typeof bomSchema>) {
         }
 
         revalidatePath("/inventory/bom");
+
+        // Audit Log
+        await logAuditAction({
+            entityType: "bom",
+            entityId: newBom.id,
+            action: "CREATE",
+            afterValue: validation.data
+        });
+
         return { success: true, id: newBom.id };
      });
   } catch (error: any) {
@@ -98,6 +111,9 @@ export async function createBom(data: z.infer<typeof bomSchema>) {
 export async function updateBom(id: string, data: z.infer<typeof bomSchema>) {
   const companyId = await getCompanyId();
   if (!companyId) throw new Error("Unauthorized");
+
+  // Security Check
+  await requirePermission("inventory.items.edit");
 
   const validation = bomSchema.safeParse(data);
   if (!validation.success) {
@@ -134,6 +150,15 @@ export async function updateBom(id: string, data: z.infer<typeof bomSchema>) {
 
       revalidatePath("/inventory/bom");
       revalidatePath(`/inventory/bom/${id}`);
+
+      // Audit Log
+      await logAuditAction({
+          entityType: "bom",
+          entityId: id,
+          action: "UPDATE",
+          afterValue: validation.data
+      });
+
       return { success: true, id };
     });
   } catch (error: any) {
@@ -146,6 +171,9 @@ export async function deleteBom(id: string) {
   const companyId = await getCompanyId();
   if (!companyId) throw new Error("Unauthorized");
 
+  // Security Check
+  await requirePermission("inventory.items.delete");
+
   try {
     await db.transaction(async (tx) => {
       // Delete lines first
@@ -155,6 +183,14 @@ export async function deleteBom(id: string) {
     });
 
     revalidatePath("/inventory/bom");
+
+    // Audit Log
+    await logAuditAction({
+        entityType: "bom",
+        entityId: id,
+        action: "DELETE"
+    });
+
     return { success: true };
   } catch (error: any) {
     console.error("Failed to delete BOM:", error);

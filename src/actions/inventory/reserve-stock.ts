@@ -3,7 +3,8 @@
 import { db } from "@/db";
 import { inventoryReservations, stockLedger, items, warehouses } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyId, requirePermission } from "@/lib/auth";
+import { logAuditAction } from "@/lib/services/audit-service";
 import { revalidatePath } from "next/cache";
 
 /**
@@ -62,6 +63,9 @@ export async function reserveStock(
 ) {
     try {
         const companyId = await getCompanyId();
+        
+        // Security Check
+        await requirePermission("inventory.items.manage");
 
         // 1. Check Availability
         const ledger = await db.query.stockLedger.findFirst({
@@ -104,6 +108,15 @@ export async function reserveStock(
 
         revalidatePath("/inventory/reservations");
         revalidatePath("/inventory/items");
+        
+        // Audit Log
+        await logAuditAction({
+            entityType: "reservation",
+            entityId: reservation.id,
+            action: "CREATE",
+            afterValue: { itemId, warehouseId, quantity, docNumber }
+        });
+
         return { success: true, message: `Reserved ${quantity} units for ${docNumber}`, id: reservation.id };
 
     } catch (e: any) {
@@ -117,6 +130,9 @@ export async function reserveStock(
 export async function releaseStock(reservationId: string) {
     try {
         const companyId = await getCompanyId();
+        
+        // Security Check
+        await requirePermission("inventory.items.manage");
         
         // 1. Find the reservation
         const reservation = await db.query.inventoryReservations.findFirst({
@@ -170,6 +186,15 @@ export async function releaseStock(reservationId: string) {
 
         revalidatePath("/inventory/reservations");
         revalidatePath("/inventory/items");
+
+        // Audit Log
+        await logAuditAction({
+            entityType: "reservation",
+            entityId: reservationId,
+            action: "CANCEL", // Release is essentially a cancel or update
+            reason: "Manual Release"
+        });
+
         return { success: true, message: `Released ${quantityToRelease} units back to available stock` };
 
     } catch (e: any) {
@@ -183,6 +208,9 @@ export async function releaseStock(reservationId: string) {
 export async function fulfillReservation(reservationId: string, quantityFulfilled: number) {
     try {
         const companyId = await getCompanyId();
+        
+        // Security Check (fulfillment might be separate strictly, but for now reuse manage)
+        await requirePermission("inventory.items.manage");
 
         const reservation = await db.query.inventoryReservations.findFirst({
             where: and(
@@ -214,6 +242,16 @@ export async function fulfillReservation(reservationId: string, quantityFulfille
             .where(eq(inventoryReservations.id, reservationId));
 
         revalidatePath("/inventory/reservations");
+
+        // Audit Log
+        await logAuditAction({
+            entityType: "reservation",
+            entityId: reservationId,
+            action: "UPDATE",
+            reason: `Fulfilled ${quantityFulfilled}`,
+            afterValue: { quantityFulfilled, status: newStatus }
+        });
+
         return { success: true, message: `Fulfilled ${quantityFulfilled} units`, status: newStatus };
 
     } catch (e: any) {
