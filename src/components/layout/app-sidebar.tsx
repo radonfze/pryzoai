@@ -57,6 +57,7 @@ import {
   Coins,
   Calculator,
   Scale,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -418,9 +419,35 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-         {/* Footer content can be used for user profile or version later */}
-         <div className="px-4 py-2 text-xs text-muted-foreground text-center">
-             v5.26 (Phase 26)
+         <div className="p-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-start gap-2 h-auto py-2">
+                        <UserCog className="h-4 w-4" />
+                        <div className="flex flex-col items-start gap-0.5 text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">User Options</span>
+                            <span>v5.26 (Phase 26)</span>
+                        </div>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-[200px]">
+                    <DropdownMenuItem asChild>
+                        <Link href="/settings/profile">
+                            <UserCog className="mr-2 h-4 w-4" /> Profile
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                        className="text-red-600 focus:text-red-700 focus:bg-red-100"
+                        onClick={async () => {
+                            await fetch("/api/auth/logout", { method: "POST" });
+                            window.location.href = "/auth/login";
+                        }}
+                    >
+                        <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
          </div>
       </SidebarFooter>
       <SidebarRail />

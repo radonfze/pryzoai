@@ -35,6 +35,18 @@ export default async function ItemsPage() {
   
   const permissions = await getUserPermissions();
 
+  // Serialization to avoid "Object not valid as React child" or client error
+  const formattedItems = data.map(item => ({
+      ...item,
+      createdAt: item.createdAt?.toISOString() || null,
+      updatedAt: item.updatedAt?.toISOString() || null,
+      deletedAt: item.deletedAt?.toISOString() || null,
+      // Ensure agregated fields are strings or numbers, not objects
+      stockOnHand: String(item.stockOnHand || 0),
+      stockAvailable: String(item.stockAvailable || 0),
+      stockReserved: String(item.stockReserved || 0),
+  }));
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <GradientHeader
@@ -45,7 +57,7 @@ export default async function ItemsPage() {
       />
       
       <div className="flex items-center justify-end gap-2">
-        <ExportButton data={data} filename="Inventory_Items" />
+        <ExportButton data={formattedItems} filename="Inventory_Items" />
         {permissions.includes('inventory.items.create') && (
             <Link href="/inventory/items/new">
             <Button><Plus className="mr-2 h-4 w-4" /> Create Item</Button>
@@ -54,7 +66,7 @@ export default async function ItemsPage() {
       </div>
 
       <ItemsClient 
-        items={data as any}
+        items={formattedItems as any}
         categories={categories}
         brands={brandList}
         permissions={permissions}
