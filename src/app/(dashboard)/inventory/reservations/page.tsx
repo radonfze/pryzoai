@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { getCompanyIdSafe, getUserPermissions } from "@/lib/auth";
-import { inventoryReservations, stockReservations, items, customers, salesOrders } from "@/db/schema";
+import { inventoryReservations, items, customers, salesOrders } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { Package, Lock } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";

@@ -1,6 +1,6 @@
 
 import { db } from "@/db";
-import { items, brands, itemCategories } from "@/db/schema";
+import { items, itemBrands, itemCategories } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { ItemsClient } from "@/components/inventory/items-client"; // Check path
 import { Package, Plus } from "lucide-react";
