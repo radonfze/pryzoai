@@ -46,6 +46,10 @@ export const users = pgTable("users", {
   lockedUntil: timestamp("locked_until"),
   lastFailedLogin: timestamp("last_failed_login"),
   
+  // Edit Password (separate from login password)
+  editPasswordHash: varchar("edit_password_hash", { length: 255 }),
+  editPasswordSetAt: timestamp("edit_password_set_at"),
+  
   // Audit
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
