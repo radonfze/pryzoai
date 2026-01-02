@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { SecuritySettingsCard } from "@/components/settings/security-settings-card";
+import { hasEditPasswordSet } from "@/lib/services/security-service";
 
 export default async function ProfilePage() {
     const session = await getSession();
@@ -13,6 +15,8 @@ export default async function ProfilePage() {
     if (!session) {
         return <div>Please log in to view profile.</div>
     }
+
+    const hasEditPwd = await hasEditPasswordSet(session.userId);
 
     return (
         <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
@@ -105,6 +109,9 @@ export default async function ProfilePage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Security Settings Row */}
+            <SecuritySettingsCard userId={session.userId} hasEditPassword={hasEditPwd} />
         </div>
     )
 }
