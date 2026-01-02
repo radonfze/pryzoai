@@ -56,14 +56,7 @@ export async function getBomById(id: string) {
     },
   });
 }
-      lines: {
-        with: {
-          componentItem: true
-        }
-      }
-    },
-  });
-}
+
 
 // Explicit type definition to avoid build errors with z.infer
 export interface CreateBomLineInput {
