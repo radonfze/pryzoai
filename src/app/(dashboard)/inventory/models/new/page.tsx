@@ -8,6 +8,7 @@ import { getCompanyIdSafe } from "@/lib/auth";
 import { logout } from "@/lib/auth/auth-service";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -46,8 +47,7 @@ export default async function NewModelPage() {
         module="inventory"
         title="New Model"
         description="Create a new item model"
-        icon="Plus"
-        backLink="/inventory/models"
+        icon={Plus}
       />
       <div className="max-w-2xl mx-auto">
         <ModelForm brands={brands} subcategories={subcategories} initialCode={nextCode} />

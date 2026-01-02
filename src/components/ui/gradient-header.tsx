@@ -7,6 +7,7 @@ interface GradientHeaderProps {
   description: string;
   icon: LucideIcon;
   size?: "default" | "small";
+  children?: ReactNode;
 }
 
 const MODULE_GRADIENTS = {
@@ -19,7 +20,7 @@ const MODULE_GRADIENTS = {
   manufacturing: 'bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500',
 };
 
-export function GradientHeader({ module, title, description, icon: Icon, size = "default" }: GradientHeaderProps) {
+export function GradientHeader({ module, title, description, icon: Icon, size = "default", children }: GradientHeaderProps) {
   const gradientClass = MODULE_GRADIENTS[module];
   const isSmall = size === "small";
 
@@ -32,15 +33,18 @@ export function GradientHeader({ module, title, description, icon: Icon, size = 
 
       {/* Content */}
       <div className="relative z-10">
-        <div className="flex items-center gap-3 mb-2">
-          {!isSmall && (
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
-                <Icon size={24} className="text-white" />
-            </div>
-          )}
-          <span className="text-white/90 text-sm font-medium uppercase tracking-wider">
-            {module} Module
-          </span>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            {!isSmall && (
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
+                  <Icon size={24} className="text-white" />
+              </div>
+            )}
+            <span className="text-white/90 text-sm font-medium uppercase tracking-wider">
+              {module} Module
+            </span>
+          </div>
+          {children && <div className="flex items-center gap-2">{children}</div>}
         </div>
         <h1 className={`text-white ${isSmall ? "text-2xl" : "text-4xl"} font-bold mb-2`}>{title}</h1>
         <p className={`text-white/90 ${isSmall ? "text-sm" : "text-lg"}`}>{description}</p>
