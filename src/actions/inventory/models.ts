@@ -1,6 +1,21 @@
 "use server";
 
-import { db } from "@/db";
+import { toUpperCase } from "@/lib/utils"; // Only Uppers for Model
+
+// ... inside createModel ...
+      ...validation.data,
+      name: toUpperCase(validation.data.name),
+      code: toUpperCase(validation.data.code),
+    }).returning();
+
+// ... inside updateModel ...
+    await db.update(itemModels)
+      .set({
+        ...validation.data,
+        name: toUpperCase(validation.data.name),
+        code: toUpperCase(validation.data.code),
+        updatedAt: new Date(),
+      })
 import { itemModels } from "@/db/schema/item-hierarchy";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
@@ -66,6 +81,8 @@ export async function createModel(data: z.infer<typeof modelSchema>) {
     const [newItem] = await db.insert(itemModels).values({
       companyId,
       ...validation.data,
+      name: toUpperCase(validation.data.name),
+      code: toUpperCase(validation.data.code),
     }).returning();
 
     revalidatePath("/inventory/models");
@@ -89,6 +106,8 @@ export async function updateModel(id: string, data: z.infer<typeof modelSchema>)
     await db.update(itemModels)
       .set({
         ...validation.data,
+        name: toUpperCase(validation.data.name),
+        code: toUpperCase(validation.data.code),
         updatedAt: new Date(),
       })
       .where(eq(itemModels.id, id));

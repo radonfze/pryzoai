@@ -1,6 +1,21 @@
 "use server";
 
-import { db } from "@/db";
+import { toTitleCase, toUpperCase } from "@/lib/utils";
+
+// ... inside createUom ...
+      ...validation.data,
+      name: toTitleCase(validation.data.name),
+      code: toUpperCase(validation.data.code),
+    }).returning();
+
+// ... inside updateUom ...
+    await db.update(uoms)
+      .set({
+        ...validation.data,
+        name: toTitleCase(validation.data.name),
+        code: toUpperCase(validation.data.code),
+        updatedAt: new Date(),
+      })
 import { uoms } from "@/db/schema/items";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
@@ -62,6 +77,8 @@ export async function createUom(data: z.infer<typeof uomSchema>) {
     const [newUom] = await db.insert(uoms).values({
       companyId,
       ...validation.data,
+      name: toTitleCase(validation.data.name),
+      code: toUpperCase(validation.data.code),
     }).returning();
 
     revalidatePath("/inventory/uom");
@@ -136,6 +153,8 @@ export async function updateUom(id: string, data: z.infer<typeof uomSchema>) {
     await db.update(uoms)
       .set({
         ...validation.data,
+        name: toTitleCase(validation.data.name),
+        code: toUpperCase(validation.data.code),
         updatedAt: new Date(),
       })
       .where(and(eq(uoms.id, id), eq(uoms.companyId, companyId)));

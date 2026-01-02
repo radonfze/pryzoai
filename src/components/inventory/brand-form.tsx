@@ -22,7 +22,10 @@ import { toast } from "sonner";
 import { createBrand, updateBrand } from "@/actions/inventory/brands";
 import { Switch } from "@/components/ui/switch";
 
-import { Checkbox } from "@/components/ui/checkbox";
+import { ChevronsUpDown, Check } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   code: z.string().min(1, "Code is required"),
@@ -44,6 +47,7 @@ interface BrandFormProps {
 export function BrandForm({ initialData, categories = [], initialCode }: BrandFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const form = useForm<BrandFormValues>({
     resolver: zodResolver(formSchema),
@@ -126,54 +130,74 @@ export function BrandForm({ initialData, categories = [], initialCode }: BrandFo
                 )}
               />
               
-              <FormItem className="col-span-full">
-                <FormLabel>Linked Categories</FormLabel>
-                <Card>
-                    <CardContent className="p-4 h-48 overflow-y-auto grid grid-cols-2 gap-4">
-                         <FormField
-                            control={form.control}
-                            name="categoryIds"
-                            render={() => (
-                                <>
-                                {categories.map((category) => (
-                                    <FormField
-                                        key={category.id}
-                                        control={form.control}
-                                        name="categoryIds"
-                                        render={({ field }) => {
-                                            return (
-                                                <FormItem
-                                                    key={category.id}
-                                                    className="flex flex-row items-start space-x-3 space-y-0"
-                                                >
-                                                    <FormControl>
-                                                        <Checkbox
-                                                            checked={field.value?.includes(category.id)}
-                                                            onCheckedChange={(checked) => {
-                                                                return checked
-                                                                    ? field.onChange([...(field.value || []), category.id])
-                                                                    : field.onChange(
-                                                                        field.value?.filter(
-                                                                            (value) => value !== category.id
-                                                                        )
-                                                                    )
-                                                            }}
-                                                        />
-                                                    </FormControl>
-                                                    <FormLabel className="font-normal cursor-pointer">
-                                                        {category.name} ({category.code})
-                                                    </FormLabel>
-                                                </FormItem>
-                                            )
-                                        }}
-                                    />
-                                ))}
-                                </>
+              <FormField
+                control={form.control}
+                name="categoryIds"
+                render={({ field }) => (
+                  <FormItem className="col-span-full">
+                    <FormLabel>Linked Categories</FormLabel>
+                    <Popover open={open} onOpenChange={setOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value || field.value.length === 0 ? "text-muted-foreground" : ""
                             )}
-                        />
-                    </CardContent>
-                </Card>
-              </FormItem>
+                          >
+                            {field.value && field.value.length > 0
+                              ? `${field.value.length} categories selected`
+                              : "Select linked categories..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[400px] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search categories..." />
+                          <CommandList>
+                            <CommandEmpty>No category found.</CommandEmpty>
+                            <CommandGroup>
+                              {categories.map((category) => (
+                                <CommandItem
+                                  key={category.id}
+                                  value={category.name}
+                                  onSelect={() => {
+                                    const current = field.value || [];
+                                    const isSelected = current.includes(category.id);
+                                    if (isSelected) {
+                                      field.onChange(current.filter((id) => id !== category.id));
+                                    } else {
+                                      field.onChange([...current, category.id]);
+                                    }
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value?.includes(category.id)
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {category.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                        Brands can be linked to multiple categories (e.g., Canon can be in Cameras and Printers).
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}

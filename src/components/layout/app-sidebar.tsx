@@ -427,7 +427,7 @@ export function AppSidebar() {
           )}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="mt-auto">
          <div className="p-2">
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>

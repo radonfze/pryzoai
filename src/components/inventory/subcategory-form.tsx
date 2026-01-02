@@ -1,39 +1,13 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Lock } from "lucide-react";
-import { toast } from "sonner";
-import { createSubcategory, updateSubcategory } from "@/actions/inventory/subcategories";
-import { Switch } from "@/components/ui/switch";
+import { ChevronsUpDown, Check } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   code: z.string().min(1, "Code is required"),
   name: z.string().min(1, "Name is required"),
-  categoryId: z.string().min(1, "Category is required"),
+  // categoryId: z.string().min(1, "Category is required"), // Deprecated
+  categoryIds: z.array(z.string()).min(1, "At least one Category is required"), // New
   nameAr: z.string().optional(),
   description: z.string().optional(),
   isActive: z.boolean().default(true),
@@ -50,13 +24,17 @@ interface SubcategoryFormProps {
 export function SubcategoryForm({ initialData, categories, initialCode }: SubcategoryFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const form = useForm<SubcategoryFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
+    defaultValues: initialData ? {
+        ...initialData,
+        categoryIds: initialData.categoryIds || (initialData.categoryId ? [initialData.categoryId] : [])
+    } : {
       code: initialCode || "",
       name: "",
-      categoryId: "",
+      categoryIds: [],
       nameAr: "",
       description: "",
       isActive: true,
@@ -100,24 +78,68 @@ export function SubcategoryForm({ initialData, categories, initialCode }: Subcat
             <div className="grid gap-6 md:grid-cols-2">
               <FormField
                 control={form.control}
-                name="categoryId"
+                name="categoryIds"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Categories *</FormLabel>
+                    <Popover open={open} onOpenChange={setOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value || field.value.length === 0 ? "text-muted-foreground" : ""
+                            )}
+                          >
+                            {field.value && field.value.length > 0
+                              ? `${field.value.length} selected`
+                              : "Select categories..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[400px] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search category..." />
+                          <CommandList>
+                            <CommandEmpty>No category found.</CommandEmpty>
+                            <CommandGroup>
+                              {categories.map((category) => (
+                                <CommandItem
+                                  key={category.id}
+                                  value={category.name}
+                                  onSelect={() => {
+                                    const current = field.value || [];
+                                    const isSelected = current.includes(category.id);
+                                    if (isSelected) {
+                                      field.onChange(current.filter((id) => id !== category.id));
+                                    } else {
+                                      field.onChange([...current, category.id]);
+                                    }
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value?.includes(category.id)
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {category.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                       Select at least one parent category.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

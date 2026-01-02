@@ -23,3 +23,15 @@ export function formatDate(date: Date | string | null | undefined): string {
   });
 }
 
+
+export function toTitleCase(str: string | null | undefined): string {
+  if (!str) return "";
+  return str.split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
+export function toUpperCase(str: string | null | undefined): string {
+    if (!str) return "";
+    return str.toUpperCase();
+}

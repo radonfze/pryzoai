@@ -115,7 +115,10 @@ export default function ItemForm({ initialData, initialCode, categories, subCate
   const filteredModels = models.filter(m => m.brandId === selectedBrandId);
 
   const selectedCategoryId = form.watch("categoryId");
-  const filteredSubCategories = subCategories.filter(sc => sc.categoryId === selectedCategoryId);
+  // Update: Check if categoryIds array includes the selected category, falling back to old categoryId check if array missing
+  const filteredSubCategories = subCategories.filter(sc => 
+      sc.categoryIds?.includes(selectedCategoryId) || sc.categoryId === selectedCategoryId
+  );
 
   const selectedSubCategoryId = form.watch("subCategoryId");
   

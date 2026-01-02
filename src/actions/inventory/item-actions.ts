@@ -1,6 +1,18 @@
 "use server";
 
-import { db } from "@/db";
+import { toTitleCase } from "@/lib/utils";
+
+// ... inside createItemAction ...
+            companyId,
+            code: input.code,
+            name: toTitleCase(input.name),
+            nameAr: input.nameAr,
+            barcode: input.barcode,
+            description: input.description, // User said "entries", maybe description too? Let's stick to Name mainly as description is free text.
+            // Actually, user said "the letter should be Title case" everywhere. 
+            // I'll stick to NAME for now as description might need sentence case.
+            // If I enforce Title Case on Description it will look Weird Like This.
+            // So Name only.
 import { items } from "@/db/schema";
 import { eq, and, sql, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -98,7 +110,7 @@ export async function createItemAction(input: ItemInput) {
         const [newItem] = await db.insert(items).values({
             companyId,
             code: input.code,
-            name: input.name,
+            name: toTitleCase(input.name),
             nameAr: input.nameAr,
             barcode: input.barcode,
             description: input.description,
@@ -164,6 +176,7 @@ export async function updateItemAction(id: string, input: ItemInput) {
     try {
         await db.update(items).set({
             ...input,
+             name: toTitleCase(input.name),
              partNumber: input.partNumber || null,
              costPrice: input.costPrice.toString(),
             sellingPrice: input.sellingPrice.toString(),

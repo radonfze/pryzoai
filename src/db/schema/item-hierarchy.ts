@@ -98,6 +98,26 @@ export const brandCategories = pgTable("brand_categories", {
   categoryId: uuid("category_id")
     .notNull()
     .references(() => itemCategories.id),
+// Brand-Category mapping (many-to-many)
+export const brandCategories = pgTable("brand_categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  brandId: uuid("brand_id")
+    .notNull()
+    .references(() => itemBrands.id),
+  categoryId: uuid("category_id")
+    .notNull()
+    .references(() => itemCategories.id),
+});
+
+// Subcategory-Category mapping (many-to-many) - NEW
+export const subcategoryCategories = pgTable("subcategory_categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  subcategoryId: uuid("subcategory_id")
+    .notNull()
+    .references(() => itemSubcategories.id),
+  categoryId: uuid("category_id")
+    .notNull()
+    .references(() => itemCategories.id),
 });
 
 // Level 4: Models/Variants
@@ -144,10 +164,12 @@ export const itemSubcategoriesRelations = relations(itemSubcategories, ({ one, m
     fields: [itemSubcategories.companyId],
     references: [companies.id],
   }),
+  // Deprecated direct relation, kept for backward compat until migration
   category: one(itemCategories, {
     fields: [itemSubcategories.categoryId],
     references: [itemCategories.id],
   }),
+  categoryMappings: many(subcategoryCategories),
   brandMappings: many(brandSubcategories),
   models: many(itemModels),
 }));
@@ -180,6 +202,17 @@ export const brandSubcategoriesRelations = relations(brandSubcategories, ({ one 
   subcategory: one(itemSubcategories, {
     fields: [brandSubcategories.subcategoryId],
     references: [itemSubcategories.id],
+  }),
+}));
+
+export const subcategoryCategoriesRelations = relations(subcategoryCategories, ({ one }) => ({
+  subcategory: one(itemSubcategories, {
+    fields: [subcategoryCategories.subcategoryId],
+    references: [itemSubcategories.id],
+  }),
+  category: one(itemCategories, {
+    fields: [subcategoryCategories.categoryId],
+    references: [itemCategories.id],
   }),
 }));
 

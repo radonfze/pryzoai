@@ -1,6 +1,19 @@
 "use server";
 
-import { db } from "@/db";
+import { toTitleCase } from "@/lib/utils";
+
+// ... inside createCategory ...
+      ...validation.data,
+      name: toTitleCase(validation.data.name),
+    }).returning();
+
+// ... inside updateCategory ...
+    await db.update(itemCategories)
+      .set({
+        ...validation.data,
+        name: toTitleCase(validation.data.name),
+        updatedAt: new Date(),
+      })
 import { itemCategories } from "@/db/schema/item-hierarchy";
 import { eq, desc, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -73,6 +86,7 @@ export async function createCategory(data: z.infer<typeof categorySchema>) {
     const [newCategory] = await db.insert(itemCategories).values({
       companyId,
       ...validation.data,
+      name: toTitleCase(validation.data.name),
     }).returning();
 
     revalidatePath("/inventory/categories");
@@ -96,6 +110,7 @@ export async function updateCategory(id: string, data: z.infer<typeof categorySc
     await db.update(itemCategories)
       .set({
         ...validation.data,
+        name: toTitleCase(validation.data.name),
         updatedAt: new Date(),
       })
       .where(eq(itemCategories.id, id));

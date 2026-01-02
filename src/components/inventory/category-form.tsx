@@ -60,6 +60,9 @@ export function CategoryForm({ initialData, initialCode, uoms = [] }: CategoryFo
   const [loading, setLoading] = useState(false);
   const isEditing = !!initialData;
 
+  // Find default UOM (Pcs / PCS / pcs)
+  const defaultBaseUomId = uoms.find(u => u.name.toLowerCase() === "pcs")?.id || null;
+
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
@@ -70,8 +73,8 @@ export function CategoryForm({ initialData, initialCode, uoms = [] }: CategoryFo
       name: "",
       nameAr: "",
       description: "",
-      baseUomId: null,
-      alternativeUomId: null,
+      baseUomId: defaultBaseUomId,
+      alternativeUomId: null, // Default to None
       conversionFactor: undefined,
       isActive: true,
     },

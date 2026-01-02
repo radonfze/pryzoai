@@ -1,6 +1,19 @@
 "use server";
 
-import { db } from "@/db";
+import { toTitleCase } from "@/lib/utils";
+
+// ... inside createBrand ...
+      ...brandData,
+      name: toTitleCase(brandData.name),
+    }).returning();
+
+// ... inside updateBrand ...
+    await db.update(itemBrands)
+      .set({
+        ...brandData,
+        name: toTitleCase(brandData.name),
+        updatedAt: new Date(),
+      })
 import { itemBrands } from "@/db/schema/item-hierarchy";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
@@ -80,6 +93,7 @@ export async function createBrand(data: z.infer<typeof brandSchema>) {
     const [newItem] = await db.insert(itemBrands).values({
       companyId,
       ...brandData,
+      name: toTitleCase(brandData.name),
     }).returning();
 
     // Link Categories
@@ -119,6 +133,7 @@ export async function updateBrand(id: string, data: z.infer<typeof brandSchema>)
     await db.update(itemBrands)
       .set({
         ...brandData,
+        name: toTitleCase(brandData.name),
         updatedAt: new Date(),
       })
       .where(eq(itemBrands.id, id));
