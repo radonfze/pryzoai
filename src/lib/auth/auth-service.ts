@@ -151,51 +151,43 @@ export async function login(
   userAgent?: string
 ): Promise<LoginResult> {
   try {
-    // BYPASS MODE: Attempt to find user by email, otherwise grab the first available admin/user
-    let user = await db.query.users.findFirst({
+    // 1. Check if user exists
+    const user = await db.query.users.findFirst({
       where: eq(users.email, email)
     });
     
     if (!user) {
-        // Fallback: Login as ANY user (preferably admin)
-        user = await db.query.users.findFirst();
+        // Security: Simulate time taken for hash comparison to prevent timing attacks
+        await new Promise(resolve => setTimeout(resolve, 100)); 
+        return { success: false, error: "Invalid email or password" };
     }
-    
-    if (!user) {
-        // EMERGENCY: Create default company and user if DB is empty
-        try {
-            console.log("⚠️ DB Empty: Creating default company and user...");
-            let company = await db.query.companies.findFirst();
-            if (!company) {
-                 const [newCompany] = await db.insert(companies).values({
-                    name: "PryzoAI Demo",
-                    nameAr: "شركة بريزو التجريبية",
-                    email: "info@pryzoai.ae",
-                    isActive: true,
-                 }).returning();
-                 company = newCompany;
-            }
 
-            const [newUser] = await db.insert(users).values({
-                 companyId: company.id,
-                 email: "admin@pryzoai.ae",
-                 name: "System Admin",
-                 role: "admin",
-                 isActive: true,
-                 passwordHash: "$2a$10$X7X7X7X7X7X7X7X7X7X7X7", // Dummy hash
-            }).returning();
-            user = newUser;
-        } catch (e) {
-            console.error("Failed to auto-create user:", e);
-             return { success: false, error: "Database empty and auto-creation failed: " + (e as Error).message };
+    // 2. Check if account is locked
+    if (await isAccountLocked(user)) {
+        return { success: false, error: "Account is locked due to too many failed attempts. Try again in 15 minutes." };
+    }
+
+    // 3. Check if user is active
+    if (!user.isActive) {
+        return { success: false, error: "Account is disabled. Contact administrator." };
+    }
+
+    // 4. Verify Password
+    const isValid = await verifyPassword(password, user.passwordHash);
+
+    if (!isValid) {
+        await handleFailedLogin(user.id);
+        const attempts = (user.failedLoginAttempts || 0) + 1;
+        const remaining = MAX_LOGIN_ATTEMPTS - attempts;
+        
+        if (remaining <= 0) {
+             return { success: false, error: "Account locked due to too many failed attempts." };
         }
+        
+        return { success: false, error: "Invalid email or password" };
     }
-
-    // SKIP PASSWORD CHECK
-    // SKIP LOCKOUT CHECK
-    // SKIP ACTIVE CHECK (Optional, but let's keep it minimally functional)
     
-    // Reset failed attempts just in case
+    // 5. Success - Reset failed attempts
     await resetFailedAttempts(user.id);
     
     // Create session
@@ -205,7 +197,7 @@ export async function login(
     const cookieStore = await cookies();
     cookieStore.set(SESSION_COOKIE_NAME, sessionId, {
       httpOnly: true,
-      secure: false, // FORCE FALSE FOR DEBUGGING
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 30 * 24 * 60 * 60, // 30 days
       path: "/",
@@ -261,22 +253,6 @@ export async function validateSession(): Promise<SessionData | null> {
       }
     }
 
-    // 2. BYPASS MODE: Return first user as session if no valid session found
-    // This allows the app to function even if cookies are blocked/missing in production
-    console.log("⚠️ [AuthService] No valid session found. Activating BYPASS mode...");
-    const user = await db.query.users.findFirst();
-    
-    if (user) {
-         return {
-            userId: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            companyId: user.companyId,
-            sessionId: "bypass-session-token",
-         };
-    }
-    
     return null;
     
   } catch (error: any) {
