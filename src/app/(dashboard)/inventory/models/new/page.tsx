@@ -30,11 +30,15 @@ export default async function NewModelPage() {
           </div>
       );
   }
-  const [brands, subcategories, nextCode] = await Promise.all([
+  const [brandsRaw, subcategoriesRaw, nextCode] = await Promise.all([
     getBrands(),
     getSubcategories(),
     getNextModelCode(),
   ]);
+
+  // Serialize to handle nested objects
+  const brands = JSON.parse(JSON.stringify(brandsRaw));
+  const subcategories = JSON.parse(JSON.stringify(subcategoriesRaw));
 
   return (
     <div className="space-y-6">
