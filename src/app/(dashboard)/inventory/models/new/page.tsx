@@ -4,6 +4,8 @@ import { getBrands } from "@/actions/inventory/brands";
 import { getSubcategories } from "@/actions/inventory/subcategories";
 import { getNextModelCode } from "@/actions/inventory/models";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewModelPage() {
   const [brands, subcategories, nextCode] = await Promise.all([
     getBrands(),

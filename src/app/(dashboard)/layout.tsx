@@ -2,6 +2,8 @@ import { AppSidebar } from "@/components/layout/app-sidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { ThemeSelector } from "@/components/theme-selector"
+import { HardRefreshButton } from "@/components/hard-refresh-button"
+import { AutoLogoutProvider } from "@/components/auto-logout-provider"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -31,12 +33,16 @@ export default function DashboardLayout({
            {/* Dynamic breadcrumbs can go here later */}
            PryzoAI ERP
           </div>
+          <HardRefreshButton />
           <ThemeSelector />
         </header>
         <div className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
-          {children}
+          <AutoLogoutProvider>
+            {children}
+          </AutoLogoutProvider>
         </div>
       </main>
     </SidebarProvider>
   )
 }
+

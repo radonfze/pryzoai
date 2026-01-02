@@ -1,12 +1,22 @@
-"use client";
-
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { ClipboardList, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
+import { getStockAdjustments } from "@/actions/inventory/create-stock-adjustment";
+import { AdjustmentsClient } from "./client";
 
-export default function StockAdjustmentsPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function StockAdjustmentsPage() {
+  const adjustmentsRaw = await getStockAdjustments();
+  
+  // Serialize dates for client component
+  const adjustments = adjustmentsRaw.map(adj => ({
+    ...adj,
+    adjustmentDate: adj.adjustmentDate,
+    createdAt: adj.createdAt,
+  }));
+
   return (
     <div className="space-y-6">
       <GradientHeader
@@ -23,11 +33,7 @@ export default function StockAdjustmentsPage() {
         </Link>
       </GradientHeader>
       
-      <Card>
-          <CardContent className="h-[400px] flex items-center justify-center text-muted-foreground">
-             Stock Adjustment List Implementation Pending...
-          </CardContent>
-      </Card>
+      <AdjustmentsClient data={adjustments as any} />
     </div>
   );
 }

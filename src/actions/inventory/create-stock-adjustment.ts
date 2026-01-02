@@ -12,6 +12,58 @@ export type ActionResponse = { success: boolean; message: string; data?: any };
 type AdjustmentLine = { itemId: string; warehouseId: string; currentQty: number; adjustedQty: number; reason: string };
 type StockAdjustmentInput = { adjustmentDate: string; lines: AdjustmentLine[]; notes?: string };
 
+// Get all stock adjustments for the company
+export async function getStockAdjustments() {
+  const companyId = await getCompanyId();
+  if (!companyId) return [];
+
+  return db.query.stockAdjustments.findMany({
+    where: eq(stockAdjustments.companyId, companyId),
+    with: {
+      lines: {
+        with: {
+          item: true,
+          warehouse: true,
+        }
+      }
+    },
+    orderBy: (stockAdjustments, { desc }) => [desc(stockAdjustments.createdAt)],
+  });
+}
+
+// Delete stock adjustments (only draft)
+export async function deleteStockAdjustments(ids: string[]) {
+  const companyId = await getCompanyId();
+  if (!companyId) throw new Error("Unauthorized");
+
+  try {
+    // Only allow deleting draft adjustments
+    const adjustments = await db.query.stockAdjustments.findMany({
+      where: and(
+        eq(stockAdjustments.companyId, companyId),
+        inArray(stockAdjustments.id, ids)
+      )
+    });
+    
+    const draftIds = adjustments.filter(a => a.status === 'draft' && !a.isPosted).map(a => a.id);
+    
+    if (draftIds.length === 0) {
+      return { success: false, error: "No draft adjustments to delete" };
+    }
+    
+    // Delete lines first
+    await db.delete(stockAdjustmentLines).where(inArray(stockAdjustmentLines.adjustmentId, draftIds));
+    // Delete adjustments
+    await db.delete(stockAdjustments).where(inArray(stockAdjustments.id, draftIds));
+    
+    revalidatePath("/inventory/adjustments");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to delete adjustments:", error);
+    return { success: false, error: "Cannot delete selected adjustments" };
+  }
+}
+
 async function generateAdjustmentNumber(companyId: string, adjustmentDate: Date): Promise<string> {
   const series = await db.query.numberSeries.findFirst({
     where: and(eq(numberSeries.companyId, companyId), eq(numberSeries.documentType, "stock_adjustment"), eq(numberSeries.isActive, true)),

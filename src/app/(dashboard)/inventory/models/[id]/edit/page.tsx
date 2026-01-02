@@ -5,6 +5,8 @@ import { getBrands } from "@/actions/inventory/brands";
 import { getSubcategories } from "@/actions/inventory/subcategories";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function EditModelPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const [model, brands, subcategories] = await Promise.all([

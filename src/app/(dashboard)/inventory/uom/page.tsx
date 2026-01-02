@@ -5,6 +5,8 @@ import Link from "next/link";
 import { getUoms } from "@/actions/inventory/uom";
 import { UomsClient } from "./client";
 
+export const dynamic = 'force-dynamic';
+
 export default async function UOMListPage() {
   const dataRaw = await getUoms();
   const uoms = dataRaw.map(item => ({

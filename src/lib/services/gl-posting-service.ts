@@ -87,7 +87,12 @@ export async function createGLPosting(params: GLPostingParams): Promise<GLPostin
     }
     
     // Generate journal number
-    const journalNumber = await generateNextNumber(companyId, "JV", "journal_entries");
+    const numResult = await generateNextNumber({
+      companyId,
+      entityType: "journal_entries",
+      documentType: "JV"
+    });
+    const journalNumber = numResult.number || `JV-${Date.now()}`;
     
     // Create journal entry
     const [journal] = await database.insert(journalEntries).values({
@@ -361,5 +366,67 @@ export async function postPaymentToGL(
       }
     ],
     tx // Pass transaction
+  });
+}
+
+/**
+ * Post Stock Adjustment to GL
+ */
+export async function postStockAdjustmentToGL(
+  adjustmentId: string,
+  adjustmentNumber: string,
+  adjustmentDate: Date,
+  totalVarianceValue: number,
+  glMapping: GLAccountMapping,
+  tx?: any
+): Promise<GLPostingResult> {
+  // For stock adjustments:
+  // - Positive variance (found more stock) = Debit Inventory, Credit COGS
+  // - Negative variance (found less stock) = Debit COGS, Credit Inventory
+  
+  const lines: GLLine[] = [];
+  
+  if (totalVarianceValue > 0) {
+    // Found more stock than expected
+    lines.push(
+      {
+        accountId: glMapping.inventory,
+        debit: totalVarianceValue,
+        description: `Adjustment ${adjustmentNumber} - Inventory Increase`
+      },
+      {
+        accountId: glMapping.costOfGoodsSold,
+        credit: totalVarianceValue,
+        description: `Adjustment ${adjustmentNumber} - COGS Reversal`
+      }
+    );
+  } else if (totalVarianceValue < 0) {
+    // Found less stock than expected
+    const absValue = Math.abs(totalVarianceValue);
+    lines.push(
+      {
+        accountId: glMapping.costOfGoodsSold,
+        debit: absValue,
+        description: `Adjustment ${adjustmentNumber} - Stock Shortage`
+      },
+      {
+        accountId: glMapping.inventory,
+        credit: absValue,
+        description: `Adjustment ${adjustmentNumber} - Inventory Decrease`
+      }
+    );
+  } else {
+    // No variance, nothing to post
+    return { success: true, journalNumber: "No posting required" };
+  }
+  
+  return createGLPosting({
+    sourceType: 'stock_adjustment',
+    sourceId: adjustmentId,
+    sourceNumber: adjustmentNumber,
+    postingDate: adjustmentDate,
+    description: `Stock Adjustment ${adjustmentNumber}`,
+    lines,
+    tx
   });
 }
