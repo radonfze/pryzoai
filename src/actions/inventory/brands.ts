@@ -4,6 +4,7 @@ import { toTitleCase } from "@/lib/utils";
 
 
 import { itemBrands } from "@/db/schema/item-hierarchy";
+import { db } from "@/db";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";
 import { eq, desc, sql, inArray } from "drizzle-orm";
