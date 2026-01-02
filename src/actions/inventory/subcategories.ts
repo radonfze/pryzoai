@@ -39,11 +39,6 @@ export async function getSubcategories() {
   const rawData = await db.query.itemSubcategories.findMany({
     where: eq(itemSubcategories.companyId, companyId),
     with: {
-       categoryMappings: {
-           with: {
-               category: true
-           }
-       },
        // Keep getting standard category relation for fallback backward compatibility 
        category: true,
     },
@@ -54,7 +49,7 @@ export async function getSubcategories() {
   return rawData.map(sub => ({
       ...sub,
       // Create a flat array of Category IDs
-      categoryIds: sub.categoryMappings?.map(m => m.categoryId) || (sub.categoryId ? [sub.categoryId] : [])
+      categoryIds: sub.categoryId ? [sub.categoryId] : []
   }));
 }
 
