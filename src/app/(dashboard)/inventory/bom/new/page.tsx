@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { items, uom } from "@/db/schema";
+import { items } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getCompanyIdSafe } from "@/lib/auth";
 import { logout } from "@/lib/auth/auth-service";

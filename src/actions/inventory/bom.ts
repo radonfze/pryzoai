@@ -29,7 +29,7 @@ export async function getBoms() {
   return db.query.bom.findMany({
     where: eq(bom.companyId, companyId),
     with: {
-        parentItem: true,
+        item: true,
         lines: {
             with: {
                 componentItem: true
@@ -47,7 +47,7 @@ export async function getBomById(id: string) {
   return db.query.bom.findFirst({
     where: and(eq(bom.id, id), eq(bom.companyId, companyId)),
     with: {
-      parentItem: true,
+      item: true,
       lines: {
         with: {
           componentItem: true

@@ -1,6 +1,6 @@
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { ClipboardList } from "lucide-react";
-import { StockCountForm } from "@/components/inventory/stock-count-form";
+import { StockCountGenerator } from "@/components/inventory/stock-count-generator";
 import { db } from "@/db";
 import { getCompanyIdSafe } from "@/lib/auth";
 import { warehouses, itemCategories, itemBrands } from "@/db/schema";

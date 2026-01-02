@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { getCompanyIdSafe } from "@/lib/auth";
 import { stockBatches, items } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { Layers } from "lucide-react";
+import { Layers, Boxes } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "./columns";
