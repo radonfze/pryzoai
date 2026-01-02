@@ -36,6 +36,23 @@ export default async function ViewStockCountPage({ params }: ViewStockCountPageP
     notFound();
   }
 
+  // Serialize dates for Client Component
+  const serializedCount = {
+    ...countData,
+    createdAt: countData.createdAt?.toISOString() ?? null,
+    updatedAt: countData.updatedAt?.toISOString() ?? null,
+    countDate: countData.countDate ? new Date(countData.countDate).toISOString() : null, // Ensure string
+  };
+
+  const serializedLines = (countData as any).lines.map((line: any) => ({
+      ...line,
+      item: {
+          ...line.item,
+          createdAt: line.item.createdAt?.toISOString() ?? null,
+          updatedAt: line.item.updatedAt?.toISOString() ?? null,
+      }
+  }));
+
   const permissions = await getUserPermissions();
 
   return (
@@ -49,8 +66,8 @@ export default async function ViewStockCountPage({ params }: ViewStockCountPageP
         </div>
 
         <StockCountSheet 
-            count={countData} 
-            lines={(countData as any).lines} 
+            count={serializedCount as any} 
+            lines={serializedLines} 
             permissions={permissions}
         />
     </div>

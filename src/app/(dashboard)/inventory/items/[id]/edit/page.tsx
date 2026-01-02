@@ -38,7 +38,12 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
         icon={Edit}
       />
       <ItemForm 
-        initialData={item} 
+        initialData={{
+            ...item,
+            createdAt: item.createdAt?.toISOString() ?? null,
+            updatedAt: item.updatedAt?.toISOString() ?? null,
+            deletedAt: item.deletedAt?.toISOString() ?? null,
+        }} 
         categories={categoryList} 
         subCategories={subCategoryList}
         brands={brandList} 

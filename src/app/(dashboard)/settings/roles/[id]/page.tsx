@@ -10,10 +10,12 @@ export default async function RoleDetailPage({ params }: { params: { id: string 
     return <div>Role not found</div>;
   }
 
-  // Cast permissions to string[] as it comes as unknown/any from jsonb
+  // Cast permissions and serialize dates
   const safeRole = {
     ...role,
-    permissions: (role.permissions as string[]) || []
+    permissions: (role.permissions as string[]) || [],
+    createdAt: role.createdAt?.toISOString() ?? null,
+    updatedAt: role.updatedAt?.toISOString() ?? null,
   };
 
   return (
