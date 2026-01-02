@@ -20,9 +20,10 @@ interface ItemsClientProps {
   items: Item[]
   categories: Category[]
   brands: Brand[]
+  permissions?: string[]
 }
 
-export function ItemsClient({ items, categories, brands }: ItemsClientProps) {
+export function ItemsClient({ items, categories, brands, permissions = [] }: ItemsClientProps) {
   const [filters, setFilters] = useState<ItemFilterValues>({
     itemType: null,
     status: null,
@@ -85,9 +86,10 @@ export function ItemsClient({ items, categories, brands }: ItemsClientProps) {
         data={filteredItems}
         searchKey="name"
         placeholder="Search items..."
-        onDelete={async (ids) => {
+        meta={{ permissions }} 
+        onDelete={permissions.includes("inventory.items.delete") ? async (ids) => {
           await deleteItemsAction(ids)
-        }}
+        } : undefined}
       />
     </div>
   )

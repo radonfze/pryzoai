@@ -230,8 +230,12 @@ export const columns: ColumnDef<Item>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const item = row.original
+      const permissions = (table.options.meta as any)?.permissions || [];
+      const canEdit = permissions.includes("inventory.items.edit");
+      const canCreate = permissions.includes("inventory.items.create"); // For duplicate
+      const canDrill = permissions.includes("inventory.items.drill_through");
 
       return (
         <DropdownMenu>
@@ -251,18 +255,24 @@ export const columns: ColumnDef<Item>[] = [
             <DropdownMenuSeparator />
             
             <ViewDialogItem item={item} />
-            <DrillDialogItem item={item} />
+            
+            {canDrill && <DrillDialogItem item={item} />}
 
-            <Link href={`/inventory/items/${item.id}/edit`}>
-                <DropdownMenuItem>
-                    <Edit className="mr-2 h-4 w-4" /> Edit Item
-                </DropdownMenuItem>
-            </Link>
-            <Link href={`/inventory/items/new?duplicate=${item.id}`}>
-                <DropdownMenuItem>
-                    <Copy className="mr-2 h-4 w-4" /> Duplicate Item
-                </DropdownMenuItem>
-            </Link>
+            {canEdit && (
+                <Link href={`/inventory/items/${item.id}/edit`}>
+                    <DropdownMenuItem>
+                        <Edit className="mr-2 h-4 w-4" /> Edit Item
+                    </DropdownMenuItem>
+                </Link>
+            )}
+            
+            {canCreate && (
+                <Link href={`/inventory/items/new?duplicate=${item.id}`}>
+                    <DropdownMenuItem>
+                        <Copy className="mr-2 h-4 w-4" /> Duplicate Item
+                    </DropdownMenuItem>
+                </Link>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )

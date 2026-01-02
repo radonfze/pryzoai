@@ -60,6 +60,23 @@ export async function checkPermission(requiredPermission: string): Promise<boole
 }
 
 /**
+ * Get all permissions for the current user
+ */
+export async function getUserPermissions(): Promise<string[]> {
+  const session = await validateSession();
+  if (!session) return [];
+
+  const assigned = await db.select({
+      permissions: roles.permissions
+  })
+  .from(userRoles)
+  .innerJoin(roles, eq(userRoles.roleId, roles.id))
+  .where(eq(userRoles.userId, session.userId));
+
+  return assigned.flatMap(r => r.permissions || []);
+}
+
+/**
  * Require a permission - throws Error if not allowed
  * Use this at the top of Server Actions
  */

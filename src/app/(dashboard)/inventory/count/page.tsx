@@ -1,12 +1,31 @@
-"use client";
 
 import { GradientHeader } from "@/components/ui/gradient-header";
 import { ClipboardList, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
+import { StockCountList } from "@/components/inventory/stock-count-list";
+import { db } from "@/db";
+import { stockCounts, warehouses } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { getCompanyId, getUserPermissions } from "@/lib/auth";
 
-export default function StockCountPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function StockCountPage() {
+  const companyId = await getCompanyId();
+  if (!companyId) return null;
+
+  const data = await db.query.stockCounts.findMany({
+      where: eq(stockCounts.companyId, companyId),
+      with: {
+          warehouse: true,
+      },
+      orderBy: [desc(stockCounts.createdAt)]
+  });
+
+  const permissions = await getUserPermissions();
+  const canCreate = permissions.includes("inventory.count.create");
+
   return (
     <div className="space-y-6">
       <GradientHeader
@@ -15,19 +34,18 @@ export default function StockCountPage() {
         description="Cycle counting and physical inventory"
         icon={ClipboardList}
       >
-        <Link href="/inventory/count/new">
-          <Button size="sm" className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Count
-          </Button>
-        </Link>
+        {canCreate && (
+            <Link href="/inventory/count/new">
+            <Button size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Count
+            </Button>
+            </Link>
+        )}
       </GradientHeader>
-
-      <Card>
-        <CardContent className="h-[400px] flex items-center justify-center text-muted-foreground">
-          Stock Count List Implementation Pending...
-        </CardContent>
-      </Card>
+      
+      <StockCountList data={data} permissions={permissions} />
     </div>
   );
 }
+

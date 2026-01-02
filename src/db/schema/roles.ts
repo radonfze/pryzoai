@@ -88,9 +88,25 @@ export const PERMISSIONS = [
   "procurement.bills.create",
   
   // Inventory
+  // Inventory
   "inventory.items.view",
   "inventory.items.create",
+  "inventory.items.edit",
+  "inventory.items.delete",
+  "inventory.items.drill_through",
+  
   "inventory.adjustments.create",
+  "inventory.adjustments.edit",
+  "inventory.adjustments.delete",
+  
+  "inventory.transfer.create",
+  "inventory.transfer.edit",
+  "inventory.transfer.delete",
+  
+  "inventory.count.view",
+  "inventory.count.create",
+  "inventory.count.edit",
+  "inventory.count.revoke",
   
   // Finance
   "finance.coa.view",

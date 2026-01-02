@@ -51,7 +51,9 @@ export function DataTable<TData, TValue>({
   placeholder = "Filter...",
   onDelete,
   exportName = "export",
-}: DataTableProps<TData, TValue>) {
+  exportName = "export",
+  meta,
+}: DataTableProps<TData, TValue> & { meta?: any }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -71,6 +73,7 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    meta, // Pass meta to table instance
     state: {
       sorting,
       columnFilters,
