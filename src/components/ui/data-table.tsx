@@ -51,7 +51,6 @@ export function DataTable<TData, TValue>({
   placeholder = "Filter...",
   onDelete,
   exportName = "export",
-  exportName = "export",
   meta,
 }: DataTableProps<TData, TValue> & { meta?: any }) {
   const [sorting, setSorting] = React.useState<SortingState>([])

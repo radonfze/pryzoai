@@ -1,7 +1,38 @@
-import { db } from "@/db";
-import { getUserPermissions } from "@/lib/auth";
 
-  // ... (inside component)
+import { db } from "@/db";
+import { items, brands, itemCategories } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { ItemsClient } from "@/components/inventory/items-client"; // Check path
+import { Package, Plus } from "lucide-react";
+import { GradientHeader } from "@/components/ui/gradient-header"; // Check path
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ExportButton } from "@/components/ui/export-button"; // Check path
+import { getCompanyId, getUserPermissions } from "@/lib/auth";
+
+export const dynamic = 'force-dynamic';
+
+export default async function ItemsPage() {
+    const companyId = await getCompanyId();
+    if (!companyId) return null;
+
+  const data = await db.query.items.findMany({
+    where: eq(items.companyId, companyId),
+    with: {
+        category: true,
+        brand: true,
+    },
+    orderBy: [desc(items.createdAt)]
+  });
+
+  const categories = await db.query.itemCategories.findMany({
+      where: eq(itemCategories.companyId, companyId),
+  });
+
+  const brandList = await db.query.itemBrands.findMany({
+      where: eq(itemBrands.companyId, companyId),
+  });
+  
   const permissions = await getUserPermissions();
 
   return (
@@ -25,11 +56,9 @@ import { getUserPermissions } from "@/lib/auth";
       <ItemsClient 
         items={data as any}
         categories={categories}
-        brands={brands}
+        brands={brandList}
         permissions={permissions}
       />
     </div>
   );
 }
-
-
