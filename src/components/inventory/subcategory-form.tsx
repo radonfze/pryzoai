@@ -1,4 +1,4 @@
-import { ChevronsUpDown, Check } from "lucide-react";
+import { ChevronsUpDown, Check, Lock, Loader2 } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";

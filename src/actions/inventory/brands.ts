@@ -2,18 +2,7 @@
 
 import { toTitleCase } from "@/lib/utils";
 
-// ... inside createBrand ...
-      ...brandData,
-      name: toTitleCase(brandData.name),
-    }).returning();
 
-// ... inside updateBrand ...
-    await db.update(itemBrands)
-      .set({
-        ...brandData,
-        name: toTitleCase(brandData.name),
-        updatedAt: new Date(),
-      })
 import { itemBrands } from "@/db/schema/item-hierarchy";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";

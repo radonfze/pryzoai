@@ -3,6 +3,9 @@ import { GradientHeader } from "@/components/ui/gradient-header";
 import { getCategories } from "@/actions/inventory/categories";
 import { getNextBrandCode } from "@/actions/inventory/brands";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function NewBrandPage() {
   const categories = await getCategories();
   const nextCode = await getNextBrandCode();

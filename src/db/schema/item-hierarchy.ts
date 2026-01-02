@@ -98,6 +98,7 @@ export const brandCategories = pgTable("brand_categories", {
   categoryId: uuid("category_id")
     .notNull()
     .references(() => itemCategories.id),
+});
 
 
 // Subcategory-Category mapping (many-to-many) - NEW

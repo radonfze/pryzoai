@@ -17,12 +17,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Lock } from "lucide-react";
+
 import { toast } from "sonner";
 import { createBrand, updateBrand } from "@/actions/inventory/brands";
 import { Switch } from "@/components/ui/switch";
 
-import { ChevronsUpDown, Check } from "lucide-react";
+import { ChevronsUpDown, Check, Lock, Loader2 } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";

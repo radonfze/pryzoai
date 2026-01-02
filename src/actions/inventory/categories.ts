@@ -2,18 +2,7 @@
 
 import { toTitleCase } from "@/lib/utils";
 
-// ... inside createCategory ...
-      ...validation.data,
-      name: toTitleCase(validation.data.name),
-    }).returning();
 
-// ... inside updateCategory ...
-    await db.update(itemCategories)
-      .set({
-        ...validation.data,
-        name: toTitleCase(validation.data.name),
-        updatedAt: new Date(),
-      })
 import { itemCategories } from "@/db/schema/item-hierarchy";
 import { eq, desc, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";

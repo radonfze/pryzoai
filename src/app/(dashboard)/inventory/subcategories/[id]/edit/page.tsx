@@ -4,6 +4,8 @@ import { getCategories } from "@/actions/inventory/categories";
 import { getSubcategory } from "@/actions/inventory/subcategories";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function EditSubcategoryPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const [subcategory, categories] = await Promise.all([

@@ -4,6 +4,9 @@ import { getActiveUoms } from "@/actions/inventory/uom";
 import { getNextCategoryCode } from "@/actions/inventory/categories";
 import { Plus } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function NewCategoryPage() {
   const [uoms, nextCode] = await Promise.all([
     getActiveUoms(),

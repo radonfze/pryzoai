@@ -5,9 +5,10 @@ import { getActiveUoms } from "@/actions/inventory/uom";
 import { notFound } from "next/navigation";
 import { Pencil } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function EditCategoryPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  
   const [category, uoms] = await Promise.all([
     getCategory(resolvedParams.id),
     getActiveUoms(),
