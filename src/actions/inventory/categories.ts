@@ -8,11 +8,11 @@ import { db } from "@/db";
 import { eq, desc, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyId, getCompanyIdSafe } from "@/lib/auth";
 
 // Get next sequential category code (CAT1, CAT2, CAT3...)
 export async function getNextCategoryCode(): Promise<string> {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return "CAT1";
   
   try {
@@ -41,7 +41,7 @@ const categorySchema = z.object({
 
 
 export async function getCategories() {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return [];
 
   return await db.query.itemCategories.findMany({
@@ -55,7 +55,7 @@ export async function getCategories() {
 }
 
 export async function getCategory(id: string) {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return null;
 
   return await db.query.itemCategories.findFirst({

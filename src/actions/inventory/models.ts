@@ -6,13 +6,13 @@ import { toUpperCase } from "@/lib/utils"; // Only Uppers for Model
 import { itemModels } from "@/db/schema/item-hierarchy";
 import { db } from "@/db";
 import { revalidatePath } from "next/cache";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyId, getCompanyIdSafe } from "@/lib/auth";
 import { eq, desc, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 // Get next sequential model code
 export async function getNextModelCode(): Promise<string> {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return "MDL1";
   try {
     const countResult = await db.select({ count: sql<number>`count(*)` })
@@ -34,7 +34,7 @@ const modelSchema = z.object({
 });
 
 export async function getModels() {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return [];
 
   return db.query.itemModels.findMany({
@@ -48,7 +48,7 @@ export async function getModels() {
 }
 
 export async function getModel(id: string) {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return null;
 
   return db.query.itemModels.findFirst({

@@ -5,6 +5,7 @@ import { validateSession } from "./auth/auth-service";
 
 /**
  * Get the current company ID from the authenticated user's session
+ * THROWS if no session - use for mutations that require auth
  */
 export async function getCompanyId(): Promise<string> {
   const session = await validateSession();
@@ -14,6 +15,15 @@ export async function getCompanyId(): Promise<string> {
   }
   
   return session.companyId;
+}
+
+/**
+ * Get current company ID or null if not authenticated
+ * Returns null instead of throwing - use for data fetching in Server Components
+ */
+export async function getCompanyIdSafe(): Promise<string | null> {
+  const session = await validateSession();
+  return session?.companyId || null;
 }
 
 /**

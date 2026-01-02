@@ -6,7 +6,7 @@ import { toTitleCase } from "@/lib/utils";
 import { itemBrands } from "@/db/schema/item-hierarchy";
 import { db } from "@/db";
 import { revalidatePath } from "next/cache";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyId, getCompanyIdSafe } from "@/lib/auth";
 import { eq, desc, sql, inArray } from "drizzle-orm";
 
 export async function deleteBrands(ids: string[]) {
@@ -30,7 +30,7 @@ import { z } from "zod";
 
 // Get next sequential brand code
 export async function getNextBrandCode(): Promise<string> {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return "BRD1";
   try {
     const countResult = await db.select({ count: sql<number>`count(*)` })
@@ -50,7 +50,7 @@ const brandSchema = z.object({
 });
 
 export async function getBrands() {
-  const companyId = await getCompanyId();
+  const companyId = await getCompanyIdSafe();
   if (!companyId) return [];
 
   return db.query.itemBrands.findMany({
