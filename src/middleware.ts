@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ["/login", "/api/auth", "/_next", "/favicon.ico", "/debug-auth", "/api/fix-categories", "/api/fix-db"];
@@ -15,6 +16,26 @@ const ALLOWED_IPS = (process.env.ALLOWED_OFFICE_IPS || "").split(",").filter(Boo
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  
+  // 0. Rate Limiting (DoS Protection)
+  // Apply to Login and API Routes
+  if (path === "/login" || path.startsWith("/api")) {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    
+    // Strict limit for Login (6 attempts / min)
+    const limit = path === "/login" ? 6 : 100; 
+    const windowMs = 60 * 1000;
+    
+    const { success, remaining } = checkRateLimit(ip, limit, windowMs);
+    
+    if (!success) {
+       console.warn(`⛔ Rate Limit Exceeded for IP: ${ip} on Path: ${path}`);
+       return new NextResponse(JSON.stringify({ success: false, message: "Too many requests. Please try again later." }), {
+         status: 429,
+         headers: { 'Content-Type': 'application/json' }
+       });
+    }
+  }
 
   // Check if route is public
   const isPublicRoute = PUBLIC_ROUTES.some((route) => path.startsWith(route));
