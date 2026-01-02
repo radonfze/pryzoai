@@ -28,22 +28,7 @@ export default async function SubcategoriesPage() {
         );
     }
 
-  let subcategories = [];
-  try {
-    const dataRaw = await getSubcategories();
-    // Full serialization to handle nested objects (categoryMappings, etc.)
-    subcategories = JSON.parse(JSON.stringify(dataRaw));
-    console.log('[Subcategories] Data loaded successfully:', subcategories.length, 'items');
-  } catch (error: any) {
-    console.error('[Subcategories] Error loading data:', error);
-    return (
-      <div className="p-8 space-y-4">
-        <h1 className="text-2xl font-bold text-red-600">Error Loading Subcategories</h1>
-        <pre className="bg-red-50 p-4 rounded text-sm overflow-auto">{error.message}</pre>
-        <pre className="bg-gray-100 p-4 rounded text-xs overflow-auto">{error.stack}</pre>
-      </div>
-    );
-  }
+  const data = await getSubcategories();
 
   return (
     <div className="space-y-6">
@@ -61,7 +46,7 @@ export default async function SubcategoriesPage() {
         </Link>
       </GradientHeader>
 
-      <SubcategoriesClient data={subcategories} />
+      <SubcategoriesClient data={data} />
     </div>
   );
 }
