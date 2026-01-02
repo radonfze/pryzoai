@@ -6,7 +6,12 @@ import { Plus, Layers } from "lucide-react";
 import Link from "next/link";
 
 export default async function SubcategoriesPage() {
-  const subcategories = await getSubcategories();
+  const dataRaw = await getSubcategories();
+  const subcategories = dataRaw.map(item => ({
+      ...item,
+      createdAt: item.createdAt?.toISOString() ?? null,
+      updatedAt: item.updatedAt?.toISOString() ?? null,
+  }));
 
   return (
     <div className="space-y-6">

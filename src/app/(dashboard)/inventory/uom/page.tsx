@@ -6,7 +6,12 @@ import { getUoms } from "@/actions/inventory/uom";
 import { UomsClient } from "./client";
 
 export default async function UOMListPage() {
-  const uoms = await getUoms();
+  const dataRaw = await getUoms();
+  const uoms = dataRaw.map(item => ({
+      ...item,
+      createdAt: item.createdAt?.toISOString() ?? null,
+      updatedAt: item.updatedAt?.toISOString() ?? null,
+  }));
 
   return (
     <div className="space-y-6">

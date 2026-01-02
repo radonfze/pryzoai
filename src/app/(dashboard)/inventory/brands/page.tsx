@@ -6,7 +6,12 @@ import { Plus, Tag } from "lucide-react";
 import Link from "next/link";
 
 export default async function BrandsPage() {
-  const brands = await getBrands();
+  const dataRaw = await getBrands();
+  const brands = dataRaw.map(item => ({
+      ...item,
+      createdAt: item.createdAt?.toISOString() ?? null,
+      updatedAt: item.updatedAt?.toISOString() ?? null,
+  }));
 
   return (
     <div className="space-y-6">

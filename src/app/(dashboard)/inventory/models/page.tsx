@@ -6,7 +6,12 @@ import { Plus, Boxes } from "lucide-react";
 import Link from "next/link";
 
 export default async function ModelsPage() {
-  const models = await getModels();
+  const dataRaw = await getModels();
+  const models = dataRaw.map(item => ({
+      ...item,
+      createdAt: item.createdAt?.toISOString() ?? null,
+      updatedAt: item.updatedAt?.toISOString() ?? null,
+  }));
 
   return (
     <div className="space-y-6">

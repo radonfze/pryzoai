@@ -6,7 +6,13 @@ import { Plus, Tags } from "lucide-react";
 import Link from "next/link";
 
 export default async function CategoriesPage() {
-  const categories = await getCategories();
+  const categoriesRaw = await getCategories();
+  const categories = categoriesRaw.map(cat => ({
+      ...cat,
+      createdAt: cat.createdAt?.toISOString() ?? null,
+      updatedAt: cat.updatedAt?.toISOString() ?? null,
+      parentCreatedAt: cat.parentCreatedAt?.toISOString() ?? null, // From join alias if exists
+  }));
 
   return (
     <div className="space-y-6">
