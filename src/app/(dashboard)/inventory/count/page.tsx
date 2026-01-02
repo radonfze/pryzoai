@@ -8,12 +8,30 @@ import { db } from "@/db";
 import { stockCounts, warehouses } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { getCompanyIdSafe, getUserPermissions } from "@/lib/auth";
+import { logout } from "@/lib/auth/auth-service";
+import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
 
 export default async function StockCountPage() {
   const companyId = await getCompanyIdSafe();
-  if (!companyId) return null;
+  if (!companyId) {
+      return (
+          <div className="flex h-[80vh] w-full flex-col items-center justify-center gap-4">
+              <div className="text-center space-y-2">
+                  <h1 className="text-2xl font-bold tracking-tight">Session Expired</h1>
+                  <p className="text-muted-foreground">Your session is invalid. Please log in again.</p>
+              </div>
+              <form action={async () => {
+                  "use server"
+                  await logout();
+                  redirect("/login");
+              }}>
+                  <Button variant="default">Return to Login</Button>
+              </form>
+          </div>
+      );
+  }
 
   const data = await db.query.stockCounts.findMany({
       where: eq(stockCounts.companyId, companyId),

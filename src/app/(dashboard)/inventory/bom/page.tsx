@@ -1,6 +1,8 @@
 import { db } from "@/db";
 import { bom } from "@/db/schema/items";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyIdSafe } from "@/lib/auth";
+import { logout } from "@/lib/auth/auth-service";
+import { redirect } from "next/navigation";
 import { getBoms } from "@/actions/inventory/bom";
 import GradientHeader from "@/components/ui/gradient-header";
 import { Scroll, Plus } from "lucide-react";
@@ -13,6 +15,25 @@ import { Badge } from "@/components/ui/badge";
 export const dynamic = 'force-dynamic';
 
 export default async function BomListPage() {
+  const companyId = await getCompanyIdSafe();
+  if (!companyId) {
+      return (
+          <div className="flex h-[80vh] w-full flex-col items-center justify-center gap-4">
+              <div className="text-center space-y-2">
+                  <h1 className="text-2xl font-bold tracking-tight">Session Expired</h1>
+                  <p className="text-muted-foreground">Your session is invalid. Please log in again.</p>
+              </div>
+              <form action={async () => {
+                  "use server"
+                  await logout();
+                  redirect("/login");
+              }}>
+                  <Button variant="default">Return to Login</Button>
+              </form>
+          </div>
+      );
+  }
+
   const boms = await getBoms();
 
   return (

@@ -3,6 +3,8 @@ import { db } from "@/db";
 import { stockCounts } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getCompanyIdSafe, getUserPermissions } from "@/lib/auth";
+import { logout } from "@/lib/auth/auth-service";
+import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 import { StockCountSheet } from "@/components/inventory/stock-count-sheet";
 import { Button } from "@/components/ui/button";
@@ -17,7 +19,23 @@ export const dynamic = 'force-dynamic';
 
 export default async function ViewStockCountPage({ params }: ViewStockCountPageProps) {
   const companyId = await getCompanyIdSafe();
-  if (!companyId) return null;
+  if (!companyId) {
+      return (
+          <div className="flex h-[80vh] w-full flex-col items-center justify-center gap-4">
+              <div className="text-center space-y-2">
+                  <h1 className="text-2xl font-bold tracking-tight">Session Expired</h1>
+                  <p className="text-muted-foreground">Your session is invalid. Please log in again.</p>
+              </div>
+              <form action={async () => {
+                  "use server"
+                  await logout();
+                  redirect("/login");
+              }}>
+                  <Button variant="default">Return to Login</Button>
+              </form>
+          </div>
+      );
+  }
 
   const countData = await db.query.stockCounts.findFirst({
     where: and(eq(stockCounts.id, params.id), eq(stockCounts.companyId, companyId)),
