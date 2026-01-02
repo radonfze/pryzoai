@@ -2,20 +2,7 @@
 
 import { toTitleCase, toUpperCase } from "@/lib/utils";
 
-// ... inside createUom ...
-      ...validation.data,
-      name: toTitleCase(validation.data.name),
-      code: toUpperCase(validation.data.code),
-    }).returning();
 
-// ... inside updateUom ...
-    await db.update(uoms)
-      .set({
-        ...validation.data,
-        name: toTitleCase(validation.data.name),
-        code: toUpperCase(validation.data.code),
-        updatedAt: new Date(),
-      })
 import { uoms } from "@/db/schema/items";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";

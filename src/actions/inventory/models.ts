@@ -2,20 +2,7 @@
 
 import { toUpperCase } from "@/lib/utils"; // Only Uppers for Model
 
-// ... inside createModel ...
-      ...validation.data,
-      name: toUpperCase(validation.data.name),
-      code: toUpperCase(validation.data.code),
-    }).returning();
 
-// ... inside updateModel ...
-    await db.update(itemModels)
-      .set({
-        ...validation.data,
-        name: toUpperCase(validation.data.name),
-        code: toUpperCase(validation.data.code),
-        updatedAt: new Date(),
-      })
 import { itemModels } from "@/db/schema/item-hierarchy";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";

@@ -2,18 +2,7 @@
 
 import { toTitleCase } from "@/lib/utils";
 
-// ... inside createSubcategory ...
-      ...validation.data,
-      name: toTitleCase(validation.data.name),
-    }).returning();
 
-// ... inside updateSubcategory ...
-    await db.update(itemSubcategories)
-      .set({
-        ...validation.data,
-        name: toTitleCase(validation.data.name),
-        updatedAt: new Date(),
-      })
 import { itemCategories, itemSubcategories } from "@/db/schema/item-hierarchy";
 import { revalidatePath } from "next/cache";
 import { getCompanyId } from "@/lib/auth";

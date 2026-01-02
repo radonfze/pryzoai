@@ -2,17 +2,7 @@
 
 import { toTitleCase } from "@/lib/utils";
 
-// ... inside createItemAction ...
-            companyId,
-            code: input.code,
-            name: toTitleCase(input.name),
-            nameAr: input.nameAr,
-            barcode: input.barcode,
-            description: input.description, // User said "entries", maybe description too? Let's stick to Name mainly as description is free text.
-            // Actually, user said "the letter should be Title case" everywhere. 
-            // I'll stick to NAME for now as description might need sentence case.
-            // If I enforce Title Case on Description it will look Weird Like This.
-            // So Name only.
+
 import { items } from "@/db/schema";
 import { eq, and, sql, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
