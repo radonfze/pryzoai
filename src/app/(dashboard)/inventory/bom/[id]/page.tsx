@@ -40,10 +40,10 @@ export default async function ViewBomPage({ params }: ViewBomPageProps) {
   const bomData = await db.query.bom.findFirst({
     where: and(eq(bom.id, params.id), eq(bom.companyId, companyId)),
     with: {
-      parentItem: true,
+      item: true,
       lines: {
         with: {
-          componentItem: true,
+          item: true,
         },
       },
     },
@@ -85,7 +85,7 @@ export default async function ViewBomPage({ params }: ViewBomPageProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-muted-foreground">BOM Number</label>
-                <p className="font-mono">{bomData.bomNumber}</p>
+                <p className="font-mono">{bomData.name}</p>
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Status</label>
@@ -97,16 +97,12 @@ export default async function ViewBomPage({ params }: ViewBomPageProps) {
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Parent Item</label>
-                <p className="font-medium">{(bomData as any).parentItem?.name || "—"}</p>
-                <p className="text-xs text-muted-foreground">{(bomData as any).parentItem?.code}</p>
+                <p className="font-medium">{(bomData as any).item?.name || "—"}</p>
+                <p className="text-xs text-muted-foreground">{(bomData as any).item?.code}</p>
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Output Quantity</label>
-                <p className="font-medium">{bomData.outputQty} {bomData.uom}</p>
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">Effective Date</label>
-                <p>{bomData.effectiveDate ? formatDate(bomData.effectiveDate) : "—"}</p>
+                <p className="font-medium">1 PCS</p>
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Created</label>
@@ -125,14 +121,11 @@ export default async function ViewBomPage({ params }: ViewBomPageProps) {
               {(bomData as any).lines?.map((line: any) => (
                 <div key={line.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div>
-                    <p className="font-medium">{line.componentItem?.name}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{line.componentItem?.code}</p>
+                    <p className="font-medium">{line.item?.name}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{line.item?.code}</p>
                   </div>
                   <div className="text-right">
                     <p className="font-medium tabular-nums">{line.quantity} {line.uom}</p>
-                    {line.isOptional && (
-                      <Badge variant="outline" className="text-xs">Optional</Badge>
-                    )}
                   </div>
                 </div>
               ))}

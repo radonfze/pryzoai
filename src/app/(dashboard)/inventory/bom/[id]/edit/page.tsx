@@ -5,7 +5,7 @@ import { getCompanyIdSafe } from "@/lib/auth";
 import { logout } from "@/lib/auth/auth-service";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { BomForm } from "@/components/inventory/bom-form";
+import BomForm from "@/components/inventory/bom-form";
 import GradientHeader from "@/components/ui/gradient-header";
 import { Edit } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -46,7 +46,7 @@ export default async function EditBomPage({ params }: EditBomPageProps) {
   }
 
   // Fetch all active items to populate dropdowns
-  const allItems = await db.query.items.findMany({
+  const allItemsRaw = await db.query.items.findMany({
     where: and(eq(items.companyId, companyId), eq(items.isActive, true)),
     columns: {
       id: true,
@@ -56,15 +56,18 @@ export default async function EditBomPage({ params }: EditBomPageProps) {
     },
   });
 
+  const allItems = JSON.parse(JSON.stringify(allItemsRaw));
+  const bomDataSanitized = JSON.parse(JSON.stringify(bomData));
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <GradientHeader
         module="inventory"
         title="Edit BOM"
-        description={`Editing BOM #${bomData.bomNumber || params.id}`}
-        icon={FileEdit}
+        description={`Editing BOM #${bomData.name || params.id}`}
+        icon={Edit}
       />
-      <BomForm items={allItems} initialData={bomData as any} isEdit />
+      <BomForm items={allItems} initialData={bomDataSanitized} isEdit />
     </div>
   );
 }

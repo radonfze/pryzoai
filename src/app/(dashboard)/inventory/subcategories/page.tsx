@@ -29,7 +29,11 @@ export default async function SubcategoriesPage() {
     }
 
   const dataRaw = await getSubcategories();
-  const subcategories = JSON.parse(JSON.stringify(dataRaw));
+  const subcategories = dataRaw.map(item => ({
+      ...item,
+      createdAt: item.createdAt?.toISOString() ?? null,
+      updatedAt: item.updatedAt?.toISOString() ?? null,
+  }));
 
   return (
     <div className="space-y-6">

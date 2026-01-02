@@ -65,20 +65,24 @@ export default async function BomListPage() {
                             {b.name}
                         </CardTitle>
                         <Badge variant={b.isActive ? "default" : "secondary"}>
-                            {b.isActive ? "Active" : "Inactive"}
+                            {b.isActive ? "Active" : "Draft"}
                         </Badge>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{b.item.name}</div>
                         <p className="text-xs text-muted-foreground">
-                            Parent Item Code: {b.item.code}
+                            Code: {b.item.code}
                         </p>
-                        <div className="mt-4 text-xs text-muted-foreground">
-                            {b.lines.length} Components defined
-                        </div>
-                         <div className="mt-2 text-xs text-muted-foreground">
-                            Created: {format(b.createdAt, "PPP")}
-                        </div>
+                         <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
+                             <div className="flex items-center gap-1">
+                                 <FileText className="h-3 w-3" />
+                                 {b.lines.length} Components
+                             </div>
+                             <div className="flex items-center gap-1">
+                                 <Clock className="h-3 w-3" />
+                                 {b.createdAt ? format(b.createdAt, "PPP") : "N/A"}
+                             </div>
+                         </div>
                     </CardContent>
                 </Card>
             ))}

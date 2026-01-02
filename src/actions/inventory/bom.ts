@@ -32,7 +32,7 @@ export async function getBoms() {
         item: true,
         lines: {
             with: {
-                componentItem: true
+                item: true
             }
         }
     },
@@ -50,6 +50,14 @@ export async function getBomById(id: string) {
       item: true,
       lines: {
         with: {
+          item: true
+        }
+      }
+    },
+  });
+}
+      lines: {
+        with: {
           componentItem: true
         }
       }
@@ -57,13 +65,29 @@ export async function getBomById(id: string) {
   });
 }
 
-export async function createBom(data: z.infer<typeof bomSchema>) {
+// Explicit type definition to avoid build errors with z.infer
+export interface CreateBomLineInput {
+  itemId: string;
+  quantity: number;
+  uom?: string;
+  notes?: string;
+}
+
+export interface CreateBomInput {
+  itemId: string;
+  name: string;
+  isActive: boolean;
+  lines: CreateBomLineInput[];
+}
+
+export async function createBomAction(data: CreateBomInput) {
   const companyId = await getCompanyId();
   if (!companyId) throw new Error("Unauthorized");
 
   // Security Check
-  await requirePermission("inventory.items.create"); // BOM creation falls under item creation/mgmt permissions
+  await requirePermission("inventory.items.create");
 
+  // Re-validate using Zod inside to ensure safety even with 'any' like signature at compiled level
   const validation = bomSchema.safeParse(data);
   if (!validation.success) {
     return { success: false, error: validation.error.flatten().fieldErrors };
@@ -81,6 +105,7 @@ export async function createBom(data: z.infer<typeof bomSchema>) {
         if (validation.data.lines.length > 0) {
             await tx.insert(bomLines).values(
                 validation.data.lines.map(line => ({
+                    companyId,
                     bomId: newBom.id,
                     itemId: line.itemId,
                     quantity: line.quantity.toString(),
@@ -92,7 +117,6 @@ export async function createBom(data: z.infer<typeof bomSchema>) {
 
         revalidatePath("/inventory/bom");
 
-        // Audit Log
         await logAuditAction({
             entityType: "bom",
             entityId: newBom.id,
@@ -108,7 +132,7 @@ export async function createBom(data: z.infer<typeof bomSchema>) {
   }
 }
 
-export async function updateBom(id: string, data: z.infer<typeof bomSchema>) {
+export async function updateBom(id: string, data: CreateBomInput) {
   const companyId = await getCompanyId();
   if (!companyId) throw new Error("Unauthorized");
 
@@ -139,6 +163,7 @@ export async function updateBom(id: string, data: z.infer<typeof bomSchema>) {
       if (validation.data.lines.length > 0) {
         await tx.insert(bomLines).values(
           validation.data.lines.map(line => ({
+            companyId,
             bomId: id,
             itemId: line.itemId,
             quantity: line.quantity.toString(),
@@ -151,7 +176,6 @@ export async function updateBom(id: string, data: z.infer<typeof bomSchema>) {
       revalidatePath("/inventory/bom");
       revalidatePath(`/inventory/bom/${id}`);
 
-      // Audit Log
       await logAuditAction({
           entityType: "bom",
           entityId: id,
@@ -171,20 +195,16 @@ export async function deleteBom(id: string) {
   const companyId = await getCompanyId();
   if (!companyId) throw new Error("Unauthorized");
 
-  // Security Check
   await requirePermission("inventory.items.delete");
 
   try {
     await db.transaction(async (tx) => {
-      // Delete lines first
       await tx.delete(bomLines).where(eq(bomLines.bomId, id));
-      // Delete header
       await tx.delete(bom).where(and(eq(bom.id, id), eq(bom.companyId, companyId)));
     });
 
     revalidatePath("/inventory/bom");
 
-    // Audit Log
     await logAuditAction({
         entityType: "bom",
         entityId: id,
@@ -204,9 +224,7 @@ export async function deleteBoms(ids: string[]) {
 
   try {
     await db.transaction(async (tx) => {
-      // Delete lines first
       await tx.delete(bomLines).where(inArray(bomLines.bomId, ids));
-      // Delete headers
       await tx.delete(bom).where(and(inArray(bom.id, ids), eq(bom.companyId, companyId)));
     });
 

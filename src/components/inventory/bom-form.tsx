@@ -12,9 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createBom } from "@/actions/inventory/bom";
+import { createBomAction, updateBom } from "@/actions/inventory/bom";
 import { toast } from "sonner";
-import { Separator } from "@/components/ui/separator";
 
 const bomLineSchema = z.object({
   itemId: z.string().min(1, "Component is required"),
@@ -31,21 +30,35 @@ const formSchema = z.object({
 });
 
 interface BomFormProps {
-  items: any[]; // List of all items
+  items: any[];
+  initialData?: any;
+  isEdit?: boolean;
 }
 
-export default function BomForm({ items }: BomFormProps) {
+export default function BomForm({ items, initialData, isEdit = false }: BomFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
+  const defaultValues = initialData ? {
+    itemId: initialData.itemId || initialData.finishedItemId, // Handle mapped field
+    name: initialData.name || initialData.bomName,
+    isActive: initialData.isActive,
+    lines: initialData.lines?.map((l: any) => ({
+        itemId: l.itemId || l.componentItemId,
+        quantity: parseFloat(l.quantity),
+        uom: l.uom,
+        notes: l.notes
+    })) || [{ itemId: "", quantity: 1, uom: "", notes: "" }]
+  } : {
       itemId: "",
       name: "",
       isActive: true,
       lines: [{ itemId: "", quantity: 1, uom: "", notes: "" }],
-    },
+  };
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues,
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -53,15 +66,20 @@ export default function BomForm({ items }: BomFormProps) {
     name: "lines",
   });
 
-  // Watch parent item to prevent selecting it as component (basic cycle check)
   const selectedParentId = form.watch("itemId");
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
     try {
-        const res = await createBom(values);
+        let res;
+        if (isEdit && initialData) {
+            res = await updateBom(initialData.id, values);
+        } else {
+            res = await createBomAction(values);
+        }
+
         if (res.success) {
-            toast.success("BOM Created Successfully");
+            toast.success(isEdit ? "BOM Updated Successfully" : "BOM Created Successfully");
             router.push("/inventory/bom");
             router.refresh();
         } else {
@@ -82,7 +100,7 @@ export default function BomForm({ items }: BomFormProps) {
             <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
             <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save BOM
+                {isEdit ? "Update BOM" : "Save BOM"}
             </Button>
         </div>
 
@@ -102,12 +120,11 @@ export default function BomForm({ items }: BomFormProps) {
                             <FormLabel>Parent Item (Product) *</FormLabel>
                             <Select onValueChange={(val) => {
                                 field.onChange(val);
-                                // Auto-name suggestion
                                 const item = items.find(i => i.id === val);
                                 if (item && !form.getValues("name")) {
                                     form.setValue("name", `${item.name} - Standard`);
                                 }
-                            }} defaultValue={field.value}>
+                            }} defaultValue={field.value} disabled={isEdit}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Select Parent Item" /></SelectTrigger></FormControl>
                                 <SelectContent>
                                     {items.map(i => <SelectItem key={i.id} value={i.id}>{i.code} - {i.name}</SelectItem>)}
@@ -141,7 +158,6 @@ export default function BomForm({ items }: BomFormProps) {
                                 <FormLabel>Component Item</FormLabel>
                                 <Select onValueChange={(val) => {
                                     field.onChange(val);
-                                    // Auto-fill UOM
                                     const item = items.find(i => i.id === val);
                                     if (item?.uom) {
                                         form.setValue(`lines.${index}.uom`, item.uom);
@@ -150,7 +166,7 @@ export default function BomForm({ items }: BomFormProps) {
                                     <FormControl><SelectTrigger><SelectValue placeholder="Select Component" /></SelectTrigger></FormControl>
                                     <SelectContent>
                                         {items
-                                            .filter(i => i.id !== selectedParentId) // Prevent recursion
+                                            .filter(i => i.id !== selectedParentId)
                                             .map(i => <SelectItem key={i.id} value={i.id}>{i.code} - {i.name}</SelectItem>)
                                         }
                                     </SelectContent>

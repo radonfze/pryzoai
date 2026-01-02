@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import GradientHeader from "@/components/ui/gradient-header";
 import { FilePlus } from "lucide-react";
-import { BomForm } from "@/components/inventory/bom-form";
+import BomForm from "@/components/inventory/bom-form";
 
 export default async function NewBomPage() {
     const companyId = await getCompanyIdSafe();
