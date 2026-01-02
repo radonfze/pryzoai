@@ -30,7 +30,7 @@ export default async function NewBomPage() {
     }
 
     // Fetch all active items to populate Parent and Component dropdowns
-    const allItems = await db.query.items.findMany({
+    const allItemsRaw = await db.query.items.findMany({
         where: and(eq(items.companyId, companyId), eq(items.isActive, true)),
         columns: {
             id: true,
@@ -39,6 +39,9 @@ export default async function NewBomPage() {
             uom: true,
         }
     });
+    
+    // Sanitize for Client Component
+    const allItems = JSON.parse(JSON.stringify(allItemsRaw));
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">

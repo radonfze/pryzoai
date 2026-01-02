@@ -37,15 +37,18 @@ export default async function NewStockCountPage() {
         columns: { id: true, name: true }
     });
 
-    const categories = await db.query.itemCategories.findMany({
+    const categoriesRaw = await db.query.itemCategories.findMany({
          where: eq(itemCategories.companyId, companyId),
          columns: { id: true, name: true }
     });
 
-    const brands = await db.query.itemBrands.findMany({
+    const brandsRaw = await db.query.itemBrands.findMany({
          where: eq(itemBrands.companyId, companyId),
          columns: { id: true, name: true }
     });
+    
+    const categories = JSON.parse(JSON.stringify(categoriesRaw));
+    const brands = JSON.parse(JSON.stringify(brandsRaw));
 
   return (
     <div className="space-y-6">

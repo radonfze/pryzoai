@@ -32,7 +32,7 @@ export default async function BatchesPage() {
       );
   }
 
-  const data = await db.query.stockBatches.findMany({
+  const dataRaw = await db.query.stockBatches.findMany({
     where: eq(stockBatches.companyId, companyId),
     with: {
       item: true,
@@ -40,6 +40,8 @@ export default async function BatchesPage() {
     },
     orderBy: [desc(stockBatches.createdAt)],
   });
+
+  const data = JSON.parse(JSON.stringify(dataRaw));
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
