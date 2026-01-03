@@ -37,3 +37,5 @@ export * from "./schema/warranty";
 export * from "./schema/field-service";
 export * from "./schema/ai-copilot";
 export * from "./schema/security";
+export * from "./schema/document-history";
+export * from "./schema/item-price-tiers";

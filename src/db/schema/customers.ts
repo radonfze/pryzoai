@@ -39,6 +39,8 @@ export const customers = pgTable("customers", {
   
   // Financial settings
   creditLimit: decimal("credit_limit", { precision: 18, scale: 2 }).default("0"),
+  outstandingBalance: decimal("outstanding_balance", { precision: 18, scale: 2 }).default("0"), // Auto-calculated from posted invoices
+  creditRating: varchar("credit_rating", { length: 20 }), // excellent, good, fair, poor
   paymentTermDays: decimal("payment_term_days", { precision: 5, scale: 0 }).default("30"),
   discountPercent: decimal("discount_percent", { precision: 5, scale: 2 }).default("0"),
   

@@ -16,7 +16,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateNextNumber } from "@/lib/services/number-generator";
 import { postSalesInvoiceToGL } from "@/lib/services/gl-posting-service";
-import { getCompanyId } from "@/lib/auth";
+import { getCompanyId, getSession } from "@/lib/auth";
+import { validateCustomerCredit, updateCustomerOutstandingBalance } from "@/lib/services/credit-validation-service";
+import { logDocumentAction } from "@/lib/services/document-history-service";
 
 
 // --- Types ---
@@ -61,9 +63,22 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
       return { success: false, message: "Customer and at least one item are required." };
     }
 
+    // 0b. Estimate total for credit check
+    const estimatedTotal = data.items.reduce((sum, item) => sum + item.totalAmount, 0);
+
+    // 0c. Credit Limit Validation (pre-transaction check)
+    const creditCheck = await validateCustomerCredit(data.customerId, estimatedTotal);
+    if (!creditCheck.allowed) {
+      return { 
+        success: false, 
+        message: `Credit limit exceeded: ${creditCheck.message}` 
+      };
+    }
+
     // 1. Transaction Wrapper
     return await db.transaction(async (tx) => {
       const companyId = await getCompanyId();
+      const session = await getSession();
       if (!companyId) throw new Error("Unauthorized: No active company session.");
 
       // 1b. Use provided invoice number or generate new one
@@ -239,6 +254,30 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
           .set({ isPosted: false })
           .where(eq(salesInvoices.id, newInvoice.id));
       }
+
+      // 7. Log document history (outside try-catch so it doesn't fail the main operation)
+      try {
+        await logDocumentAction({
+          documentId: newInvoice.id,
+          documentType: "invoice",
+          documentNumber: invoiceNumber,
+          action: "CREATE",
+          newValue: {
+            customerId: data.customerId,
+            invoiceDate: data.invoiceDate,
+            dueDate: data.dueDate,
+            totalAmount: grandTotal,
+            lineCount: lineItems.length,
+          },
+        }, session?.userId);
+      } catch (historyError) {
+        console.warn("Failed to log document history:", historyError);
+      }
+
+      // 8. Update customer outstanding balance (async, non-blocking)
+      updateCustomerOutstandingBalance(data.customerId).catch(err => {
+        console.warn("Failed to update customer balance:", err);
+      });
 
       return { 
           success: true, 
