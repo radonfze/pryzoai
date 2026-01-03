@@ -7,6 +7,7 @@ import { Plus, Truck } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "./columns";
+import { ExportButton } from "@/components/ui/export-button";
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,8 @@ export default async function DeliveryNotesPage() {
         icon={Truck}
       />
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <ExportButton data={notes} filename="Delivery_Notes" />
         <Link href="/sales/delivery-notes/new">
           <Button><Plus className="mr-2 h-4 w-4" /> Create Delivery Note</Button>
         </Link>
@@ -44,4 +46,3 @@ export default async function DeliveryNotesPage() {
     </div>
   );
 }
-

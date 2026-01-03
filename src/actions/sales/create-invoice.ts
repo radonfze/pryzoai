@@ -232,7 +232,7 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
       } catch (glError: any) {
          console.warn("GL/Inventory Posting Failed:", glError);
          glStatus = "draft";
-         glMessage = ` (Posting Failed: ${glError.message || "Unknown error"})`;
+         glMessage = ` (Saved as DRAFT. Posting Failed: ${glError.message || "Unknown error"})`;
          
          // Revert posted status just in case (though it defaults to false)
          await tx.update(salesInvoices)
@@ -242,7 +242,7 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
 
       return { 
           success: true, 
-          message: "Invoice created successfully" + glMessage, 
+          message: "Invoice created" + glMessage, 
           invoiceId: newInvoice.id 
       };
 

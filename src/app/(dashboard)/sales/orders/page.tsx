@@ -9,6 +9,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { createColumns } from "./columns";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { ExportButton } from "@/components/ui/export-button";
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +48,8 @@ export default async function SalesOrdersPage() {
         icon={ShoppingCart}
       />
       
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end gap-2">
+        <ExportButton data={orders} filename="Sales_Orders" />
         <Link href="/sales/orders/new">
           <Button><Plus className="mr-2 h-4 w-4" /> New Sales Order</Button>
         </Link>
