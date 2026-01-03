@@ -39,6 +39,7 @@ export const salesQuotations = pgTable("sales_quotations", {
   quotationDate: date("quotation_date").notNull(),
   validUntil: date("valid_until"),
   reference: varchar("reference", { length: 100 }),
+  documentType: varchar("document_type", { length: 20 }).default("quotation"), // quotation or proforma
   
   // Pricing
   currencyId: uuid("currency_id").references(() => currencies.id),
