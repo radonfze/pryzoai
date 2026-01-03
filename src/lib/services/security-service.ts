@@ -5,6 +5,7 @@ import { otpVerifications, editPasswordLogs } from "@/db/schema";
 import { users } from "@/db/schema/users";
 import { eq, and, gt } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { sendOtpEmail } from "./email-service";
 
 const OTP_EXPIRY_MINUTES = 5;
 
@@ -16,14 +17,31 @@ function generateOtpCode(): string {
 }
 
 /**
+ * Get user email by ID
+ */
+async function getUserEmail(userId: string): Promise<string | null> {
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { email: true },
+    });
+    return user?.email || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Create and store OTP for a user
+ * Returns the OTP code for in-app display (development mode)
  */
 export async function generateOtp(
   userId: string,
   purpose: "delete_master" | "reset_edit_password" | "cancel_document" | "admin_override",
   targetTable?: string,
-  targetId?: string
-): Promise<{ success: boolean; otpId?: string; expiresAt?: Date; error?: string }> {
+  targetId?: string,
+  itemName?: string
+): Promise<{ success: boolean; otpId?: string; expiresAt?: Date; otpCode?: string; deliveryMethod?: string; error?: string }> {
   try {
     const otpCode = generateOtpCode();
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
@@ -40,14 +58,35 @@ export async function generateOtp(
       })
       .returning();
 
-    // In production: Send via email/SMS
-    // For development: Log to console
+    // Try to send via email
+    const userEmail = await getUserEmail(userId);
+    let deliveryMethod = "toast"; // Default to in-app toast
+
+    if (userEmail && process.env.RESEND_API_KEY) {
+      const emailResult = await sendOtpEmail({
+        to: userEmail,
+        otpCode,
+        purpose,
+        itemName,
+        expiresInMinutes: OTP_EXPIRY_MINUTES,
+      });
+
+      if (emailResult.success && !emailResult.fallback) {
+        deliveryMethod = "email";
+        console.log(`[OTP] Code sent to ${userEmail}`);
+      }
+    }
+
+    // Always log to console for development
     console.log(`[OTP] Code for user ${userId}: ${otpCode} (expires: ${expiresAt})`);
 
     return {
       success: true,
       otpId: otp.id,
       expiresAt,
+      // Include OTP code for in-app toast display (dev mode)
+      otpCode: deliveryMethod === "toast" ? otpCode : undefined,
+      deliveryMethod,
     };
   } catch (error) {
     console.error("[OTP] Generate error:", error);
