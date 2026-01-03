@@ -90,7 +90,9 @@ export async function generateOtp(
     };
   } catch (error) {
     console.error("[OTP] Generate error:", error);
-    return { success: false, error: "Failed to generate OTP" };
+    // Return more descriptive error message
+    const errorMessage = error instanceof Error ? error.message : "Failed to generate OTP";
+    return { success: false, error: errorMessage };
   }
 }
 
