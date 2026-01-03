@@ -98,17 +98,17 @@ export async function createGLPosting(params: GLPostingParams): Promise<GLPostin
     const [journal] = await database.insert(journalEntries).values({
       companyId,
       branchId: params.branchId,
-      entryNumber: journalNumber,
-      entryDate: params.postingDate,
+      journalNumber: journalNumber,
+      journalDate: params.postingDate.toISOString().split('T')[0], // Ensure string format
       description: params.description,
-      sourceType: params.sourceType,
-      sourceId: params.sourceId,
-      sourceNumber: params.sourceNumber,
+      sourceDocType: params.sourceType === 'sales_invoice' ? 'INV' : params.sourceType === 'purchase_bill' ? 'BILL' : 'JV', // Map to varchar enum if needed or keep consistent
+      sourceDocId: params.sourceId,
+      sourceDocNumber: params.sourceNumber,
       totalDebit: String(totalDebits),
       totalCredit: String(totalCredits),
       status: "posted",
       isReversal: params.isReversal || false,
-      originalEntryId: params.originalJournalId,
+      reversalOfId: params.originalJournalId,
     }).returning();
     
     // Create journal lines
@@ -139,7 +139,7 @@ export async function createGLPosting(params: GLPostingParams): Promise<GLPostin
     return {
       success: true,
       journalId: journal.id,
-      journalNumber: journal.entryNumber,
+      journalNumber: journal.journalNumber,
     };
     
   } catch (error: any) {
@@ -183,15 +183,15 @@ export async function createReversalPosting(
       accountId: line.accountId,
       debit: Number(line.creditAmount),
       credit: Number(line.debitAmount),
-      description: `Reversal of ${originalJournal.entryNumber}: ${reason}`,
+      description: `Reversal of ${originalJournal.journalNumber}: ${reason}`,
     }));
     
     return createGLPosting({
       sourceType: 'reversal',
       sourceId: originalJournalId,
-      sourceNumber: originalJournal.entryNumber,
+      sourceNumber: originalJournal.journalNumber,
       postingDate: reversalDate,
-      description: `Reversal of ${originalJournal.entryNumber}: ${reason}`,
+      description: `Reversal of ${originalJournal.journalNumber}: ${reason}`,
       lines: reversedLines,
       branchId: originalJournal.branchId || undefined,
       isReversal: true,
