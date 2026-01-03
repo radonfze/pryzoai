@@ -1,5 +1,6 @@
 "use client";
 
+import { createQuotationAction } from "@/actions/sales/create-quotation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,12 +27,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-// Schema validation
 const formSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
   quotationDate: z.string().min(1, "Date is required"),
   validUntil: z.string().optional(),
   reference: z.string().optional(),
+  documentType: z.enum(["quotation", "proforma"]).default("quotation"),
   notes: z.string().optional(),
   lines: z.array(z.object({
     itemId: z.string().min(1, "Item is required"),
@@ -39,7 +40,6 @@ const formSchema = z.object({
     unitPrice: z.number().min(0, "Price cannot be negative"),
     uom: z.string().min(1, "UOM is required"),
     discountPercent: z.number().min(0).max(100).optional(),
-    taxId: z.string().optional(),
     description: z.string().optional(),
   })).min(1, "At least one item is required"),
 });
@@ -49,7 +49,7 @@ type QuotationFormValues = z.infer<typeof formSchema>;
 interface QuotationFormProps {
   customers: any[];
   items: any[];
-  initialData?: any; // For edit mode
+  initialData?: any;
 }
 
 export function QuotationForm({ customers, items, initialData }: QuotationFormProps) {
@@ -61,6 +61,7 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
     quotationDate: initialData.quotationDate ? new Date(initialData.quotationDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     validUntil: initialData.validUntil ? new Date(initialData.validUntil).toISOString().split('T')[0] : "",
     reference: initialData.reference || "",
+    documentType: initialData.documentType || "quotation",
     notes: initialData.notes || "",
     lines: initialData.lines?.map((l: any) => ({
       itemId: l.itemId,
@@ -68,11 +69,11 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
       unitPrice: Number(l.unitPrice),
       uom: l.uom,
       discountPercent: Number(l.discountPercent) || 0,
-      taxId: l.taxId || "",
       description: l.description || ""
     })) || [{ itemId: "", quantity: 1, unitPrice: 0, uom: "PCS" }],
   } : {
     quotationDate: new Date().toISOString().split('T')[0],
+    documentType: "quotation",
     lines: [{ itemId: "", quantity: 1, unitPrice: 0, uom: "PCS", discountPercent: 0 }],
   };
 
@@ -86,36 +87,37 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
     control: form.control,
   });
 
-  // Calculate totals
   const watchLines = form.watch("lines");
   const subtotal = watchLines.reduce((sum, line) => {
     const qty = Number(line.quantity) || 0;
     const price = Number(line.unitPrice) || 0;
     const discount = Number(line.discountPercent) || 0;
     
-    // Basic calculation logic (matches backend)
     const lineTotal = qty * price;
     const discountAmount = lineTotal * (discount / 100);
     return sum + (lineTotal - discountAmount);
   }, 0);
   
-  // Simple VAT (5%) assumption for UI feedback - Backend handles real tax logic
   const vatAmount = subtotal * 0.05;
   const totalAmount = subtotal + vatAmount;
 
   const onSubmit = async (data: QuotationFormValues) => {
     setLoading(true);
     try {
-        // TODO: Replace with actual Server Action call
-        console.log("Submitting:", data);
+        const result = await createQuotationAction({
+            ...data,
+            documentType: data.documentType as "quotation" | "proforma"
+        });
         
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        toast.success(initialData ? "Quotation updated successfully" : "Quotation created successfully");
-        router.push("/sales/quotations");
-    } catch (error) {
-      toast.error("Something went wrong");
+        if (result.success) {
+            toast.success(initialData ? "Quotation updated successfully" : "Quotation created successfully");
+            router.push("/sales/quotations");
+            router.refresh();
+        } else {
+            toast.error(result.message);
+        }
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -203,6 +205,30 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                     <FormField
+                        control={form.control}
+                        name="documentType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Document Type</FormLabel>
+                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="quotation">Standard Quotation</SelectItem>
+                                <SelectItem value="proforma">Proforma Invoice</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                 </div>
 
                 <FormField

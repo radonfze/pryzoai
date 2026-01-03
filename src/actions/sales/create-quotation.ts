@@ -36,6 +36,7 @@ type QuotationInput = {
   quotationDate: string; // YYYY-MM-DD  
   validUntil?: string; // YYYY-MM-DD
   reference?: string;
+  documentType?: "quotation" | "proforma";
   currencyId?: string;
   discountPercent?: number;
   notes?: string;
@@ -239,6 +240,7 @@ export async function createQuotationAction(
           quotationDate: input.quotationDate,
           validUntil: validUntil.toISOString().split("T")[0],
           reference: input.reference,
+          documentType: input.documentType || "quotation",
           currencyId: input.currencyId || defaultCurrency?.id,
           exchangeRate: "1.0",
           subtotal: subtotal.toFixed(2),
