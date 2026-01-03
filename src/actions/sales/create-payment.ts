@@ -227,8 +227,8 @@ export async function createPaymentAction(
         })
         .returning();
 
-      // Insert payment allocations and update invoice balances
-      if (input.allocations && input.allocations.length > 0) {
+      // Insert payment allocations and update invoice balances (Manual Mode)
+      if (!input.autoAllocate && input.allocations && input.allocations.length > 0) {
         for (const allocation of input.allocations) {
           // Insert allocation record
           await tx.insert(paymentAllocations).values({
@@ -266,6 +266,9 @@ export async function createPaymentAction(
         }
       }
 
+
+
+
       // Automatic GL Posting using Service
       await postPaymentToGL(
         payment.id,
@@ -289,6 +292,16 @@ export async function createPaymentAction(
 
       return { payment };
     });
+
+    // Run Auto-Allocation if requested
+    if (input.autoAllocate) {
+      await allocatePaymentFIFO(
+        result.payment.id, 
+        input.customerId, 
+        DEMO_COMPANY_ID, 
+        Number(input.amount)
+      );
+    }
 
     revalidatePath("/sales/payments");
     revalidatePath("/sales/invoices");

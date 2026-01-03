@@ -15,6 +15,7 @@ import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { ApprovalService } from "@/lib/services/approval-service";
 import { InventoryService } from "@/lib/services/inventory-service";
+import { checkCustomerCreditLimit } from "@/lib/services/credit-limit-check";
 import { getUser } from "@/lib/auth/get-user";
 import { requirePermission } from "@/lib/auth/permissions";
 
@@ -213,6 +214,12 @@ export async function createSalesOrderAction(
     const subtotalAfterDisc = subtotal - docDiscAmount;
     const finalTax = totalTax;
     const grandTotal = subtotalAfterDisc + finalTax;
+
+    // Credit Limit Check
+    const creditCheck = await checkCustomerCreditLimit(input.customerId, DEMO_COMPANY_ID, grandTotal);
+    if (!creditCheck.allowed) {
+        return { success: false, message: creditCheck.message };
+    }
 
     // Generate order number
     const orderDate = new Date(input.orderDate);
