@@ -16,6 +16,7 @@ export * from "./schema/attendance";
 export * from "./schema/documents";
 export * from "./schema/inventory";
 export * from "./schema/sales";
+export * from "./schema/delivery-notes";
 export * from "./schema/purchase";
 export * from "./schema/finance";
 export * from "./schema/payroll";

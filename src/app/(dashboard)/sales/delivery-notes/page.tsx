@@ -1,22 +1,27 @@
 import { db } from "@/db";
-import { salesOrders } from "@/db/schema";
+import { deliveryNotes } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Truck } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
-import { DeliveryNotesTable } from "@/components/sales/delivery-notes-table";
+import { DataTable } from "@/components/ui/data-table";
+import { columns } from "./columns";
 
 export const dynamic = 'force-dynamic';
 
 export default async function DeliveryNotesPage() {
   const companyId = "00000000-0000-0000-0000-000000000000";
 
-  // Delivery notes are based on sales orders with delivery tracking
-  const orders = await db.query.salesOrders.findMany({
-    where: eq(salesOrders.companyId, companyId),
-    with: { customer: true },
-    orderBy: [desc(salesOrders.createdAt)],
+  // Query actual delivery notes table
+  const notes = await db.query.deliveryNotes.findMany({
+    where: eq(deliveryNotes.companyId, companyId),
+    with: { 
+      customer: true,
+      salesOrder: true,
+      warehouse: true,
+    },
+    orderBy: [desc(deliveryNotes.createdAt)],
     limit: 100
   });
 
@@ -35,7 +40,8 @@ export default async function DeliveryNotesPage() {
         </Link>
       </div>
 
-      <DeliveryNotesTable orders={orders} />
+      <DataTable columns={columns} data={notes} searchPlaceholder="Search delivery notes..." />
     </div>
   );
 }
+

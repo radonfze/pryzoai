@@ -18,12 +18,17 @@ import { format } from "date-fns"
 
 export type DeliveryNote = {
   id: string
-  invoiceNumber: string
-  invoiceDate: Date | string
+  deliveryNoteNumber: string
+  deliveryDate: Date | string
   status: string
+  driverName?: string
+  vehicleNumber?: string
   customer: {
     name: string
     address?: string
+  }
+  salesOrder?: {
+    orderNumber: string
   }
 }
 
@@ -49,11 +54,11 @@ export function createColumns(): ColumnDef<DeliveryNote>[] {
       enableHiding: false,
     },
     {
-      accessorKey: "invoiceNumber",
+      accessorKey: "deliveryNoteNumber",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Delivery Note #" />
       ),
-      cell: ({ row }) => <div className="font-mono font-medium">DN-{(row.getValue("invoiceNumber") as string)?.replace("INV-", "")}</div>,
+      cell: ({ row }) => <div className="font-mono font-medium">{row.getValue("deliveryNoteNumber")}</div>,
     },
     {
       accessorKey: "customer.name",
@@ -69,11 +74,11 @@ export function createColumns(): ColumnDef<DeliveryNote>[] {
       cell: ({ row }) => <div className="truncate max-w-[200px]">{row.original.customer?.address || "-"}</div>,
     },
     {
-      accessorKey: "invoiceDate",
+      accessorKey: "deliveryDate",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Date" />
       ),
-      cell: ({ row }) => <div>{format(new Date(row.getValue("invoiceDate")), "dd MMM yyyy")}</div>,
+      cell: ({ row }) => <div>{format(new Date(row.getValue("deliveryDate")), "dd MMM yyyy")}</div>,
     },
     {
       accessorKey: "status",
