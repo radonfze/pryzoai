@@ -93,8 +93,11 @@ export async function GET(
       },
       status: 200
     });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Failed to generate PDF" }, { status: 500 });
+  } catch (err: any) {
+    console.error("PDF Generation Error:", err);
+    return NextResponse.json(
+      { error: "Failed to generate PDF", details: err.message, stack: err.stack }, 
+      { status: 500 }
+    );
   }
 }

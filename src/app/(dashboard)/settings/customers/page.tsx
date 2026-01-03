@@ -4,11 +4,9 @@ import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { DataTable } from "@/components/ui/data-table";
-import { createColumns } from "./columns";
-import { deleteCustomersAction } from "@/actions/settings/delete-customers";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { CustomersTable } from "./customers-table";
 
 export const dynamic = 'force-dynamic';
 
@@ -26,9 +24,6 @@ export default async function CustomersPage() {
     orderBy: (customers, { asc }) => [asc(customers.name)],
   });
 
-  // Create columns with user ID for security dialogs
-  const columns = createColumns(userId);
-
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
@@ -38,16 +33,7 @@ export default async function CustomersPage() {
         </Link>
       </div>
 
-      <DataTable 
-        columns={columns} 
-        data={customerList} 
-        searchKey="name"
-        placeholder="Search customers..."
-        onDelete={async (ids) => {
-          "use server";
-          await deleteCustomersAction(ids);
-        }}
-      />
+      <CustomersTable data={customerList} userId={userId} />
     </div>
   );
 }

@@ -102,8 +102,25 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<ArrayBuffer
     vatTotal: data.totals.vatTotal.toFixed(2),
   });
 
-  const qrDataUrl = await QRCode.toDataURL(tlvString);
-  doc.addImage(qrDataUrl, "PNG", pageWidth - 40, yPos + 20, 25, 25);
+  // Use QRCode.create to get raw modules (avoids canvas dependency)
+  const qr = QRCode.create(tlvString, { errorCorrectionLevel: 'M' });
+  const modules = qr.modules; // QRCode structure
+  const moduleCount = modules.size;
+  const qrSize = 25; // mm
+  const cellSize = qrSize / moduleCount;
+  const qrX = pageWidth - 40;
+  const qrY = yPos + 20;
+
+  // Draw black squares for '1' modules
+  doc.setFillColor(0, 0, 0); // Black
+  for (let r = 0; r < moduleCount; r++) {
+    for (let c = 0; c < moduleCount; c++) {
+      // Access flat data array (1 = dark, 0 = light)
+      if (modules.data[r * moduleCount + c]) {
+        doc.rect(qrX + c * cellSize, qrY + r * cellSize, cellSize, cellSize, "F");
+      }
+    }
+  }
 
   // 5. Items Table
   autoTable(doc, {
