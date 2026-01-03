@@ -53,6 +53,7 @@
     "decimal.js": "^10.6.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
+    "framer-motion": "^12.23.26",
     "inngest": "^3.48.1",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
