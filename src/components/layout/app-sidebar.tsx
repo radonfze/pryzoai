@@ -86,11 +86,11 @@ const menuItems = [
     color: "text-blue-500",
     gradient: "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md",
     items: [
+      { title: "Dashboard", href: "/sales", icon: LayoutDashboard },
       { title: "Invoice Wizard", href: "/sales/invoices/wizard", icon: Wand2 },
       { title: "Invoices", href: "/sales/invoices", icon: Receipt },
       { title: "Sales Orders", href: "/sales/orders", icon: ClipboardList },
       { title: "Quotations", href: "/sales/quotations", icon: FileText },
-      { title: "Payments", href: "/sales/payments", icon: CreditCard },
       { title: "Credit Notes", href: "/sales/credit-notes", icon: Receipt },
       { title: "Delivery Notes", href: "/sales/delivery-notes", icon: Package },
       { title: "Returns", href: "/sales/returns", icon: ClipboardList },
@@ -107,6 +107,8 @@ const menuItems = [
     color: "text-emerald-500",
     gradient: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md",
     items: [
+      { title: "Dashboard", href: "/inventory", icon: LayoutDashboard },
+
       { 
         title: "Items", 
         href: "/inventory/items", 
@@ -222,7 +224,6 @@ const menuItems = [
       { title: "Bills", href: "/procurement/bills", icon: Receipt },
       { title: "Debit Notes", href: "/procurement/debit-notes", icon: Receipt },
       { title: "Returns", href: "/procurement/returns", icon: ClipboardList },
-      { title: "Supplier Payments", href: "/procurement/payments", icon: CreditCard },
       { title: "Statement of Account", href: "/procurement/reports/supplier-statement", icon: FileText },
     ],
   },
@@ -233,10 +234,23 @@ const menuItems = [
     color: "text-indigo-500",
     gradient: "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md",
     items: [
+      { title: "Dashboard", href: "/finance", icon: LayoutDashboard },
+      { title: "Receivables", href: "/finance/receivables", icon: DollarSign,
+        subItems: [
+          { title: "Customer Receipts", href: "/finance/receivables/receipts" },
+          { title: "Advance Payments", href: "/finance/receivables/advances" },
+        ]
+      },
+      { title: "Payables", href: "/finance/payables", icon: CreditCard,
+        subItems: [
+          { title: "Supplier Payments", href: "/finance/payables/payments" },
+          { title: "Advance to Suppliers", href: "/finance/payables/advances" },
+        ]
+      },
       { title: "Chart of Accounts", href: "/finance/coa", icon: BookOpen },
       { title: "Journal Entries", href: "/finance/journals", icon: FileText },
-      { title: "Fixed Assets", href: "/finance/assets", icon: Building },
       { title: "Bank Accounts", href: "/finance/bank-accounts", icon: Landmark },
+      { title: "Fixed Assets", href: "/finance/assets", icon: Building },
       { title: "Budgets", href: "/finance/budgets", icon: Banknote },
       { title: "Reconciliation", href: "/finance/reconciliation", icon: ClipboardList },
       { title: "Tax Audit (FAF)", href: "/finance/tax-audit", icon: ShieldCheck },
