@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Printer, Download, ArrowLeft, Edit, Home } from "lucide-react";
+import { Printer, Download, ArrowLeft, Edit, Home, Copy } from "lucide-react";
 import Link from "next/link";
 import InvoiceActions from "@/components/sales/invoice-actions";
+import InvoiceCopyButton from "@/components/sales/invoice-copy-button";
+import DocumentHistoryPanel from "@/components/sales/document-history-panel";
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +59,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                     Edit
                 </Button>
             </Link>
+            <InvoiceCopyButton invoiceId={id} />
             <a href={`/api/sales/invoices/${id}/pdf`} target="_blank" rel="noreferrer">
                 <Button variant="outline">
                     <Printer className="mr-2 h-4 w-4" />
@@ -158,6 +161,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                     <Button className="w-full">Record Payment</Button>
                 </CardContent>
             </Card>
+            <DocumentHistoryPanel documentId={id} />
         </div>
       </div>
     </div>

@@ -35,6 +35,8 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { createInvoiceAction } from "@/actions/sales/create-invoice";
 import { addDays, format, parseISO } from "date-fns";
+import { getTieredPrice } from "@/lib/services/tiered-pricing-service";
+import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
@@ -248,10 +250,44 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
     }
   };
 
-  const handleItemChange = (index: number, itemId: string) => {
+  // Track tiered pricing info per line
+  const [tierInfo, setTierInfo] = useState<Record<number, { tierName?: string; savings: number; tierApplied: boolean }>>({}); 
+
+  const handleItemChange = async (index: number, itemId: string) => {
     const selectedItem = items.find(i => i.id === itemId);
     if (selectedItem) {
-      form.setValue(`lines.${index}.unitPrice`, Number(selectedItem.sellingPrice || 0));
+      const currentQty = form.getValues(`lines.${index}.quantity`) || 1;
+      // Try to get tiered price
+      try {
+        const tiered = await getTieredPrice(itemId, currentQty, Number(selectedItem.sellingPrice || 0));
+        form.setValue(`lines.${index}.unitPrice`, tiered.tieredPrice);
+        setTierInfo(prev => ({ ...prev, [index]: { tierName: tiered.tierName, savings: tiered.savings, tierApplied: tiered.tierApplied } }));
+      } catch {
+        form.setValue(`lines.${index}.unitPrice`, Number(selectedItem.sellingPrice || 0));
+        setTierInfo(prev => ({ ...prev, [index]: { tierApplied: false, savings: 0 } }));
+      }
+    }
+  };
+
+  // Handle quantity change - check for tier pricing
+  const handleQuantityChange = async (index: number, newQty: number) => {
+    const itemId = form.getValues(`lines.${index}.itemId`);
+    if (!itemId) return;
+    
+    const selectedItem = items.find(i => i.id === itemId);
+    if (!selectedItem) return;
+    
+    try {
+      const tiered = await getTieredPrice(itemId, newQty, Number(selectedItem.sellingPrice || 0));
+      if (tiered.tierApplied) {
+        form.setValue(`lines.${index}.unitPrice`, tiered.tieredPrice);
+        setTierInfo(prev => ({ ...prev, [index]: { tierName: tiered.tierName, savings: tiered.savings, tierApplied: true } }));
+        toast.info(`${tiered.tierName} applied! Saving ${tiered.savings.toFixed(2)} AED`);
+      } else {
+        setTierInfo(prev => ({ ...prev, [index]: { tierApplied: false, savings: 0 } }));
+      }
+    } catch {
+      // Silent fail - keep current price
     }
   };
 
@@ -453,7 +489,11 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                             <FormItem>
                               <FormLabel className={index > 0 ? "sr-only" : ""}>Qty</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.001" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
+                                <Input type="number" step="0.001" {...field} onChange={e => {
+                                  const newQty = parseFloat(e.target.value) || 0;
+                                  field.onChange(newQty);
+                                  handleQuantityChange(index, newQty);
+                                }} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -466,7 +506,14 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                           name={`lines.${index}.unitPrice`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className={index > 0 ? "sr-only" : ""}>Price</FormLabel>
+                              <FormLabel className={index > 0 ? "sr-only" : ""}>
+                                Price
+                                {tierInfo[index]?.tierApplied && (
+                                  <Badge variant="secondary" className="ml-2 text-xs">
+                                    {tierInfo[index].tierName || "Tier"}
+                                  </Badge>
+                                )}
+                              </FormLabel>
                               <FormControl>
                                 <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                               </FormControl>
