@@ -6,18 +6,29 @@ import { Button } from "@/components/ui/button";
 import { Plus, UserPlus } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
 import { DataTable } from "@/components/ui/data-table";
-import { columns } from "./columns";
+import { createColumns } from "./columns";
 import { deleteSuppliersAction } from "@/actions/settings/delete-suppliers";
+import { getSession, getUserId } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
 
 export default async function SuppliersPage() {
-  const companyId = "00000000-0000-0000-0000-000000000000";
+  const session = await getSession();
+  if (!session?.userId) {
+    redirect("/login");
+  }
+  
+  const userId = session.userId;
+  const companyId = session.companyId || "00000000-0000-0000-0000-000000000000";
 
   const supplierList = await db.query.suppliers.findMany({
     where: eq(suppliers.companyId, companyId),
     orderBy: (suppliers, { asc }) => [asc(suppliers.name)],
   });
+
+  // Create columns with user ID for security dialogs
+  const columns = createColumns(userId);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">

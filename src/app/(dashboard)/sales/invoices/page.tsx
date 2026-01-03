@@ -6,15 +6,22 @@ import GradientHeader from "@/components/ui/gradient-header";
 import { FileText, Plus } from "lucide-react";
 import Link from "next/link";
 import { DataTable } from "@/components/ui/data-table";
-import { columns } from "./columns";
+import { createColumns } from "./columns";
 import { deleteInvoicesAction } from "@/actions/sales/delete-invoices";
 import { ExportButton } from "@/components/ui/export-button";
-
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
 
 export default async function InvoicesPage() {
-  // Fetch all invoices (limit 50 for MVP)
+  const session = await getSession();
+  if (!session?.userId) {
+    redirect("/login");
+  }
+  
+  const userId = session.userId;
+
   // Fetch all invoices (limit 50 for MVP)
   let invoices = [];
   try {
@@ -27,9 +34,11 @@ export default async function InvoicesPage() {
     });
   } catch (error) {
     console.error("CRITICAL ERROR: Failed to fetch invoices:", error);
-    // Suppress crash and show empty state
     invoices = [];
   }
+
+  // Create columns with user ID for security dialogs
+  const columns = createColumns(userId);
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-8 pt-6">

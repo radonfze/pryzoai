@@ -5,18 +5,29 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
-import { columns } from "./columns";
+import { createColumns } from "./columns";
 import { deleteCustomersAction } from "@/actions/settings/delete-customers";
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
 
 export default async function CustomersPage() {
-  const companyId = "00000000-0000-0000-0000-000000000000";
+  const session = await getSession();
+  if (!session?.userId) {
+    redirect("/login");
+  }
+  
+  const userId = session.userId;
+  const companyId = session.companyId || "00000000-0000-0000-0000-000000000000";
 
   const customerList = await db.query.customers.findMany({
     where: eq(customers.companyId, companyId),
     orderBy: (customers, { asc }) => [asc(customers.name)],
   });
+
+  // Create columns with user ID for security dialogs
+  const columns = createColumns(userId);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">

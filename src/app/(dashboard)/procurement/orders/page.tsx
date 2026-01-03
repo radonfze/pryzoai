@@ -6,12 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Plus, ShoppingCart } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
 import { DataTable } from "@/components/ui/data-table";
-import { columns } from "./columns";
+import { createColumns } from "./columns";
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
 
 export default async function PurchaseOrderListPage() {
-  const companyId = "00000000-0000-0000-0000-000000000000";
+  const session = await getSession();
+  if (!session?.userId) {
+    redirect("/login");
+  }
+  
+  const userId = session.userId;
+  const companyId = session.companyId || "00000000-0000-0000-0000-000000000000";
 
   const orders = await db.query.purchaseOrders.findMany({
     where: eq(purchaseOrders.companyId, companyId),
@@ -20,6 +28,9 @@ export default async function PurchaseOrderListPage() {
     },
     orderBy: [desc(purchaseOrders.orderDate)]
   });
+
+  // Create columns with user ID for security dialogs
+  const columns = createColumns(userId);
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
