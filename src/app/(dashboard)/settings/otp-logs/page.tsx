@@ -1,16 +1,15 @@
 import { db } from "@/db";
-import { otpVerifications } from "@/db/schema/security";
-import { users } from "@/db/schema/users";
+import { otpVerifications, users } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { OtpLogsClient } from "./client";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function OtpLogsPage() {
-  const session = await auth();
-  if (!session?.user) {
+  const session = await getSession();
+  if (!session?.userId) {
     redirect("/login");
   }
 
