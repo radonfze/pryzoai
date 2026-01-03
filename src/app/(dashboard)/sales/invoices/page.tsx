@@ -1,16 +1,14 @@
 import { db } from "@/db";
 import { salesInvoices } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
 import GradientHeader from "@/components/ui/gradient-header";
 import { FileText, Plus } from "lucide-react";
 import Link from "next/link";
-import { DataTable } from "@/components/ui/data-table";
-import { createColumns } from "./columns";
-import { deleteInvoicesAction } from "@/actions/sales/delete-invoices";
 import { ExportButton } from "@/components/ui/export-button";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { InvoicesTable } from "./invoices-table";
 
 export const dynamic = 'force-dynamic';
 
@@ -37,9 +35,6 @@ export default async function InvoicesPage() {
     invoices = [];
   }
 
-  // Create columns with user ID for security dialogs
-  const columns = createColumns(userId);
-
   return (
     <div className="flex flex-col gap-6 p-4 md:p-8 pt-6">
       <GradientHeader
@@ -57,16 +52,7 @@ export default async function InvoicesPage() {
       </div>
 
       <div className="rounded-md border bg-white">
-        <DataTable 
-          columns={columns} 
-          data={invoices} 
-          searchKey="invoiceNumber"
-          placeholder="Search invoices..." 
-          onDelete={async (ids) => {
-            "use server";
-            await deleteInvoicesAction(ids);
-          }}
-        />
+        <InvoicesTable invoices={invoices} userId={userId} />
       </div>
     </div>
   );
