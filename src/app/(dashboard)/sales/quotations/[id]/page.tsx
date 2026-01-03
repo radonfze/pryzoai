@@ -10,12 +10,14 @@ import { ArrowLeft, Printer, Edit, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
 import GradientHeader from "@/components/ui/gradient-header";
+import { ConvertToOrderButton } from "@/components/sales/convert-to-order-button";
 
 export const dynamic = 'force-dynamic';
 
-export default async function QuotationDetailPage({ params }: { params: { id: string } }) {
+export default async function QuotationDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const quotation = await db.query.salesQuotations.findFirst({
-    where: eq(salesQuotations.id, params.id),
+    where: eq(salesQuotations.id, id),
     with: {
       customer: true,
       lines: {
@@ -49,6 +51,11 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
              <Link href={`/sales/quotations/${quotation.id}/print`}>
                 <Button variant="outline"><Printer className="mr-2 h-4 w-4" /> Print</Button>
              </Link>
+            <ConvertToOrderButton 
+              quotationId={quotation.id} 
+              quotationNumber={quotation.quotationNumber}
+              isConverted={quotation.convertedToSo || false}
+            />
         </div>
       </div>
 
