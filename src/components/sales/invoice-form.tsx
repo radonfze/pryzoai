@@ -453,7 +453,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                             <FormItem>
                               <FormLabel className={index > 0 ? "sr-only" : ""}>Qty</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.001" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                                <Input type="number" step="0.001" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -468,7 +468,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                             <FormItem>
                               <FormLabel className={index > 0 ? "sr-only" : ""}>Price</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                                <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -505,7 +505,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                             <FormItem>
                               <FormLabel className={index > 0 ? "sr-only" : ""}>Disc %</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.01" min="0" max="100" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                                <Input type="number" step="0.01" min="0" max="100" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
