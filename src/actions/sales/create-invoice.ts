@@ -263,7 +263,8 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
       */
       console.log("GL posting and inventory movement temporarily disabled for debugging");
 
-      // 7. Log document history (outside try-catch so it doesn't fail the main operation)
+      // 7. Log document history (TEMPORARILY DISABLED)
+      /*
       try {
         await logDocumentAction({
           documentId: newInvoice.id,
@@ -281,11 +282,14 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
       } catch (historyError) {
         console.warn("Failed to log document history:", historyError);
       }
+      */
 
-      // 8. Update customer outstanding balance (async, non-blocking)
+      // 8. Update customer outstanding balance (TEMPORARILY DISABLED)
+      /*
       updateCustomerOutstandingBalance(data.customerId).catch(err => {
         console.warn("Failed to update customer balance:", err);
       });
+      */
 
       return { 
           success: true, 
