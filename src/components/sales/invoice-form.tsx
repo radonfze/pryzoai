@@ -21,14 +21,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-
-
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash, Loader2, ArrowLeft, Home } from "lucide-react";
+import { 
+  Plus, 
+  Trash2, 
+  Loader2, 
+  ArrowLeft, 
+  FileText, 
+  Calendar, 
+  User, 
+  Package, 
+  CheckCircle2,
+  Receipt,
+  TrendingUp,
+  Eye
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -69,6 +83,11 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
   const [loading, setLoading] = useState(false);
   const [reservedNumber, setReservedNumber] = useState<string>("");
   const [numberLoading, setNumberLoading] = useState(!initialData);
+  
+  // Success dialog state
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [savedInvoiceId, setSavedInvoiceId] = useState<string>("");
+  const [savedInvoiceNumber, setSavedInvoiceNumber] = useState<string>("");
 
   const defaultValues: Partial<InvoiceFormValues> = initialData ? {
     customerId: initialData.customerId,
@@ -79,7 +98,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
     lines: initialData.lines || [{ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 }],
   } : {
     invoiceDate: new Date().toISOString().split('T')[0],
-    dueDate: new Date().toISOString().split('T')[0], // Default to same as invoice date
+    dueDate: new Date().toISOString().split('T')[0],
     lines: [{ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 }],
   };
 
@@ -93,154 +112,84 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
     control: form.control,
   });
 
-  // Track form dirty state for unsaved changes warning
   const isDirty = form.formState.isDirty;
 
   // Warn user when leaving with unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty && !loading) {
+      if (isDirty) {
         e.preventDefault();
-        e.returnValue = '';
+        e.returnValue = "";
       }
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isDirty, loading]);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
 
-  // Reserve document number on mount (only for new invoices)
+  // Reserve invoice number on mount
   useEffect(() => {
-    if (initialData) {
-      // Editing existing invoice - use its number
-      setReservedNumber(initialData.invoiceNumber || "");
-      setNumberLoading(false);
-      return;
-    }
-
-    // Reserve a new number for new invoice
     const reserveNumber = async () => {
+      if (initialData) {
+        setReservedNumber(initialData.invoiceNumber || "");
+        setNumberLoading(false);
+        return;
+      }
       try {
         const response = await fetch('/api/numbers/reserve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ entityType: 'invoice', documentType: 'INV' })
+          body: JSON.stringify({ entityType: 'invoice', documentType: 'INV' }),
         });
-        
         const data = await response.json();
-        
         if (data.success && data.number) {
           setReservedNumber(data.number);
-        } else {
-          toast.error(data.error || "Failed to reserve invoice number");
         }
       } catch (error) {
         console.error("Number reservation error:", error);
-        toast.error("Failed to reserve invoice number. Please refresh.");
       } finally {
         setNumberLoading(false);
       }
     };
-
     reserveNumber();
-  }, []); // Empty deps - only run once on mount
+  }, [initialData]);
 
-  // Watchers for Logic
-  const watchCustomerId = form.watch("customerId");
-  const watchInvoiceDate = form.watch("invoiceDate");
-
-  // Logic: Auto-calculate Due Date based on Customer Terms
-  useEffect(() => {
-    // Only run if we have both customer and invoice date
-    if (watchCustomerId && watchInvoiceDate) {
-        const customer = customers.find(c => c.id === watchCustomerId);
-        if (customer && customer.paymentTermDays) {
-            const days = Number(customer.paymentTermDays);
-            if (!isNaN(days) && days > 0) {
-               try {
-                 const baseDate = parseISO(watchInvoiceDate);
-                 const newDue = addDays(baseDate, days);
-                 form.setValue("dueDate", format(newDue, "yyyy-MM-dd"));
-                 return;
-               } catch (e) {
-                 // Invalid date format safety
-               }
-            }
-        }
-        // If no terms or 0 days, default to Invoice Date (Net 0)
-        // BUT only if user hasn't explicitly set a different due date? 
-        // User request: "due date must be same as invoice date unless..."
-        // So we enforce this logic on change. 
-        // If user wants custom, they can change Due Date *after* this effect runs? 
-        // Or this effect runs on every render? No, dependency array.
-        // It runs when customerId or invoiceDate changes.
-        // So if I change invoice date -> due date updates.
-        // If I change customer -> due date updates.
-        // If I change Due Date manually -> This effect does NOT run. Perfect.
-        form.setValue("dueDate", watchInvoiceDate);
-    }
-  }, [watchCustomerId, watchInvoiceDate, customers, form]);
-
-  const watchLines = form.watch("lines");
-  const subtotal = watchLines.reduce((sum, line) => {
-    const qty = Number(line.quantity) || 0;
-    const price = Number(line.unitPrice) || 0;
-    const discount = Number(line.discountPercent) || 0;
-    const lineTotal = qty * price * (1 - discount / 100);
-    return sum + lineTotal;
+  // Watch lines for calculation
+  const watchedLines = form.watch("lines");
+  
+  const subtotal = watchedLines.reduce((sum, line) => {
+    const lineTotal = (line.quantity || 0) * (line.unitPrice || 0);
+    const discount = lineTotal * ((line.discountPercent || 0) / 100);
+    return sum + lineTotal - discount;
   }, 0);
+  
   const vatAmount = subtotal * 0.05;
   const totalAmount = subtotal + vatAmount;
 
-  const onSubmit = async (data: InvoiceFormValues) => {
-    console.log("📝 Invoice form onSubmit triggered with data:", data);
-    
-    // Prevent duplicate submissions
-    if (loading) {
-      console.warn("⚠️ Form is already submitting, ignoring duplicate submission");
-      return;
+  const onInvalid = (errors: any) => {
+    console.error("Form validation errors:", errors);
+    const firstError = Object.values(errors)[0] as any;
+    if (firstError?.message) {
+      toast.error(firstError.message);
+    } else {
+      toast.error("Please fill in all required fields");
     }
+  };
+
+  const onSubmit = async (data: InvoiceFormValues) => {
+    if (loading) return;
     
     setLoading(true);
+    
     try {
-      // Map form data to action interface
-      const vatRate = 5;
+      const defaultWarehouse = warehouses[0]?.id || "";
       
-      const mappedItems = data.lines.map(l => {
-        const qty = Number(l.quantity) || 0;
-        const price = Number(l.unitPrice) || 0;
-        const disc = Number(l.discountPercent) || 0;
-        const discAmount = (qty * price * disc) / 100;
-        const lineSubtotal = qty * price - discAmount;
-        const taxAmt = lineSubtotal * (vatRate / 100);
-        return {
-          itemId: l.itemId,
-          description: l.description || "",
-          quantity: qty,
-          unitPrice: price,
-          discountAmount: discAmount,
-          taxRate: vatRate,
-          taxAmount: taxAmt,
-          totalAmount: lineSubtotal + taxAmt
-        };
-      });
-      
-      // Use passed warehouses prop
-      const defaultWarehouse = warehouses?.[0]?.id;
-      
-      if (!defaultWarehouse) {
-        toast.error("No warehouse configured. Please add a warehouse in Settings.");
-        setLoading(false);
-        return;
-      }
-      
-      console.log("📤 Calling createInvoiceAction with payload:", {
-        customerId: data.customerId,
-        warehouseId: defaultWarehouse,
-        invoiceDate: data.invoiceDate,
-        dueDate: data.dueDate,
-        itemCount: mappedItems.length,
-        invoiceNumber: reservedNumber || undefined,
-      });
+      const mappedItems = data.lines.map(line => ({
+        itemId: line.itemId,
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+        discountPercent: line.discountPercent || 0,
+        taxId: line.taxId,
+      }));
       
       const result = await createInvoiceAction({
         customerId: data.customerId,
@@ -252,41 +201,31 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
         invoiceNumber: reservedNumber || undefined,
       });
       
-      console.log("📥 Full result object:", JSON.stringify(result, null, 2));
+      console.log("📥 createInvoiceAction result:", result);
       
       if (result && result.success) {
-        console.log("✅ SUCCESS - Showing toast and redirecting");
-        
-        // Show toast
-        toast.success(result.message || "Invoice created successfully!", {
-          duration: 2000,
-        });
-        
-        // Use router.push for client-side navigation (preserves toast)
-        setTimeout(() => {
-          router.push("/sales/invoices");
-          router.refresh();
-        }, 500); // Short delay to ensure toast is visible
+        // Show success dialog instead of toast
+        setSavedInvoiceId(result.invoiceId || "");
+        setSavedInvoiceNumber(result.invoiceNumber || reservedNumber);
+        setShowSuccessDialog(true);
       } else {
-        console.error("❌ FAILED - Result:", result);
         toast.error(result?.message || "Failed to create invoice");
       }
     } catch (error: any) {
-      console.error("💥 Invoice submission error:", error);
-      toast.error(error.message || "Failed to create invoice. Please try again.");
+      console.error("Invoice submission error:", error);
+      toast.error(error.message || "Failed to create invoice");
     } finally {
       setLoading(false);
     }
   };
 
   // Track tiered pricing info per line
-  const [tierInfo, setTierInfo] = useState<Record<number, { tierName?: string; savings: number; tierApplied: boolean }>>({}); 
+  const [tierInfo, setTierInfo] = useState<Record<number, { tierName?: string; savings: number; tierApplied: boolean }>>({});
 
   const handleItemChange = async (index: number, itemId: string) => {
     const selectedItem = items.find(i => i.id === itemId);
     if (selectedItem) {
       const currentQty = form.getValues(`lines.${index}.quantity`) || 1;
-      // Try to get tiered price
       try {
         const tiered = await getTieredPrice(itemId, currentQty, Number(selectedItem.sellingPrice || 0));
         form.setValue(`lines.${index}.unitPrice`, tiered.tieredPrice);
@@ -298,373 +237,493 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
     }
   };
 
-  // Handle quantity change - check for tier pricing
-  const handleQuantityChange = async (index: number, newQty: number) => {
+  const handleQuantityChange = async (index: number, quantity: number) => {
     const itemId = form.getValues(`lines.${index}.itemId`);
-    if (!itemId) return;
-    
     const selectedItem = items.find(i => i.id === itemId);
-    if (!selectedItem) return;
-    
-    try {
-      const tiered = await getTieredPrice(itemId, newQty, Number(selectedItem.sellingPrice || 0));
-      if (tiered.tierApplied) {
+    if (selectedItem) {
+      try {
+        const tiered = await getTieredPrice(itemId, quantity, Number(selectedItem.sellingPrice || 0));
         form.setValue(`lines.${index}.unitPrice`, tiered.tieredPrice);
-        setTierInfo(prev => ({ ...prev, [index]: { tierName: tiered.tierName, savings: tiered.savings, tierApplied: true } }));
-        toast.info(`${tiered.tierName} applied! Saving ${tiered.savings.toFixed(2)} AED`);
-      } else {
-        setTierInfo(prev => ({ ...prev, [index]: { tierApplied: false, savings: 0 } }));
+        setTierInfo(prev => ({ ...prev, [index]: { tierName: tiered.tierName, savings: tiered.savings, tierApplied: tiered.tierApplied } }));
+      } catch {
+        // Keep current price
       }
-    } catch {
-      // Silent fail - keep current price
     }
   };
 
-  // Handle form validation errors
-  const onInvalid = (errors: any) => {
-    console.error("📛 Form validation errors:", errors);
-    const errorMessages = Object.entries(errors)
-      .map(([key, value]: [string, any]) => {
-        if (key === 'lines' && Array.isArray(value)) {
-          const lineErrors = value
-            .map((lineError, idx) => {
-              if (lineError) {
-                const fieldErrors = Object.entries(lineError)
-                  .map(([field, err]: [string, any]) => `Line ${idx + 1} ${field}: ${err?.message}`)
-                  .join(', ');
-                return fieldErrors;
-              }
-              return null;
-            })
-            .filter(Boolean);
-          return lineErrors.join('; ');
-        }
-        return `${key}: ${value?.message}`;
-      })
-      .filter(Boolean);
-    
-    toast.error(`Validation failed: ${errorMessages.join(', ')}`);
-  };
-
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
-        {/* Navigation Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button type="button" variant="ghost" size="icon" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <Link href="/sales/invoices">
-              <Button type="button" variant="ghost" size="icon">
-                <Home className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div className="border-l pl-4 ml-2">
-              <h2 className="text-xl font-semibold">
-                {initialData ? `Edit Invoice: ${reservedNumber}` : "New Invoice"}
-              </h2>
-              {!initialData && reservedNumber && (
-                <p className="text-sm text-muted-foreground">Reserved: {reservedNumber}</p>
-              )}
+    <>
+      {/* Success Confirmation Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-500 shadow-lg">
+              <CheckCircle2 className="h-8 w-8 text-white" />
+            </div>
+            <DialogTitle className="text-xl">Invoice Created Successfully!</DialogTitle>
+            <DialogDescription className="text-base">
+              Invoice <span className="font-semibold text-foreground">{savedInvoiceNumber}</span> has been created and saved.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="my-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 p-4 dark:from-green-900/20 dark:to-emerald-900/20">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Total Amount</span>
+              <span className="text-lg font-bold text-green-600">{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
             </div>
           </div>
-          {isDirty && (
-            <span className="text-sm text-amber-600 flex items-center gap-1">
-              <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-              Unsaved changes
-            </span>
-          )}
-        </div>
+          <DialogFooter className="flex flex-col gap-2 sm:flex-row">
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => {
+                setShowSuccessDialog(false);
+                form.reset(defaultValues);
+                setReservedNumber("");
+                // Re-reserve a new number
+                fetch('/api/numbers/reserve', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ entityType: 'invoice', documentType: 'INV' }),
+                }).then(res => res.json()).then(data => {
+                  if (data.success) setReservedNumber(data.number);
+                });
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create Another
+            </Button>
+            <Button 
+              className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+              onClick={() => {
+                setShowSuccessDialog(false);
+                router.push("/sales/invoices");
+              }}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              View All Invoices
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="customerId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Customer *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select customer..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {customers.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="invoiceDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Invoice Date *</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="dueDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Due Date *</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Notes</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Internal notes..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
+          {/* Premium Gradient Header */}
+          <div className="rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 text-white shadow-lg">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-4">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-white hover:bg-white/20"
+                  onClick={() => router.back()}
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-6 w-6" />
+                    <h1 className="text-2xl font-bold">
+                      {initialData ? "Edit Invoice" : "New Invoice"}
+                    </h1>
+                  </div>
+                  {numberLoading ? (
+                    <div className="mt-1 flex items-center gap-2 text-sm text-white/80">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Reserving number...</span>
+                    </div>
+                  ) : reservedNumber && (
+                    <Badge className="mt-2 bg-white/20 text-white hover:bg-white/30 text-sm px-3 py-1">
+                      {reservedNumber}
+                    </Badge>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="flex items-center gap-3">
+                {isDirty && (
+                  <Badge variant="secondary" className="bg-amber-500/20 text-amber-100 animate-pulse">
+                    <span className="mr-1 h-2 w-2 rounded-full bg-amber-300" />
+                    Unsaved changes
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
 
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <CardTitle>Line Items</CardTitle>
-                    {reservedNumber && (
-                      <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-primary/10 border border-primary/20">
-                        <span className="text-xs text-muted-foreground">Invoice #:</span>
-                        <span className="text-sm font-mono font-bold">{reservedNumber}</span>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Main Form Section */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Customer & Dates Card */}
+              <Card className="shadow-md hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <User className="h-5 w-5 text-blue-500" />
+                    Customer & Dates
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="customerId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Customer *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-11">
+                                <SelectValue placeholder="Select customer..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {customers.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="invoiceDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2 text-sm font-medium">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            Invoice Date *
+                          </FormLabel>
+                          <FormControl>
+                            <Input type="date" className="h-11" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="dueDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2 text-sm font-medium">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            Due Date *
+                          </FormLabel>
+                          <FormControl>
+                            <Input type="date" className="h-11" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Notes</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Internal notes..." className="h-11" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Line Items Card */}
+              <Card className="shadow-md hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Package className="h-5 w-5 text-purple-500" />
+                      Line Items
+                      {reservedNumber && (
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          {reservedNumber}
+                        </Badge>
+                      )}
+                    </CardTitle>
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 })}
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Item
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {/* Table Header */}
+                  <div className="hidden md:grid grid-cols-12 gap-3 mb-3 px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <div className="col-span-4">Item</div>
+                    <div className="col-span-2">Qty</div>
+                    <div className="col-span-2">Price</div>
+                    <div className="col-span-2">Subtotal</div>
+                    <div className="col-span-1">Disc %</div>
+                    <div className="col-span-1"></div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {fields.map((field, index) => {
+                      const line = watchedLines[index];
+                      const lineSubtotal = (line?.quantity || 0) * (line?.unitPrice || 0);
+                      const lineDiscount = lineSubtotal * ((line?.discountPercent || 0) / 100);
+                      const lineTotal = lineSubtotal - lineDiscount;
+                      
+                      return (
+                        <div 
+                          key={field.id} 
+                          className="grid grid-cols-12 gap-3 items-end p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors border border-border/50"
+                        >
+                          {/* Item Select */}
+                          <div className="col-span-12 md:col-span-4">
+                            <FormField
+                              control={form.control}
+                              name={`lines.${index}.itemId`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className={index > 0 ? "sr-only" : "md:sr-only"}>Item</FormLabel>
+                                  <Select 
+                                    onValueChange={(val) => { field.onChange(val); handleItemChange(index, val); }}
+                                    defaultValue={field.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger className="h-10">
+                                        <SelectValue placeholder="Select item..." />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {items.map((i) => (
+                                        <SelectItem key={i.id} value={i.id}>
+                                          <span className="font-medium">{i.sku}</span>
+                                          <span className="mx-2 text-muted-foreground">-</span>
+                                          <span className="text-sm">{i.name}</span>
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          {/* Quantity */}
+                          <div className="col-span-4 md:col-span-2">
+                            <FormField
+                              control={form.control}
+                              name={`lines.${index}.quantity`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className={index > 0 ? "sr-only" : "md:sr-only"}>Qty</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      step="1" 
+                                      min="1" 
+                                      className="h-10 text-center"
+                                      {...field} 
+                                      onChange={e => {
+                                        const qty = parseInt(e.target.value) || 1;
+                                        field.onChange(qty);
+                                        handleQuantityChange(index, qty);
+                                      }} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          {/* Unit Price */}
+                          <div className="col-span-4 md:col-span-2">
+                            <FormField
+                              control={form.control}
+                              name={`lines.${index}.unitPrice`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className={index > 0 ? "sr-only" : "md:sr-only"}>Price</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      step="0.01" 
+                                      min="0" 
+                                      className="h-10"
+                                      {...field} 
+                                      onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          {/* Subtotal (readonly) */}
+                          <div className="col-span-4 md:col-span-2">
+                            <FormItem>
+                              <FormLabel className={index > 0 ? "sr-only" : "md:sr-only"}>Subtotal</FormLabel>
+                              <div className="h-10 px-3 py-2 rounded-md bg-background border text-right font-medium">
+                                {lineTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              </div>
+                            </FormItem>
+                          </div>
+
+                          {/* Discount */}
+                          <div className="col-span-8 md:col-span-1">
+                            <FormField
+                              control={form.control}
+                              name={`lines.${index}.discountPercent`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className={index > 0 ? "sr-only" : "md:sr-only"}>Disc %</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      step="0.01" 
+                                      min="0" 
+                                      max="100" 
+                                      className="h-10 text-center"
+                                      {...field} 
+                                      onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          {/* Delete Button */}
+                          <div className="col-span-4 md:col-span-1 flex justify-end">
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-10 w-10 text-destructive hover:bg-destructive/10"
+                              onClick={() => remove(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {fields.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                        <p className="text-sm">No items added yet</p>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-3"
+                          onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 })}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add First Item
+                        </Button>
                       </div>
                     )}
                   </div>
-                  <Button type="button" variant="outline" size="sm" onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 })}>
-                    <Plus className="mr-2 h-4 w-4" /> Add Item
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Summary Sidebar */}
+            <div className="space-y-6">
+              {/* Summary Card */}
+              <Card className="shadow-md sticky top-4">
+                <CardHeader className="pb-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Receipt className="h-5 w-5 text-green-500" />
+                    Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span className="font-medium">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">VAT (5%)</span>
+                      <span className="font-medium">{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
+                    </div>
+                    <div className="border-t pt-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-semibold">Total</span>
+                        <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                          {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Actions Card */}
+              <Card className="shadow-md">
+                <CardContent className="pt-6 space-y-3">
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 text-base font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md" 
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Creating Invoice...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="mr-2 h-5 w-5" />
+                        {initialData ? "Update Invoice" : "Create Invoice"}
+                      </>
+                    )}
                   </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                  <div className="space-y-4">
-                  {fields.map((field, index) => {
-                    // Watch values for this specific row to handle bidirectional logic
-                    // We must use form.getValues() or watch outside? 
-                    // To avoid perf issues, we can just defer to the Input's logic or use basic watch for calculations
-                    // But for "value" prop, we need current state.
-                    const currentQty = form.watch(`lines.${index}.quantity`) || 0;
-                    const currentPrice = form.watch(`lines.${index}.unitPrice`) || 0;
-                    const currentSubtotal = (currentQty * currentPrice);
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full h-11" 
+                    onClick={() => router.back()}
+                  >
+                    Cancel
+                  </Button>
+                </CardContent>
+              </Card>
 
-                    return (
-                    <div key={field.id} className="grid gap-2 grid-cols-12 items-end border p-3 rounded-md bg-muted/20">
-                      <div className="col-span-12 md:col-span-5">
-                        <FormField
-                          control={form.control}
-                          name={`lines.${index}.itemId`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className={index > 0 ? "sr-only" : ""}>Item</FormLabel>
-                              <Select onValueChange={(val) => {
-                                field.onChange(val);
-                                handleItemChange(index, val);
-                              }} defaultValue={field.value}>
-                                
-                                <FormControl>
-                                  <div>
-                                    <HoverCard>
-                                      <HoverCardTrigger asChild>
-                                          <SelectTrigger className="w-full truncate text-left">
-                                            <SelectValue placeholder="Select..." />
-                                          </SelectTrigger>
-                                      </HoverCardTrigger>
-                                      <HoverCardContent className="w-80 p-4 border shadow-lg bg-popover text-popover-foreground z-50">
-                                         {field.value ? (() => {
-                                            const selected = items.find(i => i.id === field.value);
-                                            if (!selected) return <p className="text-sm">No item selected</p>;
-                                            return (
-                                              <div className="space-y-2">
-                                                 <h4 className="text-sm font-semibold">{selected.name}</h4>
-                                                 <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                                                    <div>Code: <span className="text-foreground">{selected.code}</span></div>
-                                                    <div>Cost: <span className="text-foreground">{Number(selected.costPrice || 0).toFixed(2)}</span></div>
-                                                    <div>Price: <span className="text-foreground">{Number(selected.sellingPrice || 0).toFixed(2)}</span></div>
-                                                    <div>Tax: <span className="text-foreground">{Number(selected.taxPercent || 0)}%</span></div>
-                                                 </div>
-                                              </div>
-                                            );
-                                         })() : (
-                                            <p className="text-sm text-muted-foreground">Select an item to see details</p>
-                                         )}
-                                      </HoverCardContent>
-                                    </HoverCard>
-                                  </div>
-                                </FormControl>
-                                
-                                <SelectContent>
-                                  {items.map((item) => (
-                                    <SelectItem key={item.id} value={item.id}>
-                                       <span className="truncate block max-w-[300px]">{item.code} - {item.name}</span>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="col-span-4 md:col-span-1">
-                        <FormField
-                          control={form.control}
-                          name={`lines.${index}.quantity`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className={index > 0 ? "sr-only" : ""}>Qty</FormLabel>
-                              <FormControl>
-                                <Input type="number" step="0.001" {...field} onChange={e => {
-                                  const newQty = parseFloat(e.target.value) || 0;
-                                  field.onChange(newQty);
-                                  handleQuantityChange(index, newQty);
-                                }} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="col-span-4 md:col-span-2">
-                        <FormField
-                          control={form.control}
-                          name={`lines.${index}.unitPrice`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className={index > 0 ? "sr-only" : ""}>
-                                Price
-                                {tierInfo[index]?.tierApplied && (
-                                  <Badge variant="secondary" className="ml-2 text-xs">
-                                    {tierInfo[index].tierName || "Tier"}
-                                  </Badge>
-                                )}
-                              </FormLabel>
-                              <FormControl>
-                                <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      {/* Editable Subtotal Column */}
-                      <div className="col-span-6 md:col-span-2">
-                         <FormItem>
-                            <FormLabel className={index > 0 ? "sr-only" : ""}>Subtotal</FormLabel>
-                            <FormControl>
-                               <Input 
-                                  type="number" 
-                                  step="0.01" 
-                                  value={currentSubtotal.toFixed(2)} // Display calculated value
-                                  onChange={(e) => {
-                                      const newTotal = parseFloat(e.target.value);
-                                      if (!isNaN(newTotal) && currentQty !== 0) {
-                                          const newPrice = newTotal / currentQty;
-                                          form.setValue(`lines.${index}.unitPrice`, Number(newPrice.toFixed(4))); // Update price, keeping precision
-                                      }
-                                  }}
-                               />
-                            </FormControl>
-                         </FormItem>
-                      </div>
-
-                      <div className="col-span-4 md:col-span-1">
-                        <FormField
-                          control={form.control}
-                          name={`lines.${index}.discountPercent`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className={index > 0 ? "sr-only" : ""}>Disc %</FormLabel>
-                              <FormControl>
-                                <Input type="number" step="0.01" min="0" max="100" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="col-span-12 md:col-span-1 flex justify-end">
-                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                          <Trash className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
+              {/* Quick Stats */}
+              <Card className="shadow-md">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                      <TrendingUp className="h-5 w-5 text-blue-600" />
                     </div>
-                  );
-                 })}
-                  {fields.length === 0 && (
-                    <div className="text-center py-4 text-muted-foreground text-sm">
-                      No items added. Click &quot;Add Item&quot; to start.
+                    <div>
+                      <p className="text-muted-foreground">Items</p>
+                      <p className="text-lg font-semibold">{fields.length}</p>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-
-          <div className="space-y-4">
-            <Card>
-              <CardHeader><CardTitle>Summary</CardTitle></CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span>{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">VAT (5%)</span>
-                  <span>{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
-                </div>
-                <div className="flex justify-between font-bold border-t pt-2">
-                  <span>Total</span>
-                  <span>{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {initialData ? "Update Invoice" : "Create Invoice"}
-                </Button>
-                <Button type="button" variant="outline" className="w-full" onClick={() => router.back()}>
-                  Cancel
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </form>
-    </Form>
+        </form>
+      </Form>
+    </>
   );
 }

@@ -307,8 +307,9 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
 
       return { 
           success: true, 
-          message: "Invoice created" + glMessage, 
-          invoiceId: newInvoice.id 
+          message: "Invoice created successfully!", 
+          invoiceId: newInvoice.id,
+          invoiceNumber: invoiceNumber
       };
 
     }); // End Transaction
