@@ -634,14 +634,16 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                                 name={`lines.${index}.itemId`}
                                 render={({ field }) => {
                                   const currentItem = items.find(i => i.id === field.value);
+                                  const [open, setOpen] = useState(false);
                                   return (
                                     <FormItem className="flex-1">
-                                      <Popover>
+                                      <Popover open={open} onOpenChange={setOpen}>
                                         <PopoverTrigger asChild>
                                           <FormControl>
                                             <Button
                                               variant="outline"
                                               role="combobox"
+                                              aria-expanded={open}
                                               className={cn(
                                                 "h-9 w-full justify-between text-sm font-normal",
                                                 !field.value && "text-muted-foreground"
@@ -669,6 +671,13 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                                                       field.onChange(item.id);
                                                       handleItemChange(index, item.id);
                                                       setSelectedLineIndex(index);
+                                                      setOpen(false); // Close dropdown
+                                                      // Focus quantity input after short delay
+                                                      setTimeout(() => {
+                                                        const qtyInput = document.querySelector(`input[name="lines.${index}.quantity"]`) as HTMLInputElement;
+                                                        qtyInput?.focus();
+                                                        qtyInput?.select();
+                                                      }, 100);
                                                     }}
                                                   >
                                                     <Check
