@@ -594,29 +594,6 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                       
                       return (
                         <div key={field.id}>
-                          {/* Add Line Button Between Items - More Visible */}
-                          {index > 0 && (
-                            <div className="flex items-center justify-center py-1">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-7 px-4 text-xs border-dashed border-green-300 text-green-600 hover:bg-green-50 hover:border-green-500"
-                                onClick={() => {
-                                  const newItem = { itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 };
-                                  const currentLines = form.getValues("lines");
-                                  const newLines = [...currentLines.slice(0, index), newItem, ...currentLines.slice(index)];
-                                  form.setValue("lines", newLines);
-                                  setSelectedLineIndex(index);
-                                  toast.info("Line inserted");
-                                }}
-                              >
-                                <Plus className="h-3 w-3 mr-1" />
-                                + Insert Line Here
-                              </Button>
-                            </div>
-                          )}
-                          
                           {/* Line Item Card - Compact */}
                           <div 
                             className={`rounded-lg border p-3 cursor-pointer transition-all ${
@@ -626,8 +603,27 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                             }`}
                             onClick={() => setSelectedLineIndex(index)}
                           >
-                            {/* Compact Header: Line # + Item Select + Delete */}
+                            {/* Compact Header: + Add | Line # | Item Select | Delete */}
                             <div className="flex items-center gap-2 mb-2">
+                              {/* Insert Line Before - Simple + */}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-green-600 hover:bg-green-100 hover:text-green-700 shrink-0"
+                                title="Insert line above"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newItem = { itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 };
+                                  const currentLines = form.getValues("lines");
+                                  const newLines = [...currentLines.slice(0, index), newItem, ...currentLines.slice(index)];
+                                  form.setValue("lines", newLines);
+                                  setSelectedLineIndex(index);
+                                }}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                              
                               <Badge variant="outline" className="text-xs shrink-0">
                                 #{index + 1}
                               </Badge>
