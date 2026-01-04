@@ -208,6 +208,8 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
       let glStatus = "posted";
       let glMessage = "";
 
+      // TEMPORARILY DISABLED FOR DEBUGGING
+      /*
       try {
         await postSalesInvoiceToGL(
           newInvoice.id,
@@ -258,6 +260,8 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
           .set({ isPosted: false })
           .where(eq(salesInvoices.id, newInvoice.id));
       }
+      */
+      console.log("GL posting and inventory movement temporarily disabled for debugging");
 
       // 7. Log document history (outside try-catch so it doesn't fail the main operation)
       try {
