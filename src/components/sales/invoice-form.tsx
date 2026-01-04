@@ -193,6 +193,13 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
 
   const onSubmit = async (data: InvoiceFormValues) => {
     console.log("📝 Invoice form onSubmit triggered with data:", data);
+    
+    // Prevent duplicate submissions
+    if (loading) {
+      console.warn("⚠️ Form is already submitting, ignoring duplicate submission");
+      return;
+    }
+    
     setLoading(true);
     try {
       // Map form data to action interface
@@ -226,6 +233,15 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
         return;
       }
       
+      console.log("📤 Calling createInvoiceAction with payload:", {
+        customerId: data.customerId,
+        warehouseId: defaultWarehouse,
+        invoiceDate: data.invoiceDate,
+        dueDate: data.dueDate,
+        itemCount: mappedItems.length,
+        invoiceNumber: reservedNumber || undefined,
+      });
+      
       const result = await createInvoiceAction({
         customerId: data.customerId,
         warehouseId: defaultWarehouse,
@@ -236,15 +252,19 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
         invoiceNumber: reservedNumber || undefined,
       });
       
+      console.log("📥 createInvoiceAction result:", result);
+      
       if (result.success) {
         toast.success(result.message);
+        console.log("✅ Invoice created successfully, redirecting to /sales/invoices");
         router.push("/sales/invoices");
         router.refresh(); // Ensure list updates
       } else {
+        console.error("❌ Invoice creation failed:", result.message);
         toast.error(result.message);
       }
     } catch (error: any) {
-      console.error("Invoice submission error:", error);
+      console.error("💥 Invoice submission error:", error);
       toast.error(error.message || "Failed to create invoice. Please try again.");
     } finally {
       setLoading(false);

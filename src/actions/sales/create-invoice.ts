@@ -288,7 +288,13 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
     }); // End Transaction
 
   } catch (error: any) {
-    console.error("Create Invoice Action Error:", error);
+    console.error("❌ Create Invoice Action Error:", error);
+    console.error("Error details:", {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      stack: error.stack?.split('\n').slice(0, 5)
+    });
     return { success: false, message: error.message || "Failed to create invoice" };
   }
 }
