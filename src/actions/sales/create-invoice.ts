@@ -63,20 +63,27 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
       return { success: false, message: "Customer and at least one item are required." };
     }
 
+    // 0a. Get session and company BEFORE transaction
+    const companyId = await getCompanyId();
+    const session = await getSession();
+    if (!companyId) {
+      return { success: false, message: "Unauthorized: No active company session." };
+    }
+
+    // 0b. Estimate total for credit check
+    const estimatedTotal = data.items.reduce((sum, item) => sum + item.totalAmount, 0);
+
+    // 0c. Credit Limit Validation (before transaction)
+    const creditCheck = await validateCustomerCredit(data.customerId, estimatedTotal);
+    if (!creditCheck.allowed) {
+      return { 
+        success: false, 
+        message: `Credit limit exceeded: ${creditCheck.message}` 
+      };
+    }
+
     // 1. Transaction Wrapper
     return await db.transaction(async (tx) => {
-      const companyId = await getCompanyId();
-      const session = await getSession();
-      if (!companyId) throw new Error("Unauthorized: No active company session.");
-
-      // 0b. Estimate total for credit check
-      const estimatedTotal = data.items.reduce((sum, item) => sum + item.totalAmount, 0);
-
-      // 0c. Credit Limit Validation (now inside transaction with session available)
-      const creditCheck = await validateCustomerCredit(data.customerId, estimatedTotal);
-      if (!creditCheck.allowed) {
-        throw new Error(`Credit limit exceeded: ${creditCheck.message}`);
-      }
 
       // 1b. Use provided invoice number or generate new one
       let invoiceNumber: string;
