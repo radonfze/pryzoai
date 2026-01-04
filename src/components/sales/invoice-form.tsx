@@ -41,7 +41,8 @@ import {
   CheckCircle2,
   Receipt,
   TrendingUp,
-  Eye
+  Eye,
+  ToggleLeft
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -51,6 +52,8 @@ import { createInvoiceAction } from "@/actions/sales/create-invoice";
 import { addDays, format, parseISO } from "date-fns";
 import { getTieredPrice } from "@/lib/services/tiered-pricing-service";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
@@ -88,6 +91,9 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [savedInvoiceId, setSavedInvoiceId] = useState<string>("");
   const [savedInvoiceNumber, setSavedInvoiceNumber] = useState<string>("");
+  
+  // Tax inclusive toggle - when true, entered amounts include VAT
+  const [isTaxInclusive, setIsTaxInclusive] = useState(false);
 
   const defaultValues: Partial<InvoiceFormValues> = initialData ? {
     customerId: initialData.customerId,
@@ -156,6 +162,9 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
   // Watch lines for calculation
   const watchedLines = form.watch("lines");
   
+  // VAT rate
+  const VAT_RATE = 0.05;
+  
   // Calculate totals with discount breakdown
   const grossTotal = watchedLines.reduce((sum, line) => {
     return sum + (line.quantity || 0) * (line.unitPrice || 0);
@@ -166,9 +175,11 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
     return sum + lineTotal * ((line.discountPercent || 0) / 100);
   }, 0);
   
-  const subtotal = grossTotal - totalDiscount;
-  const vatAmount = subtotal * 0.05;
-  const totalAmount = subtotal + vatAmount;
+  // If tax inclusive, back-calculate the taxable amount
+  const netAfterDiscount = grossTotal - totalDiscount;
+  const subtotal = isTaxInclusive ? netAfterDiscount / (1 + VAT_RATE) : netAfterDiscount;
+  const vatAmount = subtotal * VAT_RATE;
+  const totalAmount = isTaxInclusive ? netAfterDiscount : subtotal + vatAmount;
 
   const onInvalid = (errors: any) => {
     console.error("Form validation errors:", errors);
@@ -449,8 +460,29 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                           </FormControl>
                           <FormMessage />
                         </FormItem>
-                      )}
+                      )}\
                     />
+                  </div>
+                  
+                  {/* Tax Inclusive Toggle */}
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <Label htmlFor="tax-inclusive" className="text-sm font-medium cursor-pointer">
+                          Amounts are Tax Inclusive
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {isTaxInclusive 
+                            ? "Entered prices include 5% VAT" 
+                            : "VAT 5% will be added to prices"}
+                        </p>
+                      </div>
+                      <Switch
+                        id="tax-inclusive"
+                        checked={isTaxInclusive}
+                        onCheckedChange={setIsTaxInclusive}
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -576,15 +608,15 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                               )}
                             </div>
 
-                            {/* Quantity, Price, Discount, Total - Grid Layout */}
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            {/* Quantity, Rate, Gross Amount, Discount, Net - Better Grid Layout */}
+                            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                               {/* Quantity */}
                               <FormField
                                 control={form.control}
                                 name={`lines.${index}.quantity`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Quantity</FormLabel>
+                                    <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Qty</FormLabel>
                                     <FormControl>
                                       <Input 
                                         type="number" 
@@ -604,13 +636,13 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                                 )}
                               />
 
-                              {/* Unit Price */}
+                              {/* Rate (Unit Price) */}
                               <FormField
                                 control={form.control}
                                 name={`lines.${index}.unitPrice`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Unit Price</FormLabel>
+                                    <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Rate</FormLabel>
                                     <FormControl>
                                       <Input 
                                         type="number" 
@@ -626,45 +658,56 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                                 )}
                               />
 
-                              {/* Discount % */}
+                              {/* Gross Amount (Editable - auto-calculates rate) */}
+                              <div>
+                                <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Gross Amt</FormLabel>
+                                <Input 
+                                  type="number" 
+                                  step="0.01" 
+                                  min="0" 
+                                  className="h-11 text-right font-medium bg-amber-50 dark:bg-amber-900/20 border-amber-200"
+                                  value={lineSubtotal.toFixed(2)}
+                                  onChange={e => {
+                                    const newGross = parseFloat(e.target.value) || 0;
+                                    const qty = line?.quantity || 1;
+                                    const newRate = qty > 0 ? newGross / qty : 0;
+                                    form.setValue(`lines.${index}.unitPrice`, parseFloat(newRate.toFixed(2)));
+                                  }}
+                                />
+                                <p className="text-xs text-amber-600 mt-0.5">Edits rate</p>
+                              </div>
+
+                              {/* Discount Rate % */}
                               <FormField
                                 control={form.control}
                                 name={`lines.${index}.discountPercent`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Disc %</FormLabel>
+                                    <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Disc Rate</FormLabel>
                                     <FormControl>
                                       <Input 
                                         type="number" 
-                                        step="0.1" 
+                                        step="0.5" 
                                         min="0" 
                                         max="100" 
                                         className="h-11 text-center"
-                                        placeholder="0"
+                                        placeholder="0%"
                                         {...field} 
                                         onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
                                       />
                                     </FormControl>
-                                    <p className="text-xs text-orange-600 mt-1">
-                                      -{lineDiscountAmount.toFixed(2)} AED
+                                    <p className="text-xs text-orange-600 mt-0.5">
+                                      -{lineDiscountAmount.toFixed(2)}
                                     </p>
                                   </FormItem>
                                 )}
                               />
 
-                              {/* Subtotal (before discount) */}
-                              <div>
-                                <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Gross Amount</FormLabel>
-                                <div className="h-11 px-3 py-2.5 rounded-md bg-slate-100 dark:bg-slate-800 text-right font-medium">
-                                  {lineSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                </div>
-                              </div>
-
                               {/* Net Amount (after discount) */}
-                              <div>
+                              <div className="col-span-2 md:col-span-2">
                                 <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Net Amount</FormLabel>
-                                <div className="h-11 px-3 py-2.5 rounded-md bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-right font-bold text-green-700 dark:text-green-400">
-                                  {lineNetAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                <div className="h-11 px-3 py-2.5 rounded-md bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-right text-lg font-bold text-green-700 dark:text-green-400">
+                                  {lineNetAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED
                                 </div>
                               </div>
                             </div>
@@ -713,10 +756,17 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
               {/* Summary Card */}
               <Card className="shadow-md sticky top-4">
                 <CardHeader className="pb-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-t-lg">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Receipt className="h-5 w-5 text-green-500" />
-                    Summary
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Receipt className="h-5 w-5 text-green-500" />
+                      Summary
+                    </CardTitle>
+                    {isTaxInclusive && (
+                      <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                        Tax Incl.
+                      </Badge>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-4 space-y-4">
                   <div className="space-y-2">
