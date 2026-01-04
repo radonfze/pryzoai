@@ -48,6 +48,7 @@ export interface ActionResponse {
   success: boolean;
   message: string;
   invoiceId?: string;
+  invoiceNumber?: string;
 }
 
 // --- Action ---
