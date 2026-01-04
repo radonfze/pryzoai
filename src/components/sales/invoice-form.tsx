@@ -57,6 +57,7 @@ import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
+  salesmanId: z.string().optional(),
   invoiceDate: z.string().min(1, "Date is required"),
   dueDate: z.string().min(1, "Due date is required"),
   salesOrderId: z.string().optional(),
@@ -78,10 +79,11 @@ interface InvoiceFormProps {
   items: any[];
   warehouses: any[];
   taxes?: any[];
+  salesmen?: any[];
   initialData?: any;
 }
 
-export function InvoiceForm({ customers, items, warehouses, taxes, initialData }: InvoiceFormProps) {
+export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = [], initialData }: InvoiceFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [reservedNumber, setReservedNumber] = useState<string>("");
@@ -94,6 +96,9 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
   
   // Tax inclusive toggle - when true, entered amounts include VAT
   const [isTaxInclusive, setIsTaxInclusive] = useState(false);
+  
+  // Track selected/focused line for showing item details
+  const [selectedLineIndex, setSelectedLineIndex] = useState<number | null>(null);
 
   const defaultValues: Partial<InvoiceFormValues> = initialData ? {
     customerId: initialData.customerId,
@@ -415,6 +420,30 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                       )}
                     />
 
+                    {/* Salesman */}
+                    <FormField
+                      control={form.control}
+                      name="salesmanId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Salesman</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-11">
+                                <SelectValue placeholder="Select salesman..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {salesmen.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <FormField
                       control={form.control}
                       name="invoiceDate"
@@ -544,49 +573,44 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                             </div>
                           )}
                           
-                          {/* Line Item Card */}
-                          <div className="rounded-xl border-2 border-border/60 bg-gradient-to-r from-slate-50/50 to-white dark:from-slate-900/50 dark:to-slate-800/50 p-4 hover:border-blue-300 hover:shadow-md transition-all">
-                            {/* Line Number & Delete */}
-                            <div className="flex items-center justify-between mb-3">
-                              <Badge variant="outline" className="text-xs">
-                                Line {index + 1}
+                          {/* Line Item Card - Compact */}
+                          <div 
+                            className={`rounded-lg border p-3 cursor-pointer transition-all ${
+                              selectedLineIndex === index 
+                                ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-md' 
+                                : 'border-border/60 bg-white dark:bg-slate-900/50 hover:border-blue-200'
+                            }`}
+                            onClick={() => setSelectedLineIndex(index)}
+                          >
+                            {/* Compact Header: Line # + Item Select + Delete */}
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant="outline" className="text-xs shrink-0">
+                                #{index + 1}
                               </Badge>
-                              <Button 
-                                type="button" 
-                                variant="ghost" 
-                                size="sm"
-                                className="h-7 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                onClick={() => remove(index)}
-                              >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Remove
-                              </Button>
-                            </div>
-
-                            {/* Item Selection - Full Width */}
-                            <div className="mb-4">
+                              
+                              {/* Item Selection - Inline */}
                               <FormField
                                 control={form.control}
                                 name={`lines.${index}.itemId`}
                                 render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Product / Service</FormLabel>
+                                  <FormItem className="flex-1">
                                     <Select 
-                                      onValueChange={(val) => { field.onChange(val); handleItemChange(index, val); }}
+                                      onValueChange={(val) => { 
+                                        field.onChange(val); 
+                                        handleItemChange(index, val); 
+                                        setSelectedLineIndex(index);
+                                      }}
                                       defaultValue={field.value}
                                     >
                                       <FormControl>
-                                        <SelectTrigger className="h-12 text-base">
-                                          <SelectValue placeholder="Search and select item..." />
+                                        <SelectTrigger className="h-9 text-sm">
+                                          <SelectValue placeholder="Select item..." />
                                         </SelectTrigger>
                                       </FormControl>
                                       <SelectContent>
                                         {items.map((i) => (
-                                          <SelectItem key={i.id} value={i.id} className="py-2">
-                                            <div className="flex flex-col">
-                                              <span className="font-medium">{i.name}</span>
-                                              <span className="text-xs text-muted-foreground">SKU: {i.sku} | Cost: {Number(i.costPrice || 0).toFixed(2)} | Price: {Number(i.sellingPrice || 0).toFixed(2)}</span>
-                                            </div>
+                                          <SelectItem key={i.id} value={i.id}>
+                                            <span className="truncate">{i.name}</span>
                                           </SelectItem>
                                         ))}
                                       </SelectContent>
@@ -596,77 +620,72 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                                 )}
                               />
                               
-                              {/* Display Selected Item Info */}
-                              {selectedItem && (
-                                <div className="mt-2 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-xs">
-                                  <div className="flex justify-between text-blue-700 dark:text-blue-300">
-                                    <span>Cost Price: <strong>{itemCost.toFixed(2)} AED</strong></span>
-                                    <span>Selling Price: <strong>{Number(selectedItem.sellingPrice || 0).toFixed(2)} AED</strong></span>
-                                    <span>Margin: <strong>{((Number(line?.unitPrice || 0) - itemCost) / (itemCost || 1) * 100).toFixed(1)}%</strong></span>
-                                  </div>
-                                </div>
-                              )}
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="sm"
+                                className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 shrink-0"
+                                onClick={(e) => { e.stopPropagation(); remove(index); }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
 
-                            {/* Quantity, Rate, Gross Amount, Discount, Net - Better Grid Layout */}
-                            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-                              {/* Quantity */}
+                            {/* Qty, Rate, Gross, Disc, Net - Compact Row */}
+                            <div className="grid grid-cols-5 gap-2">
+                              {/* Qty */}
                               <FormField
                                 control={form.control}
                                 name={`lines.${index}.quantity`}
                                 render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Qty</FormLabel>
-                                    <FormControl>
-                                      <Input 
-                                        type="number" 
-                                        step="1" 
-                                        min="1" 
-                                        className="h-11 text-center text-lg font-semibold"
-                                        {...field} 
-                                        onChange={e => {
-                                          const qty = parseInt(e.target.value) || 1;
-                                          field.onChange(qty);
-                                          handleQuantityChange(index, qty);
-                                        }} 
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
+                                  <div>
+                                    <span className="text-[10px] text-muted-foreground uppercase">Qty</span>
+                                    <Input 
+                                      type="number" 
+                                      step="1" 
+                                      min="1" 
+                                      className="h-8 text-center text-sm"
+                                      {...field} 
+                                      onClick={(e) => e.stopPropagation()}
+                                      onChange={e => {
+                                        const qty = parseInt(e.target.value) || 1;
+                                        field.onChange(qty);
+                                        handleQuantityChange(index, qty);
+                                      }} 
+                                    />
+                                  </div>
                                 )}
                               />
 
-                              {/* Rate (Unit Price) */}
+                              {/* Rate */}
                               <FormField
                                 control={form.control}
                                 name={`lines.${index}.unitPrice`}
                                 render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Rate</FormLabel>
-                                    <FormControl>
-                                      <Input 
-                                        type="number" 
-                                        step="0.01" 
-                                        min="0" 
-                                        className="h-11 text-right font-medium"
-                                        {...field} 
-                                        onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
+                                  <div>
+                                    <span className="text-[10px] text-muted-foreground uppercase">Rate</span>
+                                    <Input 
+                                      type="number" 
+                                      step="0.01" 
+                                      min="0" 
+                                      className="h-8 text-right text-sm"
+                                      {...field} 
+                                      onClick={(e) => e.stopPropagation()}
+                                      onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                                    />
+                                  </div>
                                 )}
                               />
 
-                              {/* Gross Amount (Editable - auto-calculates rate) */}
+                              {/* Gross */}
                               <div>
-                                <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Gross Amt</FormLabel>
+                                <span className="text-[10px] text-muted-foreground uppercase">Gross</span>
                                 <Input 
                                   type="number" 
                                   step="0.01" 
-                                  min="0" 
-                                  className="h-11 text-right font-medium bg-amber-50 dark:bg-amber-900/20 border-amber-200"
+                                  className="h-8 text-right text-sm bg-amber-50 dark:bg-amber-900/20"
                                   value={lineSubtotal.toFixed(2)}
+                                  onClick={(e) => e.stopPropagation()}
                                   onChange={e => {
                                     const newGross = parseFloat(e.target.value) || 0;
                                     const qty = line?.quantity || 1;
@@ -674,43 +693,49 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                                     form.setValue(`lines.${index}.unitPrice`, parseFloat(newRate.toFixed(2)));
                                   }}
                                 />
-                                <p className="text-xs text-amber-600 mt-0.5">Edits rate</p>
                               </div>
 
-                              {/* Discount Rate % */}
+                              {/* Disc */}
                               <FormField
                                 control={form.control}
                                 name={`lines.${index}.discountPercent`}
                                 render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Disc Rate</FormLabel>
-                                    <FormControl>
-                                      <Input 
-                                        type="number" 
-                                        step="0.5" 
-                                        min="0" 
-                                        max="100" 
-                                        className="h-11 text-center"
-                                        placeholder="0%"
-                                        {...field} 
-                                        onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
-                                      />
-                                    </FormControl>
-                                    <p className="text-xs text-orange-600 mt-0.5">
-                                      -{lineDiscountAmount.toFixed(2)}
-                                    </p>
-                                  </FormItem>
+                                  <div>
+                                    <span className="text-[10px] text-muted-foreground uppercase">Disc%</span>
+                                    <Input 
+                                      type="number" 
+                                      step="0.5" 
+                                      min="0" 
+                                      max="100" 
+                                      className="h-8 text-center text-sm"
+                                      placeholder="0"
+                                      {...field} 
+                                      onClick={(e) => e.stopPropagation()}
+                                      onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                                    />
+                                  </div>
                                 )}
                               />
 
-                              {/* Net Amount (after discount) */}
-                              <div className="col-span-2 md:col-span-2">
-                                <FormLabel className="text-xs text-muted-foreground uppercase tracking-wide">Net Amount</FormLabel>
-                                <div className="h-11 px-3 py-2.5 rounded-md bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-right text-lg font-bold text-green-700 dark:text-green-400">
-                                  {lineNetAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED
+                              {/* Net */}
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase">Net</span>
+                                <div className="h-8 px-2 py-1.5 rounded-md bg-green-100 dark:bg-green-900/30 text-right text-sm font-bold text-green-700 dark:text-green-400">
+                                  {lineNetAmount.toFixed(2)}
                                 </div>
                               </div>
                             </div>
+
+                            {/* Cost Info - Only show for SELECTED line */}
+                            {selectedLineIndex === index && selectedItem && (
+                              <div className="mt-2 p-2 rounded-md bg-blue-100 dark:bg-blue-900/30 text-xs">
+                                <div className="flex justify-between text-blue-700 dark:text-blue-300">
+                                  <span>Cost: <strong>{itemCost.toFixed(2)}</strong></span>
+                                  <span>Sell: <strong>{Number(selectedItem.sellingPrice || 0).toFixed(2)}</strong></span>
+                                  <span>Margin: <strong>{((Number(line?.unitPrice || 0) - itemCost) / (itemCost || 1) * 100).toFixed(0)}%</strong></span>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
