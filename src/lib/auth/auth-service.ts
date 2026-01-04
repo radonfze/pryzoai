@@ -10,7 +10,7 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
 
-const SESSION_COOKIE_NAME = "pryzoft_session";
+const SESSION_COOKIE_NAME = "pryzoai_session"; // FIXED: Was "pryzoft_session"
 const SESSION_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes

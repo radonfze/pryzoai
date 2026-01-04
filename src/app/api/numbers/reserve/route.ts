@@ -12,8 +12,21 @@ import { getCompanyId } from "@/lib/auth";
  */
 export async function POST(request: Request) {
   try {
-    const companyId = await getCompanyId();
+    console.log("🔢 Number reservation API called");
+    
+    let companyId: string;
+    try {
+      companyId = await getCompanyId();
+      console.log("🔢 CompanyId retrieved:", companyId);
+    } catch (authError: any) {
+      console.error("🔢 Auth error:", authError.message);
+      return NextResponse.json({ 
+        error: "Unauthorized: " + authError.message 
+      }, { status: 401 });
+    }
+    
     if (!companyId) {
+      console.error("🔢 No companyId found");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
