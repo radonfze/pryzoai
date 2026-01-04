@@ -260,12 +260,17 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
       
       if (result && result.success) {
         console.log("✅ SUCCESS CONDITION MET - Showing toast and redirecting");
-        toast.success(result.message || "Invoice created successfully");
         
-        // Use window.location for more reliable redirect
+        // Show toast first
+        toast.success(result.message || "Invoice created successfully", {
+          duration: 2000,
+        });
+        
+        // Redirect after showing toast
         setTimeout(() => {
-          window.location.href = "/sales/invoices";
-        }, 1000); // 1 second delay to show toast
+          router.push("/sales/invoices");
+          router.refresh();
+        }, 1500); // 1.5 second delay to show toast
       } else {
         console.error("❌ SUCCESS CONDITION NOT MET");
         console.error("❌ Invoice creation failed:", result?.message || "Unknown error");
