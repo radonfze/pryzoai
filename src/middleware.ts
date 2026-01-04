@@ -41,7 +41,7 @@ export function middleware(request: NextRequest) {
   const isPublicRoute = PUBLIC_ROUTES.some((route) => path.startsWith(route));
   
   // Check authentication using proper session cookie
-  const sessionCookie = request.cookies.get("pryzoft_session");
+  const sessionCookie = request.cookies.get("pryzoai_session"); // FIXED: Was "pryzoft_session"
   const isAuthenticated = !!sessionCookie?.value;
 
   console.log(`[Middleware] Path: ${path} | Cookie: ${isAuthenticated ? 'YES' : 'NO'} | Public: ${isPublicRoute}`);
