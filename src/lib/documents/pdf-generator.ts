@@ -123,18 +123,22 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<ArrayBuffer
   }
 
   // 5. Items Table
+  const tableBody = data.items.length > 0 
+    ? data.items.map((item) => [
+        item.description || 'N/A',
+        String(item.quantity || 0),
+        item.uom || 'EA',
+        (item.unitPrice || 0).toFixed(2),
+        `${item.vatPercent || 5}%`,
+        (item.vatAmount || 0).toFixed(2),
+        (item.total || 0).toFixed(2),
+      ])
+    : [['No items', '-', '-', '-', '-', '-', '-']];
+
   autoTable(doc, {
     startY: yPos + 50,
     head: [["Description", "Qty", "UOM", "Price", "VAT %", "VAT", "Total"]],
-    body: data.items.map((item) => [
-      item.description,
-      item.quantity,
-      item.uom,
-      item.unitPrice.toFixed(2),
-      `${item.vatPercent}%`,
-      item.vatAmount.toFixed(2),
-      item.total.toFixed(2),
-    ]),
+    body: tableBody,
     theme: "grid",
     headStyles: { fillColor: [41, 128, 185] }, // Corporate Blue
     styles: { fontSize: 9 },

@@ -62,15 +62,15 @@ export async function GET(
     },
     // Use lines instead of items
     items: invoice.lines.map(line => ({
-      description: line.description || 'N/A',
-      quantity: Number(line.quantity),
-      uom: line.uom,
-      unitPrice: Number(line.unitPrice),
+      description: line.item?.name || line.description || 'Item',
+      quantity: Number(line.quantity || 0),
+      uom: line.uom || 'EA',
+      unitPrice: Number(line.unitPrice || 0),
       // salesLines uses taxAmount, not taxPercent
       vatPercent: 5, // Default VAT, schema doesn't have taxPercent per line
       vatAmount: Number(line.taxAmount || 0),
       // Schema uses lineTotal not totalAmount
-      total: Number(line.lineTotal)
+      total: Number(line.lineTotal || 0)
     })),
     totals: {
       // Schema uses subtotal, discountAmount, taxAmount - not subTotal, totalDiscount, totalTax

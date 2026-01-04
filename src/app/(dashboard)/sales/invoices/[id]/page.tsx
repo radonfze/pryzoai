@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Printer, Download, ArrowLeft, Edit, Home, Copy } from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
 import Link from "next/link";
-import InvoiceActions from "@/components/sales/invoice-actions";
-import InvoiceCopyButton from "@/components/sales/invoice-copy-button";
+import InvoiceActionsBar from "@/components/sales/invoice-actions-bar";
 import DocumentHistoryPanel from "@/components/sales/document-history-panel";
 
 export const dynamic = 'force-dynamic';
@@ -52,26 +51,12 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                 {invoice.status}
             </Badge>
         </div>
-        <div className="flex items-center gap-2">
-            <Link href={`/sales/invoices/${id}/edit`}>
-                <Button variant="outline">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                </Button>
-            </Link>
-            <InvoiceCopyButton invoiceId={id} />
-            <a href={`/api/sales/invoices/${id}/pdf`} target="_blank" rel="noreferrer">
-                <Button variant="outline">
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print / PDF
-                </Button>
-            </a>
-            <Button>
-                <Download className="mr-2 h-4 w-4" />
-                Email Invoice
-            </Button>
-            <InvoiceActions id={id} status={invoice.status} isPosted={invoice.isPosted || false} />
-        </div>
+        <InvoiceActionsBar 
+          id={id} 
+          status={invoice.status} 
+          isPosted={invoice.isPosted || false}
+          invoiceNumber={invoice.invoiceNumber}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
