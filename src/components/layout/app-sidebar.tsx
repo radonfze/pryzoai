@@ -88,15 +88,87 @@ const menuItems = [
     items: [
       { title: "Dashboard", href: "/sales", icon: LayoutDashboard },
       { title: "Invoice Wizard", href: "/sales/invoices/wizard", icon: Wand2 },
-      { title: "Invoices", href: "/sales/invoices", icon: Receipt },
-      { title: "Sales Orders", href: "/sales/orders", icon: ClipboardList },
-      { title: "Quotations", href: "/sales/quotations", icon: FileText },
-      { title: "Credit Notes", href: "/sales/credit-notes", icon: Receipt },
-      { title: "Delivery Notes", href: "/sales/delivery-notes", icon: Package },
-      { title: "Returns", href: "/sales/returns", icon: ClipboardList },
-      { title: "Warranty Claims", href: "/sales/warranty", icon: ShieldCheck },
-      { title: "Sales Teams", href: "/sales/teams", icon: Users },
-      { title: "Sales Targets", href: "/sales/targets", icon: Target },
+      { 
+        title: "Invoices", 
+        href: "/sales/invoices", 
+        icon: Receipt,
+        subItems: [
+          { title: "List", href: "/sales/invoices" },
+          { title: "New Invoice", href: "/sales/invoices/new" }
+        ]
+      },
+      { 
+        title: "Sales Orders", 
+        href: "/sales/orders", 
+        icon: ClipboardList,
+        subItems: [
+          { title: "List", href: "/sales/orders" },
+          { title: "New Order", href: "/sales/orders/new" }
+        ]
+      },
+      { 
+        title: "Quotations", 
+        href: "/sales/quotations", 
+        icon: FileText,
+        subItems: [
+          { title: "List", href: "/sales/quotations" },
+          { title: "New Quotation", href: "/sales/quotations/new" }
+        ]
+      },
+      { 
+        title: "Credit Notes", 
+        href: "/sales/credit-notes", 
+        icon: Receipt,
+        subItems: [
+          { title: "List", href: "/sales/credit-notes" },
+          { title: "New Credit Note", href: "/sales/credit-notes/new" }
+        ]
+      },
+      { 
+        title: "Delivery Notes", 
+        href: "/sales/delivery-notes", 
+        icon: Package,
+        subItems: [
+          { title: "List", href: "/sales/delivery-notes" },
+          { title: "New Delivery Note", href: "/sales/delivery-notes/new" }
+        ]
+      },
+      { 
+        title: "Returns", 
+        href: "/sales/returns", 
+        icon: ClipboardList,
+        subItems: [
+          { title: "List", href: "/sales/returns" },
+          { title: "New Return", href: "/sales/returns/new" }
+        ]
+      },
+      { 
+        title: "Warranty Claims", 
+        href: "/sales/warranty", 
+        icon: ShieldCheck,
+        subItems: [
+          { title: "List", href: "/sales/warranty" },
+          { title: "New Claim", href: "/sales/warranty/new" }
+        ]
+      },
+      { 
+        title: "Sales Teams", 
+        href: "/sales/teams", 
+        icon: Users,
+        subItems: [
+          { title: "List", href: "/sales/teams" },
+          { title: "New Team", href: "/sales/teams/new" }
+        ]
+      },
+      { 
+        title: "Sales Targets", 
+        href: "/sales/targets", 
+        icon: Target,
+        subItems: [
+          { title: "List", href: "/sales/targets" },
+          { title: "New Target", href: "/sales/targets/new" }
+        ]
+      },
       { title: "Statement of Account", href: "/sales/reports/customer-statement", icon: FileText },
     ],
   },

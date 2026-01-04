@@ -192,6 +192,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
   const totalAmount = subtotal + vatAmount;
 
   const onSubmit = async (data: InvoiceFormValues) => {
+    console.log("📝 Invoice form onSubmit triggered with data:", data);
     setLoading(true);
     try {
       // Map form data to action interface
@@ -291,9 +292,35 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
     }
   };
 
+  // Handle form validation errors
+  const onInvalid = (errors: any) => {
+    console.error("📛 Form validation errors:", errors);
+    const errorMessages = Object.entries(errors)
+      .map(([key, value]: [string, any]) => {
+        if (key === 'lines' && Array.isArray(value)) {
+          const lineErrors = value
+            .map((lineError, idx) => {
+              if (lineError) {
+                const fieldErrors = Object.entries(lineError)
+                  .map(([field, err]: [string, any]) => `Line ${idx + 1} ${field}: ${err?.message}`)
+                  .join(', ');
+                return fieldErrors;
+              }
+              return null;
+            })
+            .filter(Boolean);
+          return lineErrors.join('; ');
+        }
+        return `${key}: ${value?.message}`;
+      })
+      .filter(Boolean);
+    
+    toast.error(`Validation failed: ${errorMessages.join(', ')}`);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
         {/* Navigation Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
