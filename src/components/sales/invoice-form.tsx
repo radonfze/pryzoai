@@ -762,37 +762,21 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                                 )}
                               />
 
-                              {/* Gross - Editable */}
+                              {/* Gross - Read Only */}
                               <div>
                                 <span className="text-[10px] text-muted-foreground uppercase">Gross</span>
-                                <Input 
-                                  type="text"
-                                  inputMode="decimal"
-                                  className="h-8 text-right text-sm bg-amber-50 dark:bg-amber-900/20"
-                                  defaultValue={lineSubtotal.toFixed(2)}
-                                  key={`gross-${index}-${lineSubtotal.toFixed(2)}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  onBlur={(e) => {
-                                    const newGross = parseFloat(e.target.value) || 0;
-                                    const qty = line?.quantity || 1;
-                                    const newRate = qty > 0 ? newGross / qty : 0;
-                                    form.setValue(`lines.${index}.unitPrice`, parseFloat(newRate.toFixed(4)));
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      e.currentTarget.blur();
-                                    }
-                                  }}
-                                />
+                                <div className="h-8 px-2 py-1.5 rounded-md bg-slate-100 dark:bg-slate-800 text-right text-sm font-medium">
+                                  {lineSubtotal.toFixed(2)}
+                                </div>
                               </div>
 
-                              {/* Disc */}
+                              {/* Disc Rate (amount) */}
                               <FormField
                                 control={form.control}
                                 name={`lines.${index}.discountPercent`}
                                 render={({ field }) => (
                                   <div>
-                                    <span className="text-[10px] text-muted-foreground uppercase">Disc%</span>
+                                    <span className="text-[10px] text-muted-foreground uppercase">Disc Rate</span>
                                     <Input 
                                       type="number" 
                                       step="0.5" 
@@ -817,14 +801,13 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                               </div>
                             </div>
 
-                            {/* Cost Info - Only show for SELECTED line */}
-                            {selectedLineIndex === index && selectedItem && (
-                              <div className="mt-2 p-2 rounded-md bg-blue-100 dark:bg-blue-900/30 text-xs">
-                                <div className="flex justify-between text-blue-700 dark:text-blue-300">
-                                  <span>Cost: <strong>{itemCost.toFixed(2)}</strong></span>
-                                  <span>Sell: <strong>{Number(selectedItem.sellingPrice || 0).toFixed(2)}</strong></span>
-                                  <span>Margin: <strong>{((Number(line?.unitPrice || 0) - itemCost) / (itemCost || 1) * 100).toFixed(0)}%</strong></span>
-                                </div>
+                            {/* Cost/Sell/Margin/Qty - Always visible, smaller */}
+                            {selectedItem && (
+                              <div className="mt-1.5 flex items-center gap-3 text-[10px] text-muted-foreground">
+                                <span>Cost: <strong className="text-blue-600">{itemCost.toFixed(2)}</strong></span>
+                                <span>Sell: <strong className="text-green-600">{Number(selectedItem.sellingPrice || 0).toFixed(2)}</strong></span>
+                                <span>Margin: <strong className={((Number(line?.unitPrice || 0) - itemCost) / (itemCost || 1) * 100) > 0 ? 'text-green-600' : 'text-red-600'}>{((Number(line?.unitPrice || 0) - itemCost) / (itemCost || 1) * 100).toFixed(0)}%</strong></span>
+                                <span>Avl: <strong>∞</strong></span>
                               </div>
                             )}
                           </div>
