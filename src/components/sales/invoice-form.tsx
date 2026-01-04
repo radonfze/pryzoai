@@ -182,14 +182,26 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
     
     try {
       const defaultWarehouse = warehouses[0]?.id || "";
+      const defaultTaxRate = 5; // 5% VAT
       
-      const mappedItems = data.lines.map(line => ({
-        itemId: line.itemId,
-        quantity: line.quantity,
-        unitPrice: line.unitPrice,
-        discountPercent: line.discountPercent || 0,
-        taxId: line.taxId,
-      }));
+      const mappedItems = data.lines.map(line => {
+        const lineSub = line.quantity * line.unitPrice;
+        const discountAmount = lineSub * ((line.discountPercent || 0) / 100);
+        const taxableAmount = lineSub - discountAmount;
+        const taxAmount = taxableAmount * (defaultTaxRate / 100);
+        const totalAmount = taxableAmount + taxAmount;
+        
+        return {
+          itemId: line.itemId,
+          description: line.description,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          discountAmount: discountAmount,
+          taxRate: defaultTaxRate,
+          taxAmount: taxAmount,
+          totalAmount: totalAmount,
+        };
+      });
       
       const result = await createInvoiceAction({
         customerId: data.customerId,

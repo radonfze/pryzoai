@@ -123,7 +123,7 @@ export async function updateCustomerOutstandingBalance(
     .update(customers)
     .set({
       outstandingBalance: totalOutstanding.toFixed(2),
-      updatedAt: new Date(),
+      updatedAt: sql`NOW()`,
     })
     .where(eq(customers.id, customerId));
 }
