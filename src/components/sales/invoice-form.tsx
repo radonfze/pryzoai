@@ -252,36 +252,15 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
         invoiceNumber: reservedNumber || undefined,
       });
       
-      console.log("📥 createInvoiceAction result:", result);
-      console.log("📥 result.success:", result?.success);
-      console.log("📥 result.message:", result?.message);
-      console.log("📥 result type:", typeof result);
-      console.log("📥 result keys:", result ? Object.keys(result) : "null");
+      console.log("📥 Full result object:", JSON.stringify(result, null, 2));
       
       if (result && result.success) {
-        console.log("✅ SUCCESS CONDITION MET - Showing toast and redirecting");
-        
-        const successMessage = result.message || "Invoice created successfully";
-        
-        // Show toast
-        toast.success(successMessage, {
-          duration: 3000,
-        });
-        
-        // Also show alert for debugging
-        alert(`✅ ${successMessage}\n\nRedirecting to invoices list...`);
-        
-        // Redirect after showing toast
-        setTimeout(() => {
-          router.push("/sales/invoices");
-          router.refresh();
-        }, 1500);
+        console.log("✅ SUCCESS - Redirecting immediately");
+        toast.success(result.message || "Invoice created successfully");
+        window.location.href = "/sales/invoices";
       } else {
-        console.error("❌ SUCCESS CONDITION NOT MET");
-        console.error("❌ Invoice creation failed:", result?.message || "Unknown error");
-        const errorMessage = result?.message || "Failed to create invoice";
-        toast.error(errorMessage);
-        alert(`❌ ${errorMessage}`);
+        console.error("❌ FAILED - Result:", result);
+        toast.error(result?.message || "Failed to create invoice");
       }
     } catch (error: any) {
       console.error("💥 Invoice submission error:", error);

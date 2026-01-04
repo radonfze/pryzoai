@@ -64,9 +64,23 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
     }
 
     // 0a. Get session and company BEFORE transaction
-    const companyId = await getCompanyId();
+    console.log("🔐 Attempting to get session...");
     const session = await getSession();
+    console.log("🔐 Session result:", session ? "Found" : "NULL");
+    console.log("🔐 Session details:", JSON.stringify(session, null, 2));
+    
+    console.log("🏢 Attempting to get companyId...");
+    let companyId: string;
+    try {
+      companyId = await getCompanyId();
+      console.log("🏢 CompanyId:", companyId);
+    } catch (error: any) {
+      console.error("🏢 getCompanyId() failed:", error.message);
+      return { success: false, message: error.message || "Session error" };
+    }
+    
     if (!companyId) {
+      console.error("🏢 No companyId found");
       return { success: false, message: "Unauthorized: No active company session." };
     }
 
