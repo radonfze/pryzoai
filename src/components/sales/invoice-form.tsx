@@ -42,11 +42,14 @@ import {
   Receipt,
   TrendingUp,
   Eye,
-  ToggleLeft
+  ToggleLeft,
+  Search,
+  ChevronsUpDown,
+  Check
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { createInvoiceAction } from "@/actions/sales/create-invoice";
 import { addDays, format, parseISO } from "date-fns";
@@ -54,6 +57,20 @@ import { getTieredPrice } from "@/lib/services/tiered-pricing-service";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
@@ -163,6 +180,31 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
     };
     reserveNumber();
   }, [initialData]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S or Cmd+S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        form.handleSubmit(onSubmit, onInvalid)();
+        toast.info("Saving invoice...");
+      }
+      // Ctrl+N or Cmd+N to add new line
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        append({ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 });
+        toast.info("New line added");
+      }
+      // Escape to deselect line
+      if (e.key === 'Escape') {
+        setSelectedLineIndex(null);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [form, append]);
 
   // Watch lines for calculation
   const watchedLines = form.watch("lines");
@@ -384,9 +426,9 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Main Form Section */}
-            <div className="lg:col-span-2 space-y-6">
+          <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+            {/* Main Form Section - Scrollable */}
+            <div className="space-y-6 lg:max-h-[calc(100vh-180px)] lg:overflow-y-auto lg:pr-2">
               {/* Customer & Dates Card */}
               <Card className="shadow-md hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-4">
@@ -552,23 +594,25 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                       
                       return (
                         <div key={field.id}>
-                          {/* Add Line Button Between Items */}
+                          {/* Add Line Button Between Items - More Visible */}
                           {index > 0 && (
-                            <div className="flex items-center justify-center -mt-2 mb-2">
+                            <div className="flex items-center justify-center py-1">
                               <Button
                                 type="button"
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-6 px-2 text-xs text-muted-foreground hover:text-green-600"
+                                className="h-7 px-4 text-xs border-dashed border-green-300 text-green-600 hover:bg-green-50 hover:border-green-500"
                                 onClick={() => {
                                   const newItem = { itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 };
                                   const currentLines = form.getValues("lines");
                                   const newLines = [...currentLines.slice(0, index), newItem, ...currentLines.slice(index)];
                                   form.setValue("lines", newLines);
+                                  setSelectedLineIndex(index);
+                                  toast.info("Line inserted");
                                 }}
                               >
                                 <Plus className="h-3 w-3 mr-1" />
-                                Insert Line
+                                + Insert Line Here
                               </Button>
                             </div>
                           )}
@@ -588,36 +632,72 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                                 #{index + 1}
                               </Badge>
                               
-                              {/* Item Selection - Inline */}
+                              {/* Item Selection - Searchable Combobox */}
                               <FormField
                                 control={form.control}
                                 name={`lines.${index}.itemId`}
-                                render={({ field }) => (
-                                  <FormItem className="flex-1">
-                                    <Select 
-                                      onValueChange={(val) => { 
-                                        field.onChange(val); 
-                                        handleItemChange(index, val); 
-                                        setSelectedLineIndex(index);
-                                      }}
-                                      defaultValue={field.value}
-                                    >
-                                      <FormControl>
-                                        <SelectTrigger className="h-9 text-sm">
-                                          <SelectValue placeholder="Select item..." />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        {items.map((i) => (
-                                          <SelectItem key={i.id} value={i.id}>
-                                            <span className="truncate">{i.name}</span>
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
+                                render={({ field }) => {
+                                  const currentItem = items.find(i => i.id === field.value);
+                                  return (
+                                    <FormItem className="flex-1">
+                                      <Popover>
+                                        <PopoverTrigger asChild>
+                                          <FormControl>
+                                            <Button
+                                              variant="outline"
+                                              role="combobox"
+                                              className={cn(
+                                                "h-9 w-full justify-between text-sm font-normal",
+                                                !field.value && "text-muted-foreground"
+                                              )}
+                                              onClick={(e) => e.stopPropagation()}
+                                            >
+                                              <span className="truncate">
+                                                {currentItem ? currentItem.name : "Search items..."}
+                                              </span>
+                                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                          </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[400px] p-0" align="start">
+                                          <Command>
+                                            <CommandInput placeholder="Search by name or SKU..." />
+                                            <CommandList>
+                                              <CommandEmpty>No items found.</CommandEmpty>
+                                              <CommandGroup>
+                                                {items.map((item) => (
+                                                  <CommandItem
+                                                    key={item.id}
+                                                    value={`${item.name} ${item.sku || ''}`}
+                                                    onSelect={() => {
+                                                      field.onChange(item.id);
+                                                      handleItemChange(index, item.id);
+                                                      setSelectedLineIndex(index);
+                                                    }}
+                                                  >
+                                                    <Check
+                                                      className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        field.value === item.id ? "opacity-100" : "opacity-0"
+                                                      )}
+                                                    />
+                                                    <div className="flex flex-col">
+                                                      <span className="font-medium">{item.name}</span>
+                                                      <span className="text-xs text-muted-foreground">
+                                                        SKU: {item.sku || 'N/A'} | Price: {Number(item.sellingPrice || 0).toFixed(2)}
+                                                      </span>
+                                                    </div>
+                                                  </CommandItem>
+                                                ))}
+                                              </CommandGroup>
+                                            </CommandList>
+                                          </Command>
+                                        </PopoverContent>
+                                      </Popover>
+                                      <FormMessage />
+                                    </FormItem>
+                                  );
+                                }}
                               />
                               
                               <Button 
@@ -677,20 +757,26 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                                 )}
                               />
 
-                              {/* Gross */}
+                              {/* Gross - Editable */}
                               <div>
                                 <span className="text-[10px] text-muted-foreground uppercase">Gross</span>
                                 <Input 
-                                  type="number" 
-                                  step="0.01" 
+                                  type="text"
+                                  inputMode="decimal"
                                   className="h-8 text-right text-sm bg-amber-50 dark:bg-amber-900/20"
-                                  value={lineSubtotal.toFixed(2)}
+                                  defaultValue={lineSubtotal.toFixed(2)}
+                                  key={`gross-${index}-${lineSubtotal.toFixed(2)}`}
                                   onClick={(e) => e.stopPropagation()}
-                                  onChange={e => {
+                                  onBlur={(e) => {
                                     const newGross = parseFloat(e.target.value) || 0;
                                     const qty = line?.quantity || 1;
                                     const newRate = qty > 0 ? newGross / qty : 0;
-                                    form.setValue(`lines.${index}.unitPrice`, parseFloat(newRate.toFixed(2)));
+                                    form.setValue(`lines.${index}.unitPrice`, parseFloat(newRate.toFixed(4)));
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.currentTarget.blur();
+                                    }
                                   }}
                                 />
                               </div>
@@ -776,10 +862,15 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
               </Card>
             </div>
 
-            {/* Summary Sidebar */}
-            <div className="space-y-6">
+            {/* Summary Sidebar - Sticky */}
+            <div className="lg:sticky lg:top-4 lg:self-start space-y-4">
+              {/* Keyboard Shortcuts Hint */}
+              <div className="text-xs text-muted-foreground bg-slate-100 dark:bg-slate-800 rounded-lg p-2">
+                <p>⌨️ <strong>Ctrl+S</strong> Save | <strong>Ctrl+N</strong> Add Line | <strong>Esc</strong> Deselect</p>
+              </div>
+              
               {/* Summary Card */}
-              <Card className="shadow-md sticky top-4">
+              <Card className="shadow-md">
                 <CardHeader className="pb-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-t-lg">
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-lg">
