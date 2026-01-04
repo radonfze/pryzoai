@@ -131,7 +131,7 @@ export async function createGLPosting(params: GLPostingParams): Promise<GLPostin
       await database.update(chartOfAccounts)
         .set({
           currentBalance: sql`${chartOfAccounts.currentBalance} + ${netAmount}`,
-          updatedAt: new Date(),
+          updatedAt: sql`NOW()`, // Use PostgreSQL NOW() instead of new Date()
         })
         .where(eq(chartOfAccounts.id, line.accountId));
     }
