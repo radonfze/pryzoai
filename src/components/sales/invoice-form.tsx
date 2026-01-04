@@ -261,20 +261,27 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
       if (result && result.success) {
         console.log("✅ SUCCESS CONDITION MET - Showing toast and redirecting");
         
-        // Show toast first
-        toast.success(result.message || "Invoice created successfully", {
-          duration: 2000,
+        const successMessage = result.message || "Invoice created successfully";
+        
+        // Show toast
+        toast.success(successMessage, {
+          duration: 3000,
         });
+        
+        // Also show alert for debugging
+        alert(`✅ ${successMessage}\n\nRedirecting to invoices list...`);
         
         // Redirect after showing toast
         setTimeout(() => {
           router.push("/sales/invoices");
           router.refresh();
-        }, 1500); // 1.5 second delay to show toast
+        }, 1500);
       } else {
         console.error("❌ SUCCESS CONDITION NOT MET");
         console.error("❌ Invoice creation failed:", result?.message || "Unknown error");
-        toast.error(result?.message || "Failed to create invoice");
+        const errorMessage = result?.message || "Failed to create invoice";
+        toast.error(errorMessage);
+        alert(`❌ ${errorMessage}`);
       }
     } catch (error: any) {
       console.error("💥 Invoice submission error:", error);
