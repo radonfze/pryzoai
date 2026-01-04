@@ -205,7 +205,7 @@ export async function createInvoiceAction(data: InvoiceFormState): Promise<Actio
         await postSalesInvoiceToGL(
           newInvoice.id,
           invoiceNumber,
-          new Date(data.invoiceDate),
+          data.invoiceDate, // Already a string in YYYY-MM-DD format
           data.customerId,
           Number(subTotal),
           Number(totalTax),

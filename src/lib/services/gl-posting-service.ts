@@ -240,7 +240,7 @@ export async function getGLMapping(companyId: string): Promise<GLAccountMapping 
 export async function postSalesInvoiceToGL(
   invoiceId: string,
   invoiceNumber: string,
-  invoiceDate: Date,
+  invoiceDate: string | Date, // Accept both string and Date
   customerId: string,
   subtotal: number,
   vatAmount: number,
@@ -272,11 +272,14 @@ export async function postSalesInvoiceToGL(
     });
   }
   
+  // Convert string date to Date object if needed
+  const postingDate = typeof invoiceDate === 'string' ? new Date(invoiceDate) : invoiceDate;
+  
   return createGLPosting({
     sourceType: 'sales_invoice',
     sourceId: invoiceId,
     sourceNumber: invoiceNumber,
-    postingDate: invoiceDate,
+    postingDate,
     description: `Sales Invoice ${invoiceNumber}`,
     lines,
     tx // Pass transaction
