@@ -460,7 +460,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, initialData }
                           </FormControl>
                           <FormMessage />
                         </FormItem>
-                      )}\
+                      )}
                     />
                   </div>
                   
