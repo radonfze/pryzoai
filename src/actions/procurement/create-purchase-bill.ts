@@ -7,8 +7,35 @@ import { revalidatePath } from "next/cache";
 import { postPurchaseBillToGL } from "@/lib/services/gl-posting-service";
 
 export type ActionResponse = { success: boolean; message: string; data?: any };
-type BillLine = { poLineId?: string; itemId: string; quantity: number; unitPrice: number; taxAmount?: number };
-type PurchaseBillInput = { purchaseOrderId?: string; supplierId: string; billDate: string; dueDate: string; reference?: string; lines: BillLine[]; notes?: string };
+type BillLine = { 
+  poLineId?: string; 
+  itemId: string; 
+  quantity: number; 
+  unitPrice: number; 
+  taxAmount?: number;
+  discountAmount?: number;
+  uom: string;
+  projectId?: string;
+  taskId?: string;
+  description?: string;
+};
+type BillSundry = { name: string; amount: number };
+
+type PurchaseBillInput = { 
+  purchaseOrderId?: string; 
+  supplierId: string; 
+  billDate: string; 
+  dueDate: string; 
+  reference?: string; 
+  notes?: string;
+  warehouseId?: string;
+  purchaseType?: string;
+  paymentType?: string;
+  status?: string;
+  termsAndConditions?: string;
+  lines: BillLine[]; 
+  billSundry?: BillSundry[];
+};
 
 const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -32,9 +59,18 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
     }
     
     const billNumber = await generateBillNumber(DEMO_COMPANY_ID, new Date(input.billDate));
-    const subtotal = input.lines.reduce((sum, l) => sum + Number(l.quantity) * Number(l.unitPrice), 0);
+    
+    // Calculate Totals
+    const subtotal = input.lines.reduce((sum, l) => {
+      const lineBase = Number(l.quantity) * Number(l.unitPrice);
+      return sum + lineBase - (Number(l.discountAmount) || 0);
+    }, 0);
+    
     const taxTotal = input.lines.reduce((sum, l) => sum + Number(l.taxAmount || 0), 0);
-    const total = subtotal + taxTotal;
+    
+    const sundryTotal = (input.billSundry || []).reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+    
+    const total = subtotal + taxTotal + sundryTotal;
 
     const result = await db.transaction(async (tx) => {
       // 1. Insert Bill Header (Purchase Invoice)
@@ -52,7 +88,14 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
         paidAmount: "0",
         balanceAmount: total.toFixed(2),
         notes: input.notes,
-        status: "draft",
+        status: (input.status as any) || "open", // Use provided status or default to open
+        
+        // New Fields
+        warehouseId: input.warehouseId || null,
+        purchaseType: input.purchaseType,
+        paymentType: input.paymentType,
+        billSundry: input.billSundry,
+        termsAndConditions: input.termsAndConditions,
       }).returning();
 
       // 2. Insert Bill Lines
@@ -64,10 +107,16 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
           purchaseOrderLineId: line.poLineId || null,
           itemId: line.itemId,
           quantity: line.quantity.toString(),
-          uom: 'PCS', // Default UOM as it is required in schema
+          uom: line.uom || 'PCS',
           unitPrice: line.unitPrice.toString(),
+          discountAmount: (line.discountAmount || 0).toString(),
           taxAmount: (line.taxAmount || 0).toString(),
-          lineTotal: (Number(line.quantity) * Number(line.unitPrice) + Number(line.taxAmount || 0)).toString(),
+          projectId: line.projectId || null,
+          taskId: line.taskId || null,
+          description: line.description,
+          lineTotal: (
+             (Number(line.quantity) * Number(line.unitPrice)) - (Number(line.discountAmount) || 0) + (Number(line.taxAmount || 0))
+          ).toString(),
         }))
       );
 
@@ -109,6 +158,7 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
     revalidatePath("/procurement/bills");
     return { success: true, message: `Purchase Bill ${billNumber} created`, data: { id: result.bill.id, billNumber } };
   } catch (error: any) {
+    console.error("Purchase Bill Error:", error);
     return { success: false, message: error.message || "Failed to create purchase bill" };
   }
 }
