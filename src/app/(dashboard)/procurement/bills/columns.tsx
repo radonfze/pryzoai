@@ -3,13 +3,13 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Eye, Edit } from "lucide-react"
+import { MoreHorizontal, Eye, Edit, Printer, CheckCircle, Copy, Trash2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
@@ -126,13 +126,43 @@ export const columns: ColumnDef<PurchaseBill>[] = [
                 <Eye className="mr-2 h-4 w-4" /> View Details
               </DropdownMenuItem>
             </Link>
-            {bill.status === "draft" && (
+            {bill.status !== "posted" && (
               <Link href={`/procurement/bills/${bill.id}/edit`}>
                 <DropdownMenuItem>
                   <Edit className="mr-2 h-4 w-4" /> Edit
                 </DropdownMenuItem>
               </Link>
             )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => window.open(`/api/procurement/bills/${bill.id}/pdf`, '_blank')}>
+              <Printer className="mr-2 h-4 w-4" /> Print PDF
+            </DropdownMenuItem>
+            {bill.status === "draft" && (
+              <DropdownMenuItem onClick={() => {
+                // TODO: Implement post to GL functionality
+                alert('Post to GL functionality - to be implemented');
+              }}>
+                <CheckCircle className="mr-2 h-4 w-4" /> Post to GL
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={() => {
+              // TODO: Implement duplicate functionality
+              alert('Duplicate bill functionality - to be implemented');
+            }}>
+              <Copy className="mr-2 h-4 w-4" /> Duplicate
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className="text-destructive"
+              onClick={() => {
+                if (confirm(`Delete bill ${bill.invoiceNumber}?`)) {
+                  // TODO: Implement delete functionality
+                  alert('Delete functionality - to be implemented');
+                }
+              }}
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
