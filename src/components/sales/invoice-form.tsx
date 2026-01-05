@@ -80,6 +80,7 @@ const formSchema = z.object({
   salesOrderId: z.string().optional(),
   paymentTerms: z.string().optional(),
   paymentMode: z.string().optional(),
+  reference: z.string().optional(),
   termsAndConditions: z.string().optional(),
   notes: z.string().optional(),
   lines: z.array(z.object({
@@ -129,6 +130,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
     invoiceDate: initialData.invoiceDate ? new Date(initialData.invoiceDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     salesOrderId: initialData.salesOrderId || "",
+    reference: initialData.reference || "",
     notes: initialData.notes || "",
     lines: initialData.lines || [{ itemId: "", uomId: "", quantity: 1, unitPrice: 0, discountAmount: 0 }],
   } : {
@@ -589,7 +591,21 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                       )}
                     />
 
-                    {/* Notes */}
+                    {/* LPO / Reference */}
+                    <FormField
+                      control={form.control}
+                      name="reference"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">LPO # / Ref</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter LPO..." className="h-9 text-sm" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Notes (Spans remaining) */}
                     <FormField
                       control={form.control}
                       name="notes"

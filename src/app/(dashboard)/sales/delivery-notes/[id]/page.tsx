@@ -21,6 +21,7 @@ export default async function DeliveryNoteDetailPage({ params }: { params: Promi
     with: {
       customer: true,
       warehouse: true,
+      salesOrder: true,
       lines: {
         with: {
           item: true
@@ -64,6 +65,7 @@ export default async function DeliveryNoteDetailPage({ params }: { params: Promi
           <CardHeader><CardTitle className="text-lg">Delivery Details</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Delivery Note #</span><span className="font-medium">{deliveryNote.deliveryNoteNumber}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">LPO #</span><span className="font-medium">{(deliveryNote as any).salesOrder?.reference || "-"}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Date</span><span>{format(new Date(deliveryNote.deliveryDate), "dd MMM yyyy")}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Warehouse</span><span>{deliveryNote.warehouse?.name || "-"}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Status</span><Badge variant="outline">{deliveryNote.status}</Badge></div>

@@ -436,9 +436,9 @@ export function SalesOrderForm({ customers, items, warehouses = [], salesmen = [
                       name="reference"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs">Reference</FormLabel>
+                          <FormLabel className="text-xs">LPO #</FormLabel>
                           <FormControl>
-                            <Input placeholder="PO #..." className="h-9 text-sm" {...field} />
+                            <Input placeholder="Enter LPO..." className="h-9 text-sm" {...field} />
                           </FormControl>
                         </FormItem>
                       )}

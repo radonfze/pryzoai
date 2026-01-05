@@ -456,9 +456,9 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
                       name="reference"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs">Reference</FormLabel>
+                          <FormLabel className="text-xs">LPO #</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ref #..." className="h-9 text-sm" {...field} />
+                            <Input placeholder="Enter LPO..." className="h-9 text-sm" {...field} />
                           </FormControl>
                         </FormItem>
                       )}
