@@ -86,7 +86,7 @@ const formSchema = z.object({
     itemId: z.string().min(1, "Item is required"),
     quantity: z.number().min(0.001, "Quantity required"),
     unitPrice: z.number().min(0, "Price required"),
-    discountPercent: z.number().min(0).max(100).optional(),
+    discountAmount: z.number().min(0).optional(), // Changed from % to AED amount
     taxId: z.string().optional(),
     description: z.string().optional(),
   })).min(1, "At least one item is required"),
@@ -119,6 +119,9 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
   
   // Track selected/focused line for showing item details
   const [selectedLineIndex, setSelectedLineIndex] = useState<number | null>(null);
+  
+  // Overall invoice discount (editable in summary, applied before VAT)
+  const [overallDiscount, setOverallDiscount] = useState<number>(0);
 
   const defaultValues: Partial<InvoiceFormValues> = initialData ? {
     customerId: initialData.customerId,
@@ -126,11 +129,11 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
     dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     salesOrderId: initialData.salesOrderId || "",
     notes: initialData.notes || "",
-    lines: initialData.lines || [{ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 }],
+    lines: initialData.lines || [{ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 }],
   } : {
     invoiceDate: new Date().toISOString().split('T')[0],
     dueDate: new Date().toISOString().split('T')[0],
-    lines: [{ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 }],
+    lines: [{ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 }],
   };
 
   const form = useForm<InvoiceFormValues>({
@@ -203,7 +206,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
       // Ctrl+N or Cmd+N to add new line
       if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
         e.preventDefault();
-        append({ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 });
+        append({ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 });
         toast.info("New line added");
       }
       // Escape to deselect line
@@ -222,18 +225,23 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
   // VAT rate
   const VAT_RATE = 0.05;
   
-  // Calculate totals with discount breakdown
+  // Calculate totals - discount is now AED amount, not percentage
   const grossTotal = watchedLines.reduce((sum, line) => {
     return sum + (line.quantity || 0) * (line.unitPrice || 0);
   }, 0);
   
-  const totalDiscount = watchedLines.reduce((sum, line) => {
-    const lineTotal = (line.quantity || 0) * (line.unitPrice || 0);
-    return sum + lineTotal * ((line.discountPercent || 0) / 100);
+  // Line discounts = sum of discountAmount from each line
+  const lineDiscounts = watchedLines.reduce((sum, line) => {
+    return sum + (line.discountAmount || 0);
   }, 0);
   
-  // If tax inclusive, back-calculate the taxable amount
+  // Total discount = line discounts + overall invoice discount
+  const totalDiscount = lineDiscounts + overallDiscount;
+  
+  // Net after all discounts, BEFORE VAT
   const netAfterDiscount = grossTotal - totalDiscount;
+  
+  // If tax inclusive, back-calculate the taxable amount
   const subtotal = isTaxInclusive ? netAfterDiscount / (1 + VAT_RATE) : netAfterDiscount;
   const vatAmount = subtotal * VAT_RATE;
   const totalAmount = isTaxInclusive ? netAfterDiscount : subtotal + vatAmount;
@@ -626,7 +634,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                       type="button" 
                       className="gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
                       size="sm"
-                      onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 })}
+                      onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 })}
                     >
                       <Plus className="h-4 w-4" />
                       Add Item
@@ -640,8 +648,8 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                       const selectedItem = items.find(i => i.id === line?.itemId);
                       const itemCost = Number(selectedItem?.costPrice || 0);
                       const lineSubtotal = (line?.quantity || 0) * (line?.unitPrice || 0);
-                      const lineDiscountAmount = lineSubtotal * ((line?.discountPercent || 0) / 100);
-                      const lineNetAmount = lineSubtotal - lineDiscountAmount;
+                      const lineDiscountAmt = line?.discountAmount || 0;
+                      const lineNetAmount = lineSubtotal - lineDiscountAmt;
                       
                       return (
                         <div key={field.id}>
@@ -665,7 +673,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                                 title="Insert line above"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const newItem = { itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 };
+                                  const newItem = { itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 };
                                   const currentLines = form.getValues("lines");
                                   const newLines = [...currentLines.slice(0, index), newItem, ...currentLines.slice(index)];
                                   form.setValue("lines", newLines);
@@ -821,18 +829,17 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                                 </div>
                               </div>
 
-                              {/* Disc Rate (amount) */}
+                              {/* Disc Amount (AED) */}
                               <FormField
                                 control={form.control}
-                                name={`lines.${index}.discountPercent`}
+                                name={`lines.${index}.discountAmount`}
                                 render={({ field }) => (
                                   <div>
-                                    <span className="text-[10px] text-muted-foreground uppercase">Disc Rate</span>
+                                    <span className="text-[10px] text-muted-foreground uppercase">Disc (AED)</span>
                                     <Input 
                                       type="number" 
-                                      step="0.5" 
+                                      step="0.01" 
                                       min="0" 
-                                      max="100" 
                                       className="h-8 text-center text-sm"
                                       placeholder="0"
                                       {...field} 
@@ -874,7 +881,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                         <Button 
                           type="button" 
                           className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-                          onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 })}
+                          onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 })}
                         >
                           <Plus className="h-4 w-4" />
                           Add First Item
@@ -889,7 +896,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                           type="button"
                           variant="outline"
                           className="gap-2 border-dashed hover:border-green-500 hover:text-green-600"
-                          onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountPercent: 0 })}
+                          onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 })}
                         >
                           <Plus className="h-4 w-4" />
                           Add Another Item
@@ -931,10 +938,35 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                       <span className="font-medium">{grossTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
                     </div>
                     
-                    {/* Total Discount - Always show */}
-                    <div className="flex justify-between text-sm">
-                      <span className="text-orange-600">Total Discount</span>
-                      <span className="font-medium text-orange-600">-{totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
+                    {/* Line Discounts (read-only, from line items) */}
+                    {lineDiscounts > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Line Discounts</span>
+                        <span className="font-medium text-orange-500">-{lineDiscounts.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
+                      </div>
+                    )}
+                    
+                    {/* Overall Discount - Editable */}
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-orange-600 font-medium">Discount</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-orange-600">-</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="h-7 w-24 text-right text-sm text-orange-600 font-medium"
+                          value={overallDiscount}
+                          onChange={(e) => setOverallDiscount(parseFloat(e.target.value) || 0)}
+                        />
+                        <span className="text-xs text-muted-foreground">AED</span>
+                      </div>
+                    </div>
+                    
+                    {/* Total Discount summary */}
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Total Discount</span>
+                      <span>-{totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
                     </div>
                     
                     {/* Subtotal (after discount, before VAT) */}
