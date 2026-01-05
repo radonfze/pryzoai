@@ -140,6 +140,17 @@ export const purchaseInvoices = pgTable("purchase_invoices", {
   
   paymentTermsId: uuid("payment_terms_id").references(() => paymentTerms.id),
   notes: text("notes"),
+  purchaseType: varchar("purchase_type", { length: 50 }).default("vat_item_wise"), // New
+  paymentType: varchar("payment_type", { length: 50 }).default("credit"), // New
+  warehouseId: uuid("warehouse_id").references(() => warehouses.id), // Material Center
+  billingAddress: text("billing_address"), // New
+  shippingAddress: text("shipping_address"), // New
+  
+  // Bill Sundry (Additional Charges)
+  billSundry: jsonb("bill_sundry").default([]), // New
+  
+  termsAndConditions: text("terms_and_conditions"), // New
+
   status: purchaseStatusEnum("status").default("draft").notNull(),
   isPosted: boolean("is_posted").default(false),
   
@@ -193,6 +204,9 @@ export const purchaseLines = pgTable("purchase_lines", {
   
   quantity: decimal("quantity", { precision: 18, scale: 3 }).notNull(),
   uom: varchar("uom", { length: 10 }).notNull(),
+  
+  projectId: uuid("project_id"), // New: Link to Projects (if exists, else just string?) - assuming FK to projects table if it exists
+  taskId: uuid("task_id"), // New: Link to Tasks
   
   unitPrice: decimal("unit_price", { precision: 18, scale: 4 }).notNull(),
   discountPercent: decimal("discount_percent", { precision: 5, scale: 2 }).default("0"),

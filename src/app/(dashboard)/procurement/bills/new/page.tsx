@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { suppliers, items } from "@/db/schema";
+import { suppliers, items, warehouses, projects } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import GradientHeader from "@/components/ui/gradient-header";
 import { Receipt } from "lucide-react";
@@ -10,14 +10,22 @@ export const dynamic = 'force-dynamic';
 export default async function NewBillPage() {
   const companyId = "00000000-0000-0000-0000-000000000000";
 
-  const [supplierList, itemList] = await Promise.all([
+  const [supplierList, itemList, warehouseList, projectList] = await Promise.all([
     db.query.suppliers.findMany({
       where: eq(suppliers.companyId, companyId),
-      columns: { id: true, name: true }
+      columns: { id: true, name: true, email: true }
     }),
     db.query.items.findMany({
       where: eq(items.companyId, companyId),
-      columns: { id: true, name: true, code: true, costPrice: true, taxPercent: true, isTaxable: true }
+      columns: { id: true, name: true, code: true, costPrice: true, taxPercent: true, isTaxable: true, uom: true }
+    }),
+    db.query.warehouses.findMany({
+      where: eq(warehouses.companyId, companyId),
+      columns: { id: true, name: true }
+    }),
+    db.query.projects.findMany({
+      where: eq(projects.companyId, companyId),
+      columns: { id: true, projectName: true, projectCode: true }
     })
   ]);
 
@@ -29,7 +37,12 @@ export default async function NewBillPage() {
         description="Create a new vendor bill"
         icon={Receipt}
       />
-      <PurchaseBillForm suppliers={supplierList} items={itemList} />
+      <PurchaseBillForm 
+        suppliers={supplierList} 
+        items={itemList} 
+        warehouses={warehouseList}
+        projects={projectList}
+      />
     </div>
   );
 }

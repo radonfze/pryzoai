@@ -152,6 +152,7 @@ export function PurchaseBillForm({ suppliers = [], items = [] }: PurchaseBillFor
       notes: "",
       lines: [{ itemId: "", quantity: 1, unitPrice: 0, taxAmount: 0 }],
     },
+    mode: "onChange", // Enable re-render on change
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -159,25 +160,35 @@ export function PurchaseBillForm({ suppliers = [], items = [] }: PurchaseBillFor
     control: form.control,
   });
 
+  // Watch lines profoundly
+  const watchedLines = form.watch("lines");
+
   // Calculate totals whenever lines change
-  const wLines = form.watch("lines");
   useEffect(() => {
-    let sub = 0;
-    let tax = 0;
+    const calculateTotals = () => {
+      let sub = 0;
+      let tax = 0;
 
-    wLines.forEach((line) => {
-      const qty = Number(line.quantity) || 0;
-      const price = Number(line.unitPrice) || 0;
-      const tAmount = Number(line.taxAmount) || 0;
+      const currentLines = form.getValues("lines"); // Get latest values directly
       
-      sub += qty * price;
-      tax += tAmount;
-    });
+      currentLines.forEach((line) => {
+        const qty = parseFloat(String(line.quantity)) || 0;
+        const price = parseFloat(String(line.unitPrice)) || 0;
+        const tAmount = parseFloat(String(line.taxAmount)) || 0;
+        
+        sub += qty * price;
+        tax += tAmount;
+      });
 
-    setSubtotal(sub);
-    setTaxTotal(tax);
-    setTotal(sub + tax);
-  }, [wLines]); // Careful with dependency array, deep comparison is expensive but form.watch returns new objects on change
+      console.log("Calculated:", { sub, tax }); // Debug
+
+      setSubtotal(sub);
+      setTaxTotal(tax);
+      setTotal(sub + tax);
+    };
+
+    calculateTotals();
+  }, [watchedLines]); // Dependency on watchedLines triggers effect
 
   async function onSubmit(data: PurchaseBillFormValues) {
     setLoading(true);
@@ -205,13 +216,16 @@ export function PurchaseBillForm({ suppliers = [], items = [] }: PurchaseBillFor
   const handleItemSelect = (index: number, itemId: string) => {
     const item = items.find((i) => i.id === itemId);
     if (item) {
-      form.setValue(`lines.${index}.unitPrice`, Number(item.costPrice || 0));
-      const taxRate = item.taxPercent ? Number(item.taxPercent) / 100 : 0.05;
+      const costPrice = parseFloat(String(item.costPrice)) || 0;
+      form.setValue(`lines.${index}.unitPrice`, costPrice);
+      
+      const taxRate = item.taxPercent ? parseFloat(String(item.taxPercent)) / 100 : 0.05;
       const isTaxable = item.isTaxable !== false;
+      
       if (isTaxable) {
          const qty = form.getValues(`lines.${index}.quantity`) || 1;
-         const tax = qty * Number(item.costPrice || 0) * taxRate;
-         form.setValue(`lines.${index}.taxAmount`, Number(tax.toFixed(2)));
+         const tax = qty * costPrice * taxRate;
+         form.setValue(`lines.${index}.taxAmount`, parseFloat(tax.toFixed(2)));
       } else {
          form.setValue(`lines.${index}.taxAmount`, 0);
       }
