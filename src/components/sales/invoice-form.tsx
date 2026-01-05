@@ -747,7 +747,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                                                       )}
                                                     />
                                                     <div className="flex flex-col">
-                                                      <span className="font-medium">{item.name}</span>
+                                                      <span className="font-medium uppercase">{String(item.name).toUpperCase()}</span>
                                                       <span className="text-xs text-muted-foreground">
                                                         SKU: {item.sku || 'N/A'} | Price: {Number(item.sellingPrice || 0).toFixed(2)}
                                                       </span>

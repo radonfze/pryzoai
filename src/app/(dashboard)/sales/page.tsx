@@ -23,6 +23,8 @@ import {
   Package,
   Undo2
 } from "lucide-react";
+import { getCompanyIdSafe } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +34,13 @@ function formatCurrency(amount: number): string {
 }
 
 export default async function SalesDashboardPage() {
-  const companyId = "00000000-0000-0000-0000-000000000000";
+  const companyId = await getCompanyIdSafe();
+  
+  // Redirect to login if no valid session
+  if (!companyId) {
+    redirect("/login");
+  }
+  
   const today = new Date();
   const thirtyDaysAgo = new Date(today);
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
