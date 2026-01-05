@@ -429,29 +429,33 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-            {/* Main Form Section - Scrollable */}
-            <div className="space-y-6 lg:max-h-[calc(100vh-180px)] lg:overflow-y-auto lg:pr-2">
-              {/* Customer & Dates Card */}
-              <Card className="shadow-md hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <User className="h-5 w-5 text-blue-500" />
-                    Customer & Dates
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+            {/* Main Form Section */}
+            <div className="space-y-4">
+              {/* Compact Header Card - All key fields */}
+              <Card className="shadow-sm">
+                <CardContent className="pt-4 pb-3">
+                  {/* Row 1: Invoice #, Customer, Salesman, Dates */}
+                  <div className="grid grid-cols-5 gap-3 mb-3">
+                    {/* Invoice Number */}
+                    <div>
+                      <span className="text-xs text-muted-foreground">Invoice #</span>
+                      <div className="h-9 px-3 py-2 rounded-md bg-blue-50 dark:bg-blue-900/30 text-sm font-bold text-blue-700">
+                        {numberLoading ? "..." : reservedNumber || "Auto"}
+                      </div>
+                    </div>
+
+                    {/* Customer */}
                     <FormField
                       control={form.control}
                       name="customerId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Customer *</FormLabel>
+                          <FormLabel className="text-xs">Customer *</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger className="h-11">
-                                <SelectValue placeholder="Select customer..." />
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Select..." />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -460,7 +464,6 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                               ))}
                             </SelectContent>
                           </Select>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -471,11 +474,11 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                       name="salesmanId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Salesman</FormLabel>
+                          <FormLabel className="text-xs">Salesman</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger className="h-11">
-                                <SelectValue placeholder="Select salesman..." />
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Select..." />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -484,71 +487,63 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                               ))}
                             </SelectContent>
                           </Select>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
 
+                    {/* Invoice Date */}
                     <FormField
                       control={form.control}
                       name="invoiceDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-sm font-medium">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            Invoice Date *
-                          </FormLabel>
+                          <FormLabel className="text-xs">Date *</FormLabel>
                           <FormControl>
-                            <Input type="date" className="h-11" {...field} />
+                            <Input type="date" className="h-9 text-sm" {...field} />
                           </FormControl>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
 
+                    {/* Due Date */}
                     <FormField
                       control={form.control}
                       name="dueDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-sm font-medium">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            Due Date *
-                          </FormLabel>
+                          <FormLabel className="text-xs">Due *</FormLabel>
                           <FormControl>
-                            <Input type="date" className="h-11" {...field} />
+                            <Input type="date" className="h-9 text-sm" {...field} />
                           </FormControl>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </div>
 
+                  {/* Row 2: Payment Terms, Mode, Tax Inclusive Toggle */}
+                  <div className="grid grid-cols-4 gap-3">
                     {/* Payment Terms */}
                     <FormField
                       control={form.control}
                       name="paymentTerms"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Payment Terms</FormLabel>
+                          <FormLabel className="text-xs">Payment Terms</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger className="h-11">
-                                <SelectValue placeholder="Select payment terms..." />
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Select..." />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="due_on_receipt">Due on Receipt</SelectItem>
-                              <SelectItem value="net_7">Net 7 Days</SelectItem>
-                              <SelectItem value="net_15">Net 15 Days</SelectItem>
-                              <SelectItem value="net_30">Net 30 Days</SelectItem>
-                              <SelectItem value="net_45">Net 45 Days</SelectItem>
-                              <SelectItem value="net_60">Net 60 Days</SelectItem>
-                              <SelectItem value="net_90">Net 90 Days</SelectItem>
-                              <SelectItem value="end_of_month">End of Month</SelectItem>
-                              <SelectItem value="custom">Custom</SelectItem>
+                              <SelectItem value="net_7">Net 7</SelectItem>
+                              <SelectItem value="net_15">Net 15</SelectItem>
+                              <SelectItem value="net_30">Net 30</SelectItem>
+                              <SelectItem value="net_60">Net 60</SelectItem>
+                              <SelectItem value="net_90">Net 90</SelectItem>
                             </SelectContent>
                           </Select>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -559,81 +554,49 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                       name="paymentMode"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Mode of Payment</FormLabel>
+                          <FormLabel className="text-xs">Payment Mode</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger className="h-11">
-                                <SelectValue placeholder="Select payment mode..." />
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Select..." />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="cash">Cash</SelectItem>
-                              <SelectItem value="card">Credit/Debit Card</SelectItem>
+                              <SelectItem value="card">Card</SelectItem>
                               <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
                               <SelectItem value="cheque">Cheque</SelectItem>
-                              <SelectItem value="upi">UPI/Online</SelectItem>
-                              <SelectItem value="credit">Credit (On Account)</SelectItem>
-                              <SelectItem value="cod">Cash on Delivery</SelectItem>
+                              <SelectItem value="credit">Credit</SelectItem>
                             </SelectContent>
                           </Select>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    {/* Terms & Conditions */}
-                    <FormField
-                      control={form.control}
-                      name="termsAndConditions"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel className="text-sm font-medium">Terms & Conditions</FormLabel>
-                          <FormControl>
-                            <textarea 
-                              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                              placeholder="Enter terms and conditions..."
-                              rows={3}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
+                    {/* Notes */}
                     <FormField
                       control={form.control}
                       name="notes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Notes</FormLabel>
+                          <FormLabel className="text-xs">Notes</FormLabel>
                           <FormControl>
-                            <Input placeholder="Internal notes..." className="h-11" {...field} />
+                            <Input placeholder="Internal..." className="h-9 text-sm" {...field} />
                           </FormControl>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                  
-                  {/* Tax Inclusive Toggle */}
-                  <div className="mt-4 pt-4 border-t">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <Label htmlFor="tax-inclusive" className="text-sm font-medium cursor-pointer">
-                          Amounts are Tax Inclusive
-                        </Label>
-                        <p className="text-xs text-muted-foreground">
-                          {isTaxInclusive 
-                            ? "Entered prices include 5% VAT" 
-                            : "VAT 5% will be added to prices"}
-                        </p>
-                      </div>
+
+                    {/* Tax Toggle */}
+                    <div className="flex items-end gap-2 pb-1">
                       <Switch
                         id="tax-inclusive"
                         checked={isTaxInclusive}
                         onCheckedChange={setIsTaxInclusive}
                       />
+                      <Label htmlFor="tax-inclusive" className="text-xs cursor-pointer">
+                        Tax Inclusive
+                      </Label>
                     </div>
                   </div>
                 </CardContent>
