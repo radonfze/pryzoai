@@ -74,7 +74,7 @@ function SidebarProvider({
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen)
+  const [_open, _setOpen] = React.useState(false) // Default to closed
   const open = openProp ?? _open
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
@@ -90,6 +90,80 @@ function SidebarProvider({
     },
     [setOpenProp, open]
   )
+    
+  // Auto-collapse logic
+  React.useEffect(() => {
+    if (!open) return;
+
+    let timeout: NodeJS.Timeout;
+
+    const resetTimer = () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            setOpen(false);
+        }, 20000); // 20 seconds
+    };
+
+    // Initial start
+    resetTimer();
+
+    // Listen for events on the sidebar to reset timer
+    // We attach to window but filter effectively or just use a ref on sidebar later? 
+    // Actually, capturing usage *inside* the sidebar is strictly requested ("inactivity in side bar"). 
+    // However, usually users want it to stay open if they are interacting with it.
+    // If they move mouse out, should it close immediately? No, 20s. 
+    // For simplicity and robustness, let's attach to the window but maybe we can be more specific. 
+    // Since the SidebarProvider wraps everything (sidebar + main content) in dashboard layout?
+    // Wait, SidebarProvider wraps the whole app. 
+    
+    // Let's rely on a global activity listener for now, OR better, attach listeners to the sidebar element if possible.
+    // But we don't have a ref to the sidebar DOM node here easily without traversing.
+    // The Sidebar component is a child. 
+    
+    // Alternative: Just detect activity generally. 
+    // "in side bar" typically means if I am not hovering or clicking IN the sidebar.
+    // But if I am working on the main content, the sidebar is inactive. So it should close. 
+    // Correct. So if I click anywhere, it resets? No, if I click in main content, sidebar should probably close or start timer?
+    // "after 20 sec of inactivity in side bar" -> means if I don't interact with sidebar for 20s.
+    
+    // So: 
+    // 1. If sidebar is open.
+    // 2. Start 20s timer.
+    // 3. If I move mouse over sidebar or click in sidebar, reset timer.
+    // 4. If I click outside sidebar (main content), the timer continues (or essentially, looking at the request, it just says inactivity IN sidebar).
+    
+    // The implementation below attaches to document. This effectively keeps it open if I am active ANYWHERE. 
+    // This might be what the user wants ("don't close on me while I'm working"). 
+    // BUT the prompt says "inactivity in side bar".
+    // This means interactions with the MAIN CONTENT should NOT reset the timer.
+    // So if I am typing in a form in the main area, the sidebar should auto-hide after 20s.
+    // To do this, we need to detect events only inside the Sidebar.
+    
+    // We can expose a ref or event handler from context? Or easier: 
+    // Check event.target to see if it's inside the sidebar.
+    // The sidebar element has a specific data attribute: data-slot="sidebar" (desktop).
+
+    const handleActivity = (e: Event) => {
+        const target = e.target as HTMLElement;
+        const sidebar = target.closest('[data-slot="sidebar"]');
+        if (sidebar) {
+            resetTimer();
+        }
+    };
+
+    window.addEventListener("mousemove", handleActivity);
+    window.addEventListener("mousedown", handleActivity);
+    window.addEventListener("keydown", handleActivity);
+    window.addEventListener("scroll", handleActivity, true);
+
+    return () => {
+        clearTimeout(timeout);
+        window.removeEventListener("mousemove", handleActivity);
+        window.removeEventListener("mousedown", handleActivity);
+        window.removeEventListener("keydown", handleActivity);
+        window.removeEventListener("scroll", handleActivity, true);
+    };
+  }, [open, setOpen]);
 
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
