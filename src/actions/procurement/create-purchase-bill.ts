@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { purchaseBills, purchaseBillLines, purchaseOrders, numberSeries, defaultGlAccounts } from "@/db/schema";
+import { purchaseInvoices, purchaseLines, purchaseOrders, numberSeries, defaultGlAccounts } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { postPurchaseBillToGL } from "@/lib/services/gl-posting-service";
@@ -37,15 +37,15 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
     const total = subtotal + taxTotal;
 
     const result = await db.transaction(async (tx) => {
-      // 1. Insert Bill Header
-      const [bill] = await tx.insert(purchaseBills).values({
+      // 1. Insert Bill Header (Purchase Invoice)
+      const [bill] = await tx.insert(purchaseInvoices).values({
         companyId: DEMO_COMPANY_ID,
-        billNumber,
+        invoiceNumber: billNumber,
         purchaseOrderId: input.purchaseOrderId || null,
         supplierId: input.supplierId,
-        billDate: input.billDate,
+        invoiceDate: input.billDate,
         dueDate: input.dueDate,
-        reference: input.reference,
+        supplierInvoiceNo: input.reference,
         subtotal: subtotal.toFixed(2),
         taxAmount: taxTotal.toFixed(2),
         totalAmount: total.toFixed(2),
@@ -56,14 +56,15 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
       }).returning();
 
       // 2. Insert Bill Lines
-      await tx.insert(purchaseBillLines).values(
+      await tx.insert(purchaseLines).values(
         input.lines.map((line, index) => ({
           companyId: DEMO_COMPANY_ID,
-          billId: bill.id,
+          invoiceId: bill.id,
           lineNumber: index + 1,
           purchaseOrderLineId: line.poLineId || null,
           itemId: line.itemId,
           quantity: line.quantity.toString(),
+          uom: 'PCS', // Default UOM as it is required in schema
           unitPrice: line.unitPrice.toString(),
           taxAmount: (line.taxAmount || 0).toString(),
           lineTotal: (Number(line.quantity) * Number(line.unitPrice) + Number(line.taxAmount || 0)).toString(),
