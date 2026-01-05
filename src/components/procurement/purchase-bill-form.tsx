@@ -85,6 +85,7 @@ interface PurchaseBillFormProps {
   items: any[];
   warehouses?: any[];
   projects?: any[];
+  initialData?: any;
 }
 
 // Sub-component for Item Combobox
@@ -159,10 +160,11 @@ function ItemCombobox({
   );
 }
 
-export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], projects = [] }: PurchaseBillFormProps) {
+export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], projects = [], initialData }: PurchaseBillFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [openSupplier, setOpenSupplier] = useState(false);
+  const isEdit = !!initialData;
   
   // Calculations
   const [subtotal, setSubtotal] = useState(0);
@@ -171,9 +173,32 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
 
   const form = useForm<PurchaseBillFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: initialData ? {
+      supplierId: initialData.supplierId || "",
+      billDate: initialData.invoiceDate || new Date().toISOString().split("T")[0],
+      dueDate: initialData.dueDate || new Date().toISOString().split("T")[0],
+      reference: initialData.supplierInvoiceNo || "",
+      notes: initialData.notes || "",
+      warehouseId: initialData.warehouseId || "",
+      purchaseType: initialData.purchaseType || "vat_item_wise",
+      paymentType: initialData.paymentType || "credit",
+      status: initialData.status || "open",
+      termsAndConditions: initialData.termsAndConditions || "",
+      lines: initialData.lines?.map((line: any) => ({
+        itemId: line.itemId,
+        quantity: Number(line.quantity) || 0,
+        uom: line.uom || "PCS",
+        unitPrice: Number(line.unitPrice) || 0,
+        discountAmount: Number(line.discountAmount) || 0,
+        taxAmount: Number(line.taxAmount) || 0,
+        projectId: line.projectId || "",
+        taskId: line.taskId || "",
+        description: line.description || "",
+      })) || [{ itemId: "", quantity: 0, uom: "PCS", unitPrice: 0, discountAmount: 0, taxAmount: 0, projectId: "" }],
+      billSundry: initialData.billSundry || [{ name: "", amount: 0 }],
+    } : {
       billDate: new Date().toISOString().split("T")[0],
-      dueDate: new Date().toISOString().split("T")[0], // Not in screenshot but useful
+      dueDate: new Date().toISOString().split("T")[0],
       reference: "",
       notes: "",
       purchaseType: "vat_item_wise",
