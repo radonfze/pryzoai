@@ -1,4 +1,4 @@
-"use server";
+
 
 import { login } from "@/lib/auth/auth-service";
 import { NextResponse } from "next/server";
