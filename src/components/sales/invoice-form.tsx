@@ -174,9 +174,16 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
         const data = await response.json();
         if (data.success && data.number) {
           setReservedNumber(data.number);
+        } else if (data.error) {
+          console.error("Number reservation error:", data.error);
+          if (data.error.includes("Unauthorized")) {
+            toast.error("Session expired. Please log in again.");
+            setReservedNumber("Login Required");
+          }
         }
       } catch (error) {
         console.error("Number reservation error:", error);
+        toast.error("Failed to reserve invoice number");
       } finally {
         setNumberLoading(false);
       }
@@ -924,13 +931,11 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                       <span className="font-medium">{grossTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
                     </div>
                     
-                    {/* Total Line Discount */}
-                    {totalDiscount > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-orange-600">Line Discounts</span>
-                        <span className="font-medium text-orange-600">-{totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
-                      </div>
-                    )}
+                    {/* Total Discount - Always show */}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-orange-600">Total Discount</span>
+                      <span className="font-medium text-orange-600">-{totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })} AED</span>
+                    </div>
                     
                     {/* Subtotal (after discount, before VAT) */}
                     <div className="flex justify-between text-sm border-t pt-2">
