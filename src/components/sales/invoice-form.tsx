@@ -78,6 +78,9 @@ const formSchema = z.object({
   invoiceDate: z.string().min(1, "Date is required"),
   dueDate: z.string().min(1, "Due date is required"),
   salesOrderId: z.string().optional(),
+  paymentTerms: z.string().optional(),
+  paymentMode: z.string().optional(),
+  termsAndConditions: z.string().optional(),
   notes: z.string().optional(),
   lines: z.array(z.object({
     itemId: z.string().min(1, "Item is required"),
@@ -514,6 +517,84 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                           </FormLabel>
                           <FormControl>
                             <Input type="date" className="h-11" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Payment Terms */}
+                    <FormField
+                      control={form.control}
+                      name="paymentTerms"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Payment Terms</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-11">
+                                <SelectValue placeholder="Select payment terms..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="due_on_receipt">Due on Receipt</SelectItem>
+                              <SelectItem value="net_7">Net 7 Days</SelectItem>
+                              <SelectItem value="net_15">Net 15 Days</SelectItem>
+                              <SelectItem value="net_30">Net 30 Days</SelectItem>
+                              <SelectItem value="net_45">Net 45 Days</SelectItem>
+                              <SelectItem value="net_60">Net 60 Days</SelectItem>
+                              <SelectItem value="net_90">Net 90 Days</SelectItem>
+                              <SelectItem value="end_of_month">End of Month</SelectItem>
+                              <SelectItem value="custom">Custom</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Mode of Payment */}
+                    <FormField
+                      control={form.control}
+                      name="paymentMode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Mode of Payment</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-11">
+                                <SelectValue placeholder="Select payment mode..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="cash">Cash</SelectItem>
+                              <SelectItem value="card">Credit/Debit Card</SelectItem>
+                              <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                              <SelectItem value="cheque">Cheque</SelectItem>
+                              <SelectItem value="upi">UPI/Online</SelectItem>
+                              <SelectItem value="credit">Credit (On Account)</SelectItem>
+                              <SelectItem value="cod">Cash on Delivery</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Terms & Conditions */}
+                    <FormField
+                      control={form.control}
+                      name="termsAndConditions"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel className="text-sm font-medium">Terms & Conditions</FormLabel>
+                          <FormControl>
+                            <textarea 
+                              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              placeholder="Enter terms and conditions..."
+                              rows={3}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
