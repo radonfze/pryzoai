@@ -5,10 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, UserPlus } from "lucide-react";
 import GradientHeader from "@/components/ui/gradient-header";
-import { DataTable } from "@/components/ui/data-table";
-import { createColumns } from "./columns";
-import { deleteSuppliersAction } from "@/actions/settings/delete-suppliers";
-import { getSession, getUserId } from "@/lib/auth";
+import { SuppliersClient } from "./client";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
@@ -25,10 +23,16 @@ export default async function SuppliersPage() {
   const supplierList = await db.query.suppliers.findMany({
     where: eq(suppliers.companyId, companyId),
     orderBy: (suppliers, { asc }) => [asc(suppliers.name)],
+    columns: {
+      id: true,
+      name: true,
+      code: true,
+      phone: true,
+      email: true,
+      taxId: true,
+      isActive: true,
+    }
   });
-
-  // Create columns with user ID for security dialogs
-  const columns = createColumns(userId);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -44,16 +48,7 @@ export default async function SuppliersPage() {
         </Link>
       </div>
 
-      <DataTable 
-        columns={columns} 
-        data={supplierList} 
-        searchKey="name"
-        placeholder="Search suppliers..." 
-        onDelete={async (ids) => {
-          "use server";
-          await deleteSuppliersAction(ids);
-        }}
-      />
+      <SuppliersClient data={supplierList} userId={userId} />
     </div>
   );
 }
