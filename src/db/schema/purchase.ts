@@ -9,6 +9,7 @@ import {
   date,
   pgEnum,
   integer,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { companies, branches, warehouses } from "./companies";
