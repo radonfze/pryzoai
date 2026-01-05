@@ -17,12 +17,16 @@ export default async function NewQuotationPage() {
 
   const itemList = await db.query.items.findMany({
     where: eq(items.companyId, companyId),
+    with: {
+        units: true
+    },
     columns: {
         id: true,
         code: true,
         name: true,
         sellingPrice: true,
-        uom: true
+        uom: true,
+        costPrice: true
     }
   });
 

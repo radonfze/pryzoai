@@ -44,23 +44,28 @@ type QuotationInput = {
   lines: QuotationLine[];
 };
 
-// Generate quotation number with format: QT-2025-00001
+// Generate quotation number based on document type
 async function generateQuotationNumber(
   companyId: string,
-  quotationDate: Date
+  quotationDate: Date,
+  documentType: "quotation" | "proforma" = "quotation"
 ): Promise<string> {
+  // Use "proforma" or "quotation" as documentType in DB lookup
+  const dbDocType = documentType === "proforma" ? "proforma" : "quotation";
+  const defaultPrefix = documentType === "proforma" ? "PI" : "QT";
+
   // Try to get number series for quotations
   const series = await db.query.numberSeries.findFirst({
     where: and(
       eq(numberSeries.companyId, companyId),
-      eq(numberSeries.documentType, "quotation"),
+      eq(numberSeries.documentType, dbDocType),
       eq(numberSeries.isActive, true)
     ),
   });
 
   if (!series) {
     // Fallback: Use timestamp-based number
-    return `QT-${Date.now()}`;
+    return `${defaultPrefix}-${Date.now()}`;
   }
 
   // Extract year from quotation date
@@ -215,7 +220,8 @@ export async function createQuotationAction(
     const quotationDate = new Date(input.quotationDate);
     const quotationNumber = await generateQuotationNumber(
       DEMO_COMPANY_ID,
-      quotationDate
+      quotationDate,
+      input.documentType
     );
 
     // 5. Calculate valid until (default: 30 days from quotation date)
