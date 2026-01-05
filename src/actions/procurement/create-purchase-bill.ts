@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { purchaseInvoices, purchaseLines, purchaseOrders, numberSeries, defaultGlAccounts } from "@/db/schema";
+import { purchaseInvoices, purchaseLines, purchaseOrders, numberSeries, defaultGlAccounts, stockLedger, items } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { postPurchaseBillToGL } from "@/lib/services/gl-posting-service";
@@ -151,6 +151,42 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
         Number(total),
         glMapping
       );
+
+      // 4. Update Inventory (Stock Ledger)
+      if (input.warehouseId) {
+        for (const line of input.lines) {
+          // Insert stock ledger entry
+          await tx.insert(stockLedger).values({
+            companyId: DEMO_COMPANY_ID,
+            itemId: line.itemId,
+            warehouseId: input.warehouseId,
+            transactionType: "purchase_bill",
+            referenceId: bill.id,
+            referenceNumber: billNumber,
+            transactionDate: input.billDate,
+            quantity: line.quantity.toString(),
+            unitCost: line.unitPrice.toString(),
+            notes: `Purchase from ${input.supplierId}`,
+          });
+
+          // Update item quantity (increase stock)
+          const [currentItem] = await tx
+            .select()
+            .from(items)
+            .where(eq(items.id, line.itemId));
+
+          if (currentItem) {
+            const currentQty = Number(currentItem.quantity) || 0;
+            await tx
+              .update(items)
+              .set({
+                quantity: (currentQty + Number(line.quantity)).toString(),
+                updatedAt: new Date(),
+              })
+              .where(eq(items.id, line.itemId));
+          }
+        }
+      }
 
       return { bill };
     });
