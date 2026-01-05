@@ -88,14 +88,52 @@ export async function POST(request: Request) {
       );
     }
 
-    // Atomic increment
+    // Atomic increment with row-level lock to prevent duplicate numbers
+    // Using UPDATE ... RETURNING in a single statement ensures atomicity
     const [updated] = await db
       .update(numberSeries)
       .set({
         currentValue: sql`${numberSeries.currentValue} + 1`,
+        updatedAt: sql`NOW()`, // Mark as updated for tracking
       })
-      .where(eq(numberSeries.id, series.id))
+      .where(and(
+        eq(numberSeries.id, series.id),
+        eq(numberSeries.currentValue, series.currentValue) // Optimistic lock
+      ))
       .returning({ newValue: numberSeries.currentValue });
+
+    // If optimistic lock failed (concurrent update), retry
+    if (!updated) {
+      // Refetch and retry once
+      const refetched = await db.query.numberSeries.findFirst({
+        where: eq(numberSeries.id, series.id),
+      });
+      
+      if (!refetched) {
+        return NextResponse.json(
+          { error: "Number series not found on retry" },
+          { status: 500 }
+        );
+      }
+      
+      const [retried] = await db
+        .update(numberSeries)
+        .set({
+          currentValue: sql`${numberSeries.currentValue} + 1`,
+        })
+        .where(eq(numberSeries.id, series.id))
+        .returning({ newValue: numberSeries.currentValue });
+      
+      if (!retried) {
+        return NextResponse.json(
+          { error: "Failed to increment number series after retry" },
+          { status: 500 }
+        );
+      }
+      
+      // Use retried value
+      Object.assign(updated || {}, retried);
+    }
 
     if (!updated) {
       return NextResponse.json(

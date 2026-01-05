@@ -84,9 +84,10 @@ const formSchema = z.object({
   notes: z.string().optional(),
   lines: z.array(z.object({
     itemId: z.string().min(1, "Item is required"),
+    uomId: z.string().optional(), // Unit of Measure - auto-loaded from item
     quantity: z.number().min(0.001, "Quantity required"),
     unitPrice: z.number().min(0, "Price required"),
-    discountAmount: z.number().min(0).optional(), // Changed from % to AED amount
+    discountAmount: z.number().min(0).optional(), // AED amount
     taxId: z.string().optional(),
     description: z.string().optional(),
   })).min(1, "At least one item is required"),
@@ -129,11 +130,11 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
     dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     salesOrderId: initialData.salesOrderId || "",
     notes: initialData.notes || "",
-    lines: initialData.lines || [{ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 }],
+    lines: initialData.lines || [{ itemId: "", uomId: "", quantity: 1, unitPrice: 0, discountAmount: 0 }],
   } : {
     invoiceDate: new Date().toISOString().split('T')[0],
     dueDate: new Date().toISOString().split('T')[0],
-    lines: [{ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 }],
+    lines: [{ itemId: "", uomId: "", quantity: 1, unitPrice: 0, discountAmount: 0 }],
   };
 
   const form = useForm<InvoiceFormValues>({
@@ -206,7 +207,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
       // Ctrl+N or Cmd+N to add new line
       if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
         e.preventDefault();
-        append({ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 });
+        append({ itemId: "", uomId: "", quantity: 1, unitPrice: 0, discountAmount: 0 });
         toast.info("New line added");
       }
       // Escape to deselect line
@@ -634,7 +635,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                       type="button" 
                       className="gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
                       size="sm"
-                      onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 })}
+                      onClick={() => append({ itemId: "", uomId: "", quantity: 1, unitPrice: 0, discountAmount: 0 })}
                     >
                       <Plus className="h-4 w-4" />
                       Add Item
@@ -673,7 +674,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                                 title="Insert line above"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const newItem = { itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 };
+                                  const newItem = { itemId: "", uomId: "", quantity: 1, unitPrice: 0, discountAmount: 0 };
                                   const currentLines = form.getValues("lines");
                                   const newLines = [...currentLines.slice(0, index), newItem, ...currentLines.slice(index)];
                                   form.setValue("lines", newLines);
@@ -775,8 +776,44 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                               </Button>
                             </div>
 
-                            {/* Qty, Rate, Gross, Disc, Net - Compact Row */}
-                            <div className="grid grid-cols-5 gap-2">
+                            {/* UOM, Qty, Rate, Gross, Disc, Net - Compact Row */}
+                            <div className="grid grid-cols-6 gap-2">
+                              {/* UOM */}
+                              <FormField
+                                control={form.control}
+                                name={`lines.${index}.uomId`}
+                                render={({ field }) => {
+                                  // Get available UOMs for this item
+                                  const itemUom = selectedItem?.uom || "PCS";
+                                  const itemUnits = selectedItem?.units || [];
+                                  const availableUoms = [
+                                    { id: itemUom, name: itemUom, isBase: true },
+                                    ...itemUnits.map((u: any) => ({ id: u.uom, name: u.uom, isBase: false }))
+                                  ];
+                                  
+                                  return (
+                                    <div>
+                                      <span className="text-[10px] text-muted-foreground uppercase">UOM</span>
+                                      <Select 
+                                        onValueChange={field.onChange} 
+                                        value={field.value || itemUom}
+                                      >
+                                        <SelectTrigger className="h-8 text-xs">
+                                          <SelectValue placeholder={itemUom} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {availableUoms.map((uom) => (
+                                            <SelectItem key={uom.id} value={uom.id}>
+                                              {uom.name} {uom.isBase && "(Base)"}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  );
+                                }}
+                              />
+                              
                               {/* Qty */}
                               <FormField
                                 control={form.control}
@@ -881,7 +918,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                         <Button 
                           type="button" 
                           className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-                          onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 })}
+                          onClick={() => append({ itemId: "", uomId: "", quantity: 1, unitPrice: 0, discountAmount: 0 })}
                         >
                           <Plus className="h-4 w-4" />
                           Add First Item
@@ -896,7 +933,7 @@ export function InvoiceForm({ customers, items, warehouses, taxes, salesmen = []
                           type="button"
                           variant="outline"
                           className="gap-2 border-dashed hover:border-green-500 hover:text-green-600"
-                          onClick={() => append({ itemId: "", quantity: 1, unitPrice: 0, discountAmount: 0 })}
+                          onClick={() => append({ itemId: "", uomId: "", quantity: 1, unitPrice: 0, discountAmount: 0 })}
                         >
                           <Plus className="h-4 w-4" />
                           Add Another Item
