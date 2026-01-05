@@ -1,6 +1,6 @@
 "use client";
 
-import { DataTable } from "@/app/data-table";
+import { DataTable } from "@/components/ui/data-table";
 import { columns } from "./columns";
 
 interface RequestsTableProps {
