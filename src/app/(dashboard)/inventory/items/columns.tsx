@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Eye, Edit, Package, AlertTriangle, Lock, Wrench, Copy } from "lucide-react"
+import { MoreHorizontal, Eye, Edit, Package, AlertTriangle, Lock, Wrench, Copy, Trash2, Power } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -105,7 +105,7 @@ export const columns: ColumnDef<Item>[] = [
       const item = row.original;
       return (
         <div className="flex items-center gap-2">
-          <span className="font-medium">{row.getValue("name")}</span>
+          <span className="font-medium uppercase">{String(row.getValue("name")).toUpperCase()}</span>
           {/* Visual Indicators */}
           {item.itemType === "service" && (
             <TooltipProvider>
@@ -236,6 +236,7 @@ export const columns: ColumnDef<Item>[] = [
       const item = row.original
       const permissions = (table.options.meta as any)?.permissions || [];
       const canEdit = permissions.includes("inventory.items.edit");
+      const canDelete = permissions.includes("inventory.items.delete");
       const canCreate = permissions.includes("inventory.items.create"); // For duplicate
       const canDrill = permissions.includes("inventory.items.drill_through");
 
@@ -270,6 +271,14 @@ export const columns: ColumnDef<Item>[] = [
                         <Copy className="mr-2 h-4 w-4" /> Duplicate Item
                     </DropdownMenuItem>
                 </Link>
+            )}
+            
+            {canEdit && (
+                <ActivateDialogItem item={item} userId={(table.options.meta as any)?.userId || ""} />
+            )}
+            
+            {canDelete && (
+                <DeleteDialogItem item={item} userId={(table.options.meta as any)?.userId || ""} />
             )}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -344,3 +353,83 @@ const EditDialogItem = ({ item, userId }: { item: Item; userId: string }) => {
     );
 };
 
+// Helper component for Activate/Deactivate toggle
+const ActivateDialogItem = ({ item, userId }: { item: Item; userId: string }) => {
+    const router = useRouter();
+    const [showPassword, setShowPassword] = useState(false);
+
+    const handleSuccess = async () => {
+        try {
+            const response = await fetch(`/api/inventory/items/${item.id}/toggle-status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isActive: !item.isActive }),
+            });
+            if (response.ok) {
+                router.refresh();
+            }
+        } catch (error) {
+            console.error("Failed to toggle status:", error);
+        }
+    };
+
+    return (
+        <>
+            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setShowPassword(true); }}>
+                <Power className="mr-2 h-4 w-4" /> 
+                {item.isActive ? "Deactivate" : "Activate"}
+            </DropdownMenuItem>
+            <EditPasswordDialog
+                open={showPassword}
+                onOpenChange={setShowPassword}
+                userId={userId}
+                action={item.isActive ? "deactivate_item" : "activate_item"}
+                targetTable="items"
+                targetId={item.id}
+                title={item.isActive ? "Deactivate Item" : "Activate Item"}
+                description={`Enter your password to ${item.isActive ? "deactivate" : "activate"} ${item.code}.`}
+                onSuccess={handleSuccess}
+            />
+        </>
+    );
+};
+
+// Helper component for Delete with OTP Dialog
+const DeleteDialogItem = ({ item, userId }: { item: Item; userId: string }) => {
+    const router = useRouter();
+    const [showDelete, setShowDelete] = useState(false);
+
+    const handleDelete = async () => {
+        try {
+            const response = await fetch(`/api/inventory/items/${item.id}`, {
+                method: 'DELETE',
+            });
+            if (response.ok) {
+                router.refresh();
+            }
+        } catch (error) {
+            console.error("Failed to delete item:", error);
+        }
+    };
+
+    return (
+        <>
+            <DropdownMenuItem 
+                onSelect={(e) => { e.preventDefault(); setShowDelete(true); }}
+                className="text-destructive focus:text-destructive"
+            >
+                <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </DropdownMenuItem>
+            <DeleteOtpDialog
+                open={showDelete}
+                onOpenChange={setShowDelete}
+                userId={userId}
+                targetTable="items"
+                targetId={item.id}
+                title="Delete Item"
+                description={`Are you sure you want to delete ${item.code} - ${item.name}? This action cannot be undone.`}
+                onConfirm={handleDelete}
+            />
+        </>
+    );
+};
