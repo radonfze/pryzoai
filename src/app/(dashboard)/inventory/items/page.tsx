@@ -1,14 +1,13 @@
-
 import { db } from "@/db";
 import { items, itemBrands, itemCategories } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { ItemsClient } from "@/components/inventory/items-client"; // Check path
+import { ItemsClient } from "@/components/inventory/items-client";
 import { Package, Plus } from "lucide-react";
-import { GradientHeader } from "@/components/ui/gradient-header"; // Check path
+import { GradientHeader } from "@/components/ui/gradient-header";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ExportButton } from "@/components/ui/export-button"; // Check path
-import { getCompanyIdSafe, getUserPermissions } from "@/lib/auth";
+import { ExportButton } from "@/components/ui/export-button";
+import { getCompanyIdSafe, getUserPermissions, getSession } from "@/lib/auth";
 import { logout } from "@/lib/auth/auth-service";
 import { redirect } from "next/navigation";
 
@@ -33,6 +32,9 @@ export default async function ItemsPage() {
             </div>
         );
     }
+
+  const session = await getSession();
+  const userId = session?.userId || "";
 
   const data = await db.query.items.findMany({
     where: eq(items.companyId, companyId),
@@ -76,7 +78,7 @@ export default async function ItemsPage() {
       
       <div className="flex items-center justify-end gap-2">
         <ExportButton data={formattedItems} filename="Inventory_Items" />
-        {permissions.includes('inventory.items.create') && (
+        {(permissions.includes('inventory.items.create') || permissions.includes('*')) && (
             <Link href="/inventory/items/new">
             <Button><Plus className="mr-2 h-4 w-4" /> Create Item</Button>
             </Link>
@@ -88,6 +90,7 @@ export default async function ItemsPage() {
         categories={categories}
         brands={brandList}
         permissions={permissions}
+        userId={userId}
       />
     </div>
   );

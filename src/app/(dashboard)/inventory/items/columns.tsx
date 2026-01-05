@@ -235,10 +235,15 @@ export const columns: ColumnDef<Item>[] = [
     cell: ({ row, table }) => {
       const item = row.original
       const permissions = (table.options.meta as any)?.permissions || [];
-      const canEdit = permissions.includes("inventory.items.edit");
-      const canDelete = permissions.includes("inventory.items.delete");
-      const canCreate = permissions.includes("inventory.items.create"); // For duplicate
-      const canDrill = permissions.includes("inventory.items.drill_through");
+      const userId = (table.options.meta as any)?.userId || "";
+      
+      // Helper to check permission (includes wildcard for admins)
+      const hasPermission = (perm: string) => permissions.includes(perm) || permissions.includes('*');
+      
+      const canEdit = hasPermission("inventory.items.edit");
+      const canDelete = hasPermission("inventory.items.delete");
+      const canCreate = hasPermission("inventory.items.create");
+      const canDrill = hasPermission("inventory.items.drill_through");
 
       return (
         <DropdownMenu>
@@ -262,7 +267,7 @@ export const columns: ColumnDef<Item>[] = [
             {canDrill && <DrillDialogItem item={item} />}
 
             {canEdit && (
-                <EditDialogItem item={item} userId={(table.options.meta as any)?.userId || ""} />
+                <EditDialogItem item={item} userId={userId} />
             )}
             
             {canCreate && (
@@ -274,11 +279,11 @@ export const columns: ColumnDef<Item>[] = [
             )}
             
             {canEdit && (
-                <ActivateDialogItem item={item} userId={(table.options.meta as any)?.userId || ""} />
+                <ActivateDialogItem item={item} userId={userId} />
             )}
             
             {canDelete && (
-                <DeleteDialogItem item={item} userId={(table.options.meta as any)?.userId || ""} />
+                <DeleteDialogItem item={item} userId={userId} />
             )}
           </DropdownMenuContent>
         </DropdownMenu>
