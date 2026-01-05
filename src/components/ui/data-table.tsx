@@ -93,6 +93,10 @@ export function DataTable<TData, TValue>({
                 table.getColumn(searchKey)?.setFilterValue(event.target.value)
               }
               className="max-w-sm"
+              autoComplete="off"
+              name={`search_${searchKey}_${Math.random().toString(36).substring(7)}`}
+              data-1p-ignore // 1Password
+              data-lpignore="true" // LastPass
             />
           </div>
         )}

@@ -335,7 +335,8 @@ const EditDialogItem = ({ item, userId }: { item: Item; userId: string }) => {
     const [showEditPassword, setShowEditPassword] = useState(false);
 
     const handleEditSuccess = () => {
-        router.push(`/inventory/items/${item.id}/edit`);
+        // Use window.location for hard redirect to ensure clean state
+        window.location.href = `/inventory/items/${item.id}/edit`;
     };
 
     return (
