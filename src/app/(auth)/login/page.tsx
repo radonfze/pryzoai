@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -60,20 +61,11 @@ export default function LoginPage() {
       {/* Logo */}
       <div className="text-center">
         <div className="inline-flex items-center gap-2 text-3xl font-bold text-primary">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-8 w-8"
-          >
-            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-            <path d="M2 17l10 5 10-5" />
-            <path d="M2 12l10 5 10-5" />
-          </svg>
+      <div className="text-center">
+        <div className="inline-flex items-center gap-2 text-3xl font-bold text-primary">
+          <div className="relative h-12 w-12">
+            <Image src="/logo.png" alt="PryzoAI" fill className="object-contain" priority />
+          </div>
           PryzoAI
         </div>
         <p className="text-sm text-muted-foreground mt-2">Enterprise Resource Planning</p>

@@ -70,6 +70,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 const menuItems = [
   {
@@ -405,7 +406,9 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
-          <Layers className="h-6 w-6 text-primary" />
+          <div className="relative h-8 w-8">
+            <Image src="/logo.png" alt="Logo" fill className="object-contain" />
+          </div>
           <span className="font-bold text-lg">PryzoAI</span>
         </div>
       </SidebarHeader>

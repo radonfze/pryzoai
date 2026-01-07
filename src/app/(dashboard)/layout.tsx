@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import Image from "next/image"
 import { Separator } from "@/components/ui/separator"
 import { ThemeSelector } from "@/components/theme-selector"
 import { HardRefreshButton } from "@/components/hard-refresh-button"
@@ -31,8 +32,11 @@ export default function DashboardLayout({
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <div className="flex-1 font-semibold">
-           {/* Dynamic breadcrumbs can go here later */}
-           PryzoAI ERP
+           {/* Logo in Header */}
+           <div className="flex items-center gap-2">
+              <Image src="/logo.png" alt="PryzoAI" width={32} height={32} className="h-8 w-auto object-contain" />
+              <span className="hidden sm:inline-block">PryzoAI ERP</span>
+           </div>
           </div>
           <HardRefreshButton />
           <ThemeSelector />
