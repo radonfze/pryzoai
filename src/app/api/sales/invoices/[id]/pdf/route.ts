@@ -3,6 +3,8 @@ import { salesInvoices, companies } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateInvoicePdf, InvoiceData } from "@/lib/documents/pdf-generator";
 import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 
 export const dynamic = 'force-dynamic';
 
@@ -40,13 +42,25 @@ export async function GET(
     return NextResponse.json({ error: "Company not found" }, { status: 404 });
   }
 
+  // Read Logo File
+  let logoBase64: string | undefined;
+  try {
+    const logoPath = path.join(process.cwd(), "public", "logo.png");
+    if (fs.existsSync(logoPath)) {
+      const logoBuffer = fs.readFileSync(logoPath);
+      logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+    }
+  } catch (error) {
+    console.error("Error reading logo file:", error);
+  }
+
   // 2. Shape Data
   const pdfData: InvoiceData = {
     company: {
       name: company.name,
       trn: company.taxId || "N/A",
       address: company.address || "Dubai, UAE",
-      logo: undefined
+      logo: logoBase64
     },
     customer: {
       name: invoice.customer.name,

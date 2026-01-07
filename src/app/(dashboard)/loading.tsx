@@ -9,7 +9,10 @@ export default function DashboardLoading() {
       {/* Header Skeleton */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <Skeleton className="h-8 w-[250px]" />
+           <div className="flex items-center gap-2 mb-4">
+               <div className="relative h-10 w-10 animate-pulse bg-muted rounded"></div>
+               <Skeleton className="h-8 w-[200px]" />
+           </div>
           <Skeleton className="h-4 w-[350px]" />
         </div>
         <Skeleton className="h-10 w-[140px]" />

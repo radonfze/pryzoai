@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, LogOut, Lock } from "lucide-react";
+import Image from "next/image";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -212,8 +213,10 @@ export function SessionMonitor() {
           <div className="fixed inset-0 z-[50] flex items-center justify-center bg-background/80 backdrop-blur-sm">
              <Card className="w-full max-w-md shadow-2xl border-2 border-primary/20">
                 <CardHeader className="text-center">
-                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                      <Lock className="h-6 w-6 text-red-600" />
+                    <div className="mx-auto mb-4 flex items-center justify-center">
+                       <div className="relative h-16 w-16">
+                          <Image src="/logo.png" alt="PryzoAI" fill className="object-contain" />
+                       </div>
                     </div>
                     <CardTitle>Session Expired</CardTitle>
                     <CardDescription>
