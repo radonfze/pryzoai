@@ -406,8 +406,8 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
-          <div className="relative h-12 w-auto min-w-[120px]">
-            <Image src="/logo.png" alt="PryzoAI" width={140} height={40} className="object-contain h-full w-auto" priority />
+          <div className="relative h-16 w-auto min-w-[140px]">
+            <Image src="/logo.png" alt="PryzoAI" width={160} height={50} className="object-contain h-full w-auto" priority />
           </div>
         </div>
       </SidebarHeader>

@@ -34,7 +34,7 @@ export default function DashboardLayout({
           <div className="flex-1 font-semibold">
            {/* Logo in Header */}
            <div className="flex items-center gap-2">
-              <Image src="/logo.png" alt="PryzoAI" width={100} height={32} className="h-8 w-auto object-contain" />
+              <Image src="/logo.png" alt="PryzoAI" width={120} height={40} className="h-10 w-auto object-contain" />
            </div>
           </div>
           <HardRefreshButton />
