@@ -170,7 +170,11 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
           setReservedNumber(data.number);
         } else if (data.error) {
            if (data.error.includes("Unauthorized")) {
-             setReservedNumber("Login Required");
+             // Instead of showing text, trigger the re-login modal
+             window.dispatchEvent(new Event("auth:unauthorized"));
+             setReservedNumber("Auto"); // Reset to Auto so it retries after login
+             // We can also retry automatically or let user click retry? 
+             // For now, let's just trigger the modal. The logic below in success dialog handles retry.
            }
         }
       } catch (error) {

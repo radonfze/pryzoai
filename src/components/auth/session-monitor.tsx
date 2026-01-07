@@ -84,6 +84,19 @@ export function SessionMonitor() {
     };
   }, [isPublicPage, isWarning, isLoggedOut]);
 
+  // Listen for unauthorized events from API calls to trigger re-login modal
+  useEffect(() => {
+    const handleUnauthorized = () => {
+        if (!isLoggedOut) {
+            setIsLoggedOut(true);
+            setIsWarning(false);
+        }
+    };
+
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
+  }, [isLoggedOut]);
+
   // Timer Check
   useEffect(() => {
     if (isPublicPage || isLoggedOut) return;

@@ -35,7 +35,7 @@ export default async function PurchaseBillsPage() {
          status: purchaseInvoices.status
        })
        .from(purchaseInvoices)
-       .where(eq(purchaseInvoices.companyId, "00000000-0000-0000-0000-000000000000")); // Hardcoded for MVP, ideally assume session company
+        .where(eq(purchaseInvoices.companyId, userId ? (session.companyId || "00000000-0000-0000-0000-000000000000") : "00000000-0000-0000-0000-000000000000"));
 
      statsList.forEach(bill => {
         statsData.total += Number(bill.totalAmount || 0);
@@ -88,7 +88,7 @@ export default async function PurchaseBillsPage() {
       </div>
 
       <div className="rounded-md border bg-white">
-        <BillsTable data={bills as any} />
+        <BillsTable data={JSON.parse(JSON.stringify(bills))} />
       </div>
     </div>
   );

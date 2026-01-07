@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator"
 import { ThemeSelector } from "@/components/theme-selector"
 import { HardRefreshButton } from "@/components/hard-refresh-button"
 import { AutoLogoutProvider } from "@/components/auto-logout-provider"
+import { UserNav } from "@/components/ui/user-nav"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -35,6 +36,7 @@ export default function DashboardLayout({
           </div>
           <HardRefreshButton />
           <ThemeSelector />
+          <UserNav />
         </header>
         <div className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
           <AutoLogoutProvider>
