@@ -234,18 +234,22 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
         const qty = parseFloat(String(line.quantity)) || 0;
         const price = parseFloat(String(line.unitPrice)) || 0;
         const disc = parseFloat(String(line.discountAmount)) || 0;
-        const tAmount = parseFloat(String(line.taxAmount)) || 0;
-        
-        // Line Logic: (Qty * Rate) - Discount + Tax ? 
-        // Screenshot shows Sub Total column which usually is (Qty * Rate)
-        // Then Discount, Then Tax, Then Total.
-        // Assuming user enters RATE (Unit Price).
+        let tAmount = parseFloat(String(line.taxAmount)) || 0;
         
         const lineBase = qty * price;
-        // Discount might be per unit or total? Usually total for line.
-        // Assuming discountAmount is total discount for the line.
+        const taxable = Math.max(0, lineBase - disc);
+
+        // If taxAmount is 0 but it's a VAT purchase, we might want to auto-calculate if it wasn't manually set?
+        // But for now, we trust the 'taxAmount' field which is set by handleItemSelect or manual input.
+        // However, if the user changes Qty/Price, tax should update.
+        // The current implementation only sets tax on Item Select. 
+        // We really need to update tax when Qty/Price changes.
         
-        sub += lineBase - disc;
+        // Recalculate tax if we have enough info and if it's not a manual override?
+        // Simplified: Assume 5% standard for now if not set, or preserve what was set.
+        // Better approach: In the render loop, we calculate line total. Here we sum up.
+        
+        sub += taxable;
         tax += tAmount;
       });
 
@@ -263,6 +267,37 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
 
     calculateTotals();
   }, [watchedLines, watchedSundry]);
+  
+  // Helper to re-calculate line tax when qty/price changes
+  const updateLineTax = (index: number) => {
+     // This would ideally check the Item's tax percent. 
+     // Since we don't have easy access to the exact item object here without searching 'items' array again:
+     const line = form.getValues(`lines.${index}`);
+     // If we want to be safe, we can default to 5% if we know it's taxable.
+     // But we don't know if it's taxable without the item.
+     // Let's rely on handleItemSelect setting a hidden 'taxRate' field in the future, 
+     // but for now, let's try to lookup item again or assume 5% if 'taxAmount' was previously set > 0
+     
+     // QUICK FIX: If taxAmount was > 0 or it's a new line with a selected item,
+     // we could try to re-apply 5% logic.
+     // Better yet, let's look up the item:
+     const selectedItem = items.find(i => i.id === line.itemId);
+     if (selectedItem) {
+          const taxMod = selectedItem.taxPercent ? parseFloat(String(selectedItem.taxPercent)) / 100 : 0.05;
+          const isTaxable = selectedItem.isTaxable !== false;
+          const qty = parseFloat(String(line.quantity)) || 0;
+          const price = parseFloat(String(line.unitPrice)) || 0;
+           const disc = parseFloat(String(line.discountAmount)) || 0;
+           
+          // Taxable Amount = (Qty * Price) - Discount
+           const base = (qty * price) - disc;
+           
+          if (isTaxable && base > 0) {
+              const newTax = base * taxMod;
+              form.setValue(`lines.${index}.taxAmount`, parseFloat(newTax.toFixed(2)));
+          }
+     }
+  };
 
   async function onSubmit(data: PurchaseBillFormValues) {
     setLoading(true);
@@ -528,13 +563,19 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
 
                    <div className="col-span-1">
                       <FormField control={form.control} name={`lines.${index}.quantity`} render={({ field }) => (
-                        <Input type="number" className="h-8 text-center" min={0} {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
+                        <Input type="number" className="h-8 text-center" min={0} {...field} onChange={e => {
+                            field.onChange(parseFloat(e.target.value) || 0);
+                            updateLineTax(index);
+                        }} />
                       )} />
                    </div>
 
                    <div className="col-span-1">
                       <FormField control={form.control} name={`lines.${index}.unitPrice`} render={({ field }) => (
-                        <Input type="number" className="h-8 text-center" min={0} {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
+                        <Input type="number" className="h-8 text-center" min={0} {...field} onChange={e => {
+                            field.onChange(parseFloat(e.target.value) || 0);
+                            updateLineTax(index);
+                        }} />
                       )} />
                    </div>
 

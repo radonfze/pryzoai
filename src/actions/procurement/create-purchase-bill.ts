@@ -77,7 +77,7 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
       const [bill] = await tx.insert(purchaseInvoices).values({
         companyId: DEMO_COMPANY_ID,
         invoiceNumber: billNumber,
-        purchaseOrderId: input.purchaseOrderId || null,
+        purchaseOrderId: input.purchaseOrderId && input.purchaseOrderId.trim() !== "" ? input.purchaseOrderId : null,
         supplierId: input.supplierId,
         invoiceDate: input.billDate,
         dueDate: input.dueDate,
@@ -91,7 +91,7 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
         status: (input.status as any) || "open", // Use provided status or default to open
         
         // New Fields
-        warehouseId: input.warehouseId || null,
+        warehouseId: input.warehouseId && input.warehouseId.trim() !== "" ? input.warehouseId : null,
         purchaseType: input.purchaseType,
         paymentType: input.paymentType,
         billSundry: input.billSundry,
