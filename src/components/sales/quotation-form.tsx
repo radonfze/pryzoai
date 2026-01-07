@@ -110,6 +110,7 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
   
   // Overall discount (editable in summary)
   const [overallDiscount, setOverallDiscount] = useState<number>(0);
+  const [taxInclusive, setTaxInclusive] = useState<boolean>(false);
 
   const defaultValues: Partial<QuotationFormValues> = initialData ? {
     customerId: initialData.customerId,
@@ -209,9 +210,25 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
   }, 0);
   
   const totalDiscount = lineDiscounts + overallDiscount;
-  const taxableAmount = grossTotal - totalDiscount;
-  const vatAmount = taxableAmount * VAT_RATE;
-  const totalAmount = taxableAmount + vatAmount;
+  const netBeforeTax = grossTotal - totalDiscount;
+
+  let taxableAmount = 0;
+  let vatAmount = 0;
+  let totalAmount = 0;
+
+  if (taxInclusive) {
+      // If Inclusive: Total = NetBeforeTax (User input IS the final price)
+      // Taxable = Net / (1 + Rate)
+      totalAmount = netBeforeTax;
+      taxableAmount = totalAmount / (1 + VAT_RATE);
+      vatAmount = totalAmount - taxableAmount;
+  } else {
+      // If Exclusive: Taxable = Net
+      // Total = Taxable + VAT
+      taxableAmount = netBeforeTax;
+      vatAmount = taxableAmount * VAT_RATE;
+      totalAmount = taxableAmount + vatAmount;
+  }
 
   const onInvalid = (errors: any) => {
     const firstError = Object.values(errors)[0] as any;
@@ -450,24 +467,26 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
                         />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3">
-                     <FormField
-                      control={form.control}
-                      name="reference"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">LPO #</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter LPO..." className="h-9 text-sm" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                   <div className="grid grid-cols-2 gap-3">
+                     {documentType === "proforma" && (
+                       <FormField
+                        control={form.control}
+                        name="reference"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">LPO #</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter LPO..." className="h-9 text-sm" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                     )}
                     <FormField
                       control={form.control}
                       name="notes"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className={documentType === "proforma" ? "" : "col-span-2"}>
                           <FormLabel className="text-xs">Notes</FormLabel>
                           <FormControl>
                             <Input placeholder="Internal notes..." className="h-9 text-sm" {...field} />
@@ -666,7 +685,15 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
                         </div>
                     </div>
 
-                    <div className="flex justify-between text-sm pt-2 border-t">
+                     <div className="flex justify-between items-center text-sm pt-2 border-t">
+                        <span className="text-muted-foreground flex items-center gap-2">
+                           Tax Inclusive
+                           {/* Add switch logic later or use simple checkbox for now */}
+                           <input type="checkbox" checked={taxInclusive} onChange={(e) => setTaxInclusive(e.target.checked)} className="h-4 w-4" />
+                        </span>
+                    </div>
+
+                    <div className="flex justify-between text-sm pt-2">
                         <span className="text-muted-foreground">Taxable</span>
                         <span>{taxableAmount.toFixed(2)}</span>
                     </div>
