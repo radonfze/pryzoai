@@ -48,9 +48,19 @@ function InvoiceActionsCell({ invoice, userId }: { invoice: Invoice; userId: str
   }
 
   const handleCancel = async (reason: string) => {
-    // TODO: Implement actual cancel action
-    console.log("Cancelling invoice:", invoice.id, "Reason:", reason)
-    return { success: false, error: "Cancel action not implemented yet" }
+    try {
+        const { cancelInvoiceAction } = await import("@/actions/sales/cancel-invoice");
+        const result = await cancelInvoiceAction(invoice.id, reason);
+        if (result.success) {
+            router.refresh();
+            return { success: true };
+        } else {
+            return { success: false, error: result.message };
+        }
+    } catch (error) {
+        console.error("Cancel failed", error);
+        return { success: false, error: "Failed to invoke cancel action" };
+    }
   }
 
   return (
