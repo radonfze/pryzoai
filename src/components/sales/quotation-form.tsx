@@ -151,7 +151,7 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
 
-  // Reserve number on mount
+  // Reserve number on mount and when document type changes
   useEffect(() => {
     const reserveNumber = async () => {
       if (initialData) {
@@ -159,22 +159,24 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
         setNumberLoading(false);
         return;
       }
+
+      setNumberLoading(true);
+      const entityType = documentType === 'proforma' ? 'proforma' : 'quotation';
+      const docTypePrefix = documentType === 'proforma' ? 'PRO' : 'QT';
+
       try {
         const response = await fetch('/api/numbers/reserve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ entityType: 'quotation', documentType: 'QT' }),
+          body: JSON.stringify({ entityType, documentType: docTypePrefix }),
         });
         const data = await response.json();
         if (data.success && data.number) {
           setReservedNumber(data.number);
         } else if (data.error) {
            if (data.error.includes("Unauthorized")) {
-             // Instead of showing text, trigger the re-login modal
              window.dispatchEvent(new Event("auth:unauthorized"));
-             setReservedNumber("Auto"); // Reset to Auto so it retries after login
-             // We can also retry automatically or let user click retry? 
-             // For now, let's just trigger the modal. The logic below in success dialog handles retry.
+             setReservedNumber("Auto"); 
            }
         }
       } catch (error) {
@@ -184,7 +186,7 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
       }
     };
     reserveNumber();
-  }, [initialData]);
+  }, [initialData, documentType]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -322,12 +324,24 @@ export function QuotationForm({ customers, items, initialData }: QuotationFormPr
               className="flex-1"
               onClick={() => {
                 setShowSuccessDialog(false);
-                form.reset(defaultValues);
+                const currentType = form.getValues("documentType");
+                form.reset({ ...defaultValues, documentType: currentType });
                 setReservedNumber("");
+                // Effect will trigger due to re-render or explicit type set if needed, 
+                // but actually if type is same, effect might not fire if it depends on [documentType] only?
+                // No, I added [initialData, documentType]. If initialData is same, and documentType is same...
+                // The effect won't fire if nothing changed.
+                // So I SHOULD manual fetch or force a change.
+                // Or I can just set reservedNumber("") and toggle a "refresh" state.
+                // Let's just do manual fetch with DYNAMIC type.
+                
+                const entityType = currentType === 'proforma' ? 'proforma' : 'quotation';
+                const docTypePrefix = currentType === 'proforma' ? 'PRO' : 'QT';
+
                 fetch('/api/numbers/reserve', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ entityType: 'quotation', documentType: 'QT' }),
+                  body: JSON.stringify({ entityType, documentType: docTypePrefix }),
                 }).then(res => res.json()).then(data => {
                   if (data.success) setReservedNumber(data.number);
                 });
