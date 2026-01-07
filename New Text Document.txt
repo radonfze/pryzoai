@@ -1,6 +1,12 @@
 R@DON@5012010
 adminR@DON@89
 
+Admin Account
+Email: admin@pryzo.com
+Password: password123
+Sales Account
+Email: sales@pryzo.com
+Password: password123
 
 https://bddveetxtckdyefnlsdo.supabase.co
 
@@ -26,7 +32,7 @@ implementation plan v1 to v90 anything pending , missing ui?? , missing gaps?, m
  finish them all , fixi ,no hot fixes, only roots , build & push , commit & deploy as you go 
 
 task v1 to v100 , p0 to p15 
-check everywhere , every features, work flows,users, roles, permissions, sercurity, rbac and etc, appovals, microfeatures, modules & so and soo . etccc.  anything pending , missing ui?? , missing gaps?, missing api ??missing dependencies??, any suggestions? missing Logics??, missing links??, missing pages,?? missing forms? add & edit, update? List? , select all ? delete all?? action buttons??export??sidebar auto linking, coa auto linking ??,missing tables?? missing schemas.???, missing routes?? Page & form  Components???,Schema & Enum Fixes??,API Routes & Services???all 404 erro, all 500 error.?? authentication missing??roles missing???
+check everywhere ,do everything with time staps, every features, work flows, users, roles, permissions, security, rbac and etc, appovals, microfeatures, modules & so and soo . etccc.  anything pending , missing ui?? , missing gaps?, missing api ??missing dependencies??, any suggestions? missing Logics??, missing links??, missing pages,?? missing forms? add & edit, update? List? , select all ? delete all?? action buttons??export??sidebar auto linking, coa auto linking ??,missing tables?? missing schemas.???, missing routes?? Page & form  Components???,Schema & Enum Fixes??,API Routes & Services???all 404 erro, all 500 error.?? authentication missing??roles missing???
  finish them all , fix it ,no hot fixes, only roots causes , build & push , commit & deploy as you go 
 ---------------------------------------------------------------------------------
 You are now acting as a SYSTEM AUDITOR, not a developer.

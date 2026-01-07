@@ -86,9 +86,9 @@ const formSchema = z.object({
   lines: z.array(z.object({
     itemId: z.string().min(1, "Item is required"),
     uomId: z.string().optional(), // Unit of Measure - auto-loaded from item
-    quantity: z.number().min(0.001, "Quantity required"),
-    unitPrice: z.number().min(0, "Price required"),
-    discountAmount: z.number().min(0).optional(), // AED amount
+    quantity: z.coerce.number().min(0.001, "Quantity required"),
+    unitPrice: z.coerce.number().min(0, "Price required"),
+    discountAmount: z.coerce.number().min(0).optional(), // AED amount
     taxId: z.string().optional(),
     description: z.string().optional(),
   })).min(1, "At least one item is required"),

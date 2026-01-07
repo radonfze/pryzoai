@@ -6,16 +6,17 @@ import { getCompanyId } from "@/lib/auth";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const companyId = await getCompanyId();
     if (!companyId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { id } = await params;
 
     const order = await db.query.purchaseOrders.findFirst({
-      where: eq(purchaseOrders.id, params.id),
+      where: eq(purchaseOrders.id, id),
       with: {
         supplier: true,
         lines: true,
@@ -35,18 +36,19 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const companyId = await getCompanyId();
     if (!companyId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { id } = await params;
 
     const body = await req.json();
     
     const existing = await db.query.purchaseOrders.findFirst({
-      where: eq(purchaseOrders.id, params.id),
+      where: eq(purchaseOrders.id, id),
     });
 
     if (!existing || existing.companyId !== companyId) {
@@ -59,7 +61,7 @@ export async function PUT(
         ...body,
         updatedAt: new Date(),
       })
-      .where(eq(purchaseOrders.id, params.id))
+      .where(eq(purchaseOrders.id, id))
       .returning();
 
     return NextResponse.json({ 
@@ -75,16 +77,17 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const companyId = await getCompanyId();
     if (!companyId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { id } = await params;
 
     const existing = await db.query.purchaseOrders.findFirst({
-      where: eq(purchaseOrders.id, params.id),
+      where: eq(purchaseOrders.id, id),
     });
 
     if (!existing || existing.companyId !== companyId) {
@@ -94,7 +97,7 @@ export async function DELETE(
     await db
       .update(purchaseOrders)
       .set({ deletedAt: new Date() })
-      .where(eq(purchaseOrders.id, params.id));
+      .where(eq(purchaseOrders.id, id));
 
     return NextResponse.json({ 
       success: true, 

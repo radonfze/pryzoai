@@ -45,7 +45,7 @@ export const items = pgTable("items", {
   nameAr: varchar("name_ar", { length: 200 }), // Arabic name
   description: text("description"),
   
-  itemType: itemTypeEnum("item_type").default("stock").notNull(),
+  type: itemTypeEnum("type").default("stock").notNull(),
   
   // Hierarchy Links
   categoryId: uuid("category_id").references(() => itemCategories.id),

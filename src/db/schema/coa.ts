@@ -76,6 +76,7 @@ export const chartOfAccounts = pgTable("chart_of_accounts", {
   allowManualEntry: boolean("allow_manual_entry").default(true),
   
   isActive: boolean("is_active").default(true).notNull(),
+  isGroup: boolean("is_group").default(false),
   version: integer("version").default(1),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

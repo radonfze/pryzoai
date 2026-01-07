@@ -62,9 +62,9 @@ export default async function ItemsPage() {
       updatedAt: item.updatedAt?.toISOString() || null,
       deletedAt: item.deletedAt?.toISOString() || null,
       // Ensure agregated fields are strings or numbers, not objects
-      stockOnHand: String(item.stockOnHand || 0),
-      stockAvailable: String(item.stockAvailable || 0),
-      stockReserved: String(item.stockReserved || 0),
+      stockOnHand: "0",
+      stockAvailable: "0",
+      stockReserved: "0",
   }));
 
   return (

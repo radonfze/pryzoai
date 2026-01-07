@@ -6,16 +6,17 @@ import { getCompanyId } from "@/lib/auth";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const companyId = await getCompanyId();
     if (!companyId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { id } = await params;
 
     const grn = await db.query.goodsReceipts.findFirst({
-      where: eq(goodsReceipts.id, params.id),
+      where: eq(goodsReceipts.id, id),
       with: {
         supplier: true,
         purchaseOrder: true,
@@ -36,18 +37,19 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const companyId = await getCompanyId();
     if (!companyId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { id } = await params;
 
     const body = await req.json();
     
     const existing = await db.query.goodsReceipts.findFirst({
-      where: eq(goodsReceipts.id, params.id),
+      where: eq(goodsReceipts.id, id),
     });
 
     if (!existing || existing.companyId !== companyId) {
@@ -60,7 +62,7 @@ export async function PUT(
         ...body,
         updatedAt: new Date(),
       })
-      .where(eq(goodsReceipts.id, params.id))
+      .where(eq(goodsReceipts.id, id))
       .returning();
 
     return NextResponse.json({ 

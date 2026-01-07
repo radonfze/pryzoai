@@ -6,7 +6,7 @@ import { getCompanyId } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const companyId = await getCompanyId();
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const itemId = params.id;
+    const { id: itemId } = await params;
 
     // 1. Stock by Warehouse
     const stockData = await db.query.stockLedger.findMany({

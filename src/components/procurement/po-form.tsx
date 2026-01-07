@@ -29,7 +29,7 @@ import { useRouter } from "next/navigation";
 // Form Schema
 const formSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
-  transactionDate: z.string(),
+  orderDate: z.string(),
   dueDate: z.string(),
   items: z.array(z.object({
     itemId: z.string().min(1, "Item is required"),
@@ -49,7 +49,7 @@ export default function PurchaseOrderForm({ suppliers, items }: { suppliers: any
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      transactionDate: new Date().toISOString().split("T")[0],
+      orderDate: new Date().toISOString().split("T")[0],
       dueDate: new Date().toISOString().split("T")[0],
       items: [{ itemId: "", quantity: 1, unitPrice: 0, vatRate: 5 }]
     }
@@ -116,7 +116,7 @@ export default function PurchaseOrderForm({ suppliers, items }: { suppliers: any
             />
              <FormField
               control={form.control}
-              name="transactionDate"
+              name="orderDate"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Date</FormLabel>

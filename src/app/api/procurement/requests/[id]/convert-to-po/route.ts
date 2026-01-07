@@ -6,17 +6,18 @@ import { getCompanyId } from "@/lib/auth";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const companyId = await getCompanyId();
     if (!companyId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { id } = await params;
 
     // Get request with lines
     const request = await db.query.purchaseRequests.findFirst({
-      where: eq(purchaseRequests.id, params.id),
+      where: eq(purchaseRequests.id, id),
       with: {
         lines: true,
       },
@@ -75,7 +76,7 @@ export async function POST(
       await tx
         .update(purchaseRequests)
         .set({ status: "completed" })
-        .where(eq(purchaseRequests.id, params.id));
+        .where(eq(purchaseRequests.id, id));
 
       return { po };
     });

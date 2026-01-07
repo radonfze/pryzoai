@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { 
   supplierPayments, 
-  purchaseBills, 
+  purchaseInvoices, 
   numberSeries, 
   journalEntries, 
   journalLines, 

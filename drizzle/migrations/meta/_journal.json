@@ -169,6 +169,13 @@
       "when": 1767631535887,
       "tag": "0023_lonely_lionheart",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1767777986899,
+      "tag": "0024_sour_frog_thor",
+      "breakpoints": true
     }
   ]
 }

@@ -25,6 +25,7 @@ export const salesStatusEnum = pgEnum("sales_status", [
   "partial",
   "completed",
   "cancelled",
+  "posted",
 ]);
 
 // Sales Quotations

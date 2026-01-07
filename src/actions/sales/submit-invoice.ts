@@ -1,3 +1,7 @@
+import { db } from "@/db";
+import { salesInvoices, approvalRules, approvalRequests } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { getCompanyId, requirePermission, getUserId } from "@/lib/auth";
 
 export async function submitInvoiceForApproval(invoiceId: string): Promise<{ success: boolean; message: string }> {

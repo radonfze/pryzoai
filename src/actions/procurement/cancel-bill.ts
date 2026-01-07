@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { purchaseBills, journalEntries } from "@/db/schema";
+import { purchaseInvoices, journalEntries } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { createReversalPosting } from "@/lib/services/gl-posting-service";
@@ -11,8 +11,8 @@ export async function cancelBillAction(billId: string, reason: string) {
     if (!billId) return { success: false, message: "Bill ID required" };
     if (!reason) return { success: false, message: "Cancellation reason required" };
 
-    const bill = await db.query.purchaseBills.findFirst({
-      where: eq(purchaseBills.id, billId),
+    const bill = await db.query.purchaseInvoices.findFirst({
+      where: eq(purchaseInvoices.id, billId),
     });
 
     if (!bill) return { success: false, message: "Bill not found" };
@@ -23,17 +23,13 @@ export async function cancelBillAction(billId: string, reason: string) {
     }
 
     // 1. Update Status
-    await db.update(purchaseBills)
+    await db.update(purchaseInvoices)
         .set({ 
             status: "cancelled", 
             notes: bill.notes ? `${bill.notes}\n[Cancelled]: ${reason}` : `[Cancelled]: ${reason}`,
-            updatedAt: new Date() // No explicit updatedAt in schema? Let's check. 
-            // purchaseBills schema: created_at, no updated_at in snippet? 
-            // Checking snippet 9449: purchaseBills has no updatedAt shown in snippet?
-            // Wait, I should verify if updatedAt exists.
-            // If not, I'll skip it.
+            updatedAt: new Date()
          })
-        .where(eq(purchaseBills.id, billId));
+        .where(eq(purchaseInvoices.id, billId));
 
     // 2. GL Reversal
     // Check if posted? Schema snippet 9449 doesn't show isPosted for purchaseBills.

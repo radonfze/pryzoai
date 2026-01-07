@@ -204,3 +204,32 @@ export const workOrdersRelations = relations(workOrders, ({ one }) => ({
   project: one(projects, { fields: [workOrders.projectId], references: [projects.id] }),
   amcContract: one(amcContracts, { fields: [workOrders.amcContractId], references: [amcContracts.id] }),
 }));
+
+// Time Entries
+export const timeEntries = pgTable("time_entries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("company_id").notNull().references(() => companies.id),
+  projectId: uuid("project_id").notNull().references(() => projects.id),
+  taskId: uuid("task_id").references(() => projectTasks.id),
+  employeeId: uuid("employee_id").notNull().references(() => employees.id),
+  
+  date: date("date").notNull(),
+  hours: decimal("hours", { precision: 5, scale: 2 }).notNull(),
+  description: text("description"),
+  
+  isBillable: boolean("is_billable").default(false),
+  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, approved, rejected, invoiced
+  
+  invoiceId: uuid("invoice_id"), // Link to sales invoice if billed
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdBy: uuid("created_by"),
+});
+
+export const timeEntriesRelations = relations(timeEntries, ({ one }) => ({
+  company: one(companies, { fields: [timeEntries.companyId], references: [companies.id] }),
+  project: one(projects, { fields: [timeEntries.projectId], references: [projects.id] }),
+  task: one(projectTasks, { fields: [timeEntries.taskId], references: [projectTasks.id] }),
+  employee: one(employees, { fields: [timeEntries.employeeId], references: [employees.id] }),
+}));

@@ -73,7 +73,7 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
                    <label className="text-sm font-medium text-muted-foreground">Type</label>
                    <div className="mt-1">
                        <Badge variant="outline" className="capitalize">
-                           {item.itemType}
+                           {item.type}
                        </Badge>
                    </div>
                </div>

@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { items, stockLedger, invoiceLines, purchaseOrderLines } from "@/db/schema";
+import { items, stockLedger, salesLines, purchaseLines } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 

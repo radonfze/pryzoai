@@ -26,6 +26,7 @@ export const purchaseStatusEnum = pgEnum("purchase_status", [
   "partial",
   "completed",
   "cancelled",
+  "posted",
 ]);
 
 // Purchase Requests

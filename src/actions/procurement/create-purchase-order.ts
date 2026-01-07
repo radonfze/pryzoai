@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { getCompanyId } from "@/lib/auth";
 import { 
   purchaseOrders,
-  purchaseOrderLines,
+  purchaseLines,
   companies,
   suppliers,
   items,
@@ -82,7 +82,7 @@ async function getPOMasterData(companyId: string) {
     }),
     db.query.items.findMany({
       where: and(eq(items.companyId, companyId), eq(items.isActive, true)),
-      columns: { id: true, name: true, code: true, purchasePrice: true, uom: true },
+      columns: { id: true, name: true, code: true, costPrice: true, uom: true },
     }),
     db.query.warehouses.findMany({
       where: and(eq(warehouses.companyId, companyId), eq(warehouses.isActive, true)),
@@ -172,7 +172,7 @@ export async function createPurchaseOrderAction(input: PurchaseOrderInput): Prom
         status: "draft",
       }).returning();
 
-      await tx.insert(purchaseOrderLines).values(
+      await tx.insert(purchaseLines).values(
         processedLines.map((line) => ({
           companyId: companyId,
           purchaseOrderId: po.id,

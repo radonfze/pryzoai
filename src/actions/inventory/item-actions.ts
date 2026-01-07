@@ -53,7 +53,6 @@ export type ItemInput = {
     categoryId?: string;
     subCategoryId?: string;
     brandId?: string;
-    brandId?: string;
     modelId?: string;
     partNumber?: string;
     uom: string;
@@ -71,7 +70,7 @@ export type ItemInput = {
     reorderQty: number;
     
     // Flags
-    itemType: 'stock' | 'service' | 'goods'; // 'goods' maps to 'stock' in DB
+    type: 'stock' | 'service' | 'goods'; // 'goods' maps to 'stock' in DB
     isActive: boolean;
     hasBatchNo: boolean;
     hasSerialNo: boolean;
@@ -96,7 +95,7 @@ export async function createItemAction(input: ItemInput) {
         if (existing) return { success: false, message: "Item code already exists" };
 
         // Map 'goods' to 'stock' for DB enum
-        const dbItemType = input.itemType === 'goods' ? 'stock' : input.itemType;
+        const dbItemType = input.type === 'goods' ? 'stock' : input.type;
 
         const [newItem] = await db.insert(items).values({
             companyId,
@@ -105,10 +104,9 @@ export async function createItemAction(input: ItemInput) {
             nameAr: input.nameAr,
             barcode: input.barcode,
             description: input.description,
-            itemType: dbItemType as any,
+            type: dbItemType as any,
             categoryId: input.categoryId || null,
             subCategoryId: input.subCategoryId || null,
-            brandId: input.brandId || null,
             brandId: input.brandId || null,
             modelId: input.modelId || null,
             partNumber: input.partNumber || null,

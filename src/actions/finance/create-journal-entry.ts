@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { 
   journalEntries,
-  journalEntryLines,
+  journalLines,
   companies,
   accounts,
   numberSeries
@@ -112,7 +112,7 @@ export async function createJournalEntryAction(input: JournalInput): Promise<Act
       const [journal] = await tx.insert(journalEntries).values({
         companyId: DEMO_COMPANY_ID,
         journalNumber,
-        entryDate: input.entryDate,
+        journalDate: input.entryDate,
         reference: input.reference,
         description: input.description,
         totalDebit: totalDebit.toFixed(2),
@@ -122,7 +122,7 @@ export async function createJournalEntryAction(input: JournalInput): Promise<Act
       }).returning();
 
       // Insert journal entry lines
-      await tx.insert(journalEntryLines).values(
+      await tx.insert(journalLines).values(
         input.lines.map((line, index) => ({
           companyId: DEMO_COMPANY_ID,
           journalEntryId: journal.id,

@@ -3,11 +3,11 @@
 import { db } from "@/db";
 import { 
   purchaseReturns, 
-  purchaseReturnLines, 
-  purchaseBills, 
+  purchaseLines, 
+  purchaseInvoices, 
   items, 
   numberSeries,
-  inventoryTransactions,
+  stockTransactions,
   journalEntries,
   journalLines,
   chartOfAccounts
@@ -93,7 +93,7 @@ export async function createPurchaseReturnAction(input: PurchaseReturnInput): Pr
             }).returning();
 
             // Lines
-            await tx.insert(purchaseReturnLines).values(
+            await tx.insert(purchaseLines).values(
                 input.lines.map((l, i) => ({
                     companyId: DEMO_COMPANY_ID,
                     returnId: pr.id,
@@ -116,19 +116,19 @@ export async function createPurchaseReturnAction(input: PurchaseReturnInput): Pr
                         .set({ stockQuantity: newStock.toString() })
                         .where(eq(items.id, line.itemId));
 
-                     await tx.insert(inventoryTransactions).values({
+                     await tx.insert(stockTransactions).values({
                         companyId: DEMO_COMPANY_ID,
                         transactionDate: new Date(input.returnDate),
                         itemId: line.itemId,
                         warehouseId: input.warehouseId,
-                        transactionType: "OUT",
+                        transactionType: "return_out", // Fixed enum
                         documentType: "PR",
                         documentId: pr.id,
                         documentNumber: prNumber,
                         quantity: line.quantity.toString(),
                         unitCost: item.costPrice || "0",
-                        totalValue: (Number(line.quantity) * Number(item.costPrice || 0)).toString(),
-                        reference: `Purchase Return to ${input.supplierId}`
+                        totalCost: (Number(line.quantity) * Number(item.costPrice || 0)).toString(), // Fixed totalValue -> totalCost
+                        uom: "PCS" // Added required uom
                      });
                 }
             }

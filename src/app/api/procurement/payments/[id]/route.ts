@@ -6,13 +6,15 @@ import { getCompanyId } from "@/lib/auth";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const companyId = await getCompanyId();
     if (!companyId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const { id } = await params;
 
     const payment = await db.query.supplierPayments.findFirst({
       where: eq(supplierPayments.id, params.id),

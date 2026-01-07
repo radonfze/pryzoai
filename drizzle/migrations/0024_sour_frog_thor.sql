@@ -1,0 +1,2 @@
+-- Manual fix applied via fix-schema.ts
+-- This migration records the state change in Drizzle but executes nothing.

@@ -42,7 +42,7 @@ export default async function InventoryDashboardPage() {
 
   const [stockValueResult] = await db
     .select({ 
-      totalValue: sum(sql`COALESCE(${stockLedger.qty}, 0) * COALESCE(${stockLedger.avgCost}, 0)`)
+      totalValue: sum(sql`COALESCE(${stockLedger.quantityOnHand}, 0) * COALESCE(${stockLedger.averageCost}, 0)`)
     })
     .from(stockLedger)
     .where(eq(stockLedger.companyId, companyId));
@@ -52,7 +52,7 @@ export default async function InventoryDashboardPage() {
     .from(stockLedger)
     .where(and(
       eq(stockLedger.companyId, companyId),
-      sql`${stockLedger.qty} <= ${stockLedger.reorderLevel}`
+      sql`${stockLedger.quantityOnHand} <= ${stockLedger.reorderLevel}`
     ));
 
   const [movementsResult] = await db
@@ -68,7 +68,7 @@ export default async function InventoryDashboardPage() {
     .select({
       id: stockTransactions.id,
       type: stockTransactions.transactionType,
-      qty: stockTransactions.qty,
+      qty: stockTransactions.quantity,
       createdAt: stockTransactions.createdAt,
       itemId: stockTransactions.itemId,
     })
@@ -82,13 +82,13 @@ export default async function InventoryDashboardPage() {
     .select({
       id: stockLedger.id,
       itemId: stockLedger.itemId,
-      qty: stockLedger.qty,
+      qty: stockLedger.quantityOnHand,
       reorderLevel: stockLedger.reorderLevel,
     })
     .from(stockLedger)
     .where(and(
       eq(stockLedger.companyId, companyId),
-      sql`${stockLedger.qty} <= ${stockLedger.reorderLevel}`
+      sql`${stockLedger.quantityOnHand} <= ${stockLedger.reorderLevel}`
     ))
     .limit(5);
 
@@ -96,13 +96,13 @@ export default async function InventoryDashboardPage() {
   const topItemsByValue = await db
     .select({
       itemId: stockLedger.itemId,
-      qty: stockLedger.qty,
-      avgCost: stockLedger.avgCost,
-      value: sql<number>`COALESCE(${stockLedger.qty}, 0) * COALESCE(${stockLedger.avgCost}, 0)`,
+      qty: stockLedger.quantityOnHand,
+      avgCost: stockLedger.averageCost,
+      value: sql<number>`COALESCE(${stockLedger.quantityOnHand}, 0) * COALESCE(${stockLedger.averageCost}, 0)`,
     })
     .from(stockLedger)
     .where(eq(stockLedger.companyId, companyId))
-    .orderBy(desc(sql`COALESCE(${stockLedger.qty}, 0) * COALESCE(${stockLedger.avgCost}, 0)`))
+    .orderBy(desc(sql`COALESCE(${stockLedger.quantityOnHand}, 0) * COALESCE(${stockLedger.averageCost}, 0)`))
     .limit(5);
 
   const stats = [
