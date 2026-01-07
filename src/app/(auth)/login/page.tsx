@@ -60,13 +60,12 @@ export default function LoginPage() {
     <div className="space-y-6">
       {/* Logo */}
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 text-3xl font-bold text-primary">
-          <div className="relative h-12 w-12">
+        <div className="inline-flex items-center justify-center mb-4">
+          <div className="relative h-20 w-64">
             <Image src="/logo.png" alt="PryzoAI" fill className="object-contain" priority />
           </div>
-          PryzoAI
         </div>
-        <p className="text-sm text-muted-foreground mt-2">Enterprise Resource Planning</p>
+        <p className="text-sm text-muted-foreground">Enterprise Resource Planning</p>
       </div>
 
       {/* Login Card */}
