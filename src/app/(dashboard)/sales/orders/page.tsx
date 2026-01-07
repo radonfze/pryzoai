@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { salesOrders } from "@/db/schema";
-import { eq, desc, count } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, ShoppingCart, Clock, CheckCircle2 } from "lucide-react";
@@ -51,16 +51,17 @@ export default async function SalesOrdersPage() {
     const statsResult = await db
       .select({
         status: salesOrders.status,
-        count: count(),
+        count: sql<number>`count(*)`.mapWith(Number),
       })
       .from(salesOrders)
       .where(eq(salesOrders.companyId, companyId))
       .groupBy(salesOrders.status);
 
     statsData = statsResult.reduce((acc, curr) => {
-      acc.total += curr.count;
-      if (curr.status === 'draft' || curr.status === 'pending_approval' || curr.status === 'sent') acc.pending += curr.count;
-      if (curr.status === 'completed' || curr.status === 'issued') acc.completed += curr.count;
+      const countVal = Number(curr.count);
+      acc.total += countVal;
+      if (curr.status === 'draft' || curr.status === 'pending_approval' || curr.status === 'sent') acc.pending += countVal;
+      if (curr.status === 'completed' || curr.status === 'issued') acc.completed += countVal;
       return acc;
     }, { total: 0, pending: 0, completed: 0 });
 
@@ -111,7 +112,7 @@ export default async function SalesOrdersPage() {
 
       <DataTable 
         columns={columns} 
-        data={orders} 
+        data={JSON.parse(JSON.stringify(orders))} 
         searchKey="orderNumber"
         placeholder="Search orders..." 
       />

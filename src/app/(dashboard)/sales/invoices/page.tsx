@@ -55,7 +55,7 @@ export default async function InvoicesPage() {
             dueDate: salesInvoices.dueDate
         })
         .from(salesInvoices)
-        .where(eq(salesInvoices.companyId, "00000000-0000-0000-0000-000000000000")); // Use correct company ID variable if available, else static for now
+        .where(eq(salesInvoices.companyId, userId ? (session.companyId || "00000000-0000-0000-0000-000000000000") : "00000000-0000-0000-0000-000000000000"));
         
       const now = new Date();
       
@@ -134,7 +134,7 @@ export default async function InvoicesPage() {
       </div>
 
       <div className="rounded-md border bg-white">
-        <InvoicesTable invoices={invoices} userId={userId} />
+        <InvoicesTable invoices={JSON.parse(JSON.stringify(invoices))} userId={userId} />
       </div>
     </div>
   );

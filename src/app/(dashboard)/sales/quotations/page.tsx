@@ -52,7 +52,7 @@ export default async function QuotationsPage() {
     const statsResult = await db
       .select({
         status: salesQuotations.status,
-        count: sql<number>`count(*)`,
+        count: sql<number>`count(*)`.mapWith(Number),
       })
       .from(salesQuotations)
       .where(eq(salesQuotations.companyId, companyId))
@@ -121,7 +121,7 @@ export default async function QuotationsPage() {
 
       <DataTable 
         columns={columns} 
-        data={specificQuotations} 
+        data={JSON.parse(JSON.stringify(specificQuotations))} 
         searchKey="quotationNumber"
         placeholder="Search quotations..." 
       />
