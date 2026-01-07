@@ -1,9 +1,10 @@
 import { db } from "@/db";
 import { salesInvoices } from "@/db/schema";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
 import GradientHeader from "@/components/ui/gradient-header";
-import { FileText, Plus } from "lucide-react";
+import { FileText, Plus, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
+import { StatsCards } from "@/components/dashboard/stats-cards";
 import Link from "next/link";
 import { ExportButton } from "@/components/ui/export-button";
 import { getSession } from "@/lib/auth";
@@ -35,6 +36,85 @@ export default async function InvoicesPage() {
     invoices = [];
   }
 
+  // Calculate Stats
+  let statsData = {
+    totalRevenue: 0,
+    pendingPayment: 0,
+    overdue: 0,
+    drafts: 0
+  };
+
+  try {
+      // We can use a raw SQL query or just fetch all lightweight status/amount objects for cleaner logic if distinct count is low, 
+      // but let's try a grouped query. Ideally we sum amounts.
+      const statsList = await db
+        .select({
+            status: salesInvoices.status,
+            totalAmount: salesInvoices.totalAmount,
+            balanceAmount: salesInvoices.balanceAmount,
+            dueDate: salesInvoices.dueDate
+        })
+        .from(salesInvoices)
+        .where(eq(salesInvoices.companyId, "00000000-0000-0000-0000-000000000000")); // Use correct company ID variable if available, else static for now
+        
+      const now = new Date();
+      
+      statsList.forEach(inv => {
+         const amount = Number(inv.totalAmount || 0);
+         const balance = Number(inv.balanceAmount || 0);
+         
+         if (inv.status === 'posted' || inv.status === 'completed' || inv.status === 'paid') { // valid revenue
+             statsData.totalRevenue += amount;
+         }
+         
+         if (balance > 0 && inv.status !== 'draft' && inv.status !== 'cancelled') {
+             statsData.pendingPayment += balance;
+             const due = new Date(inv.dueDate);
+             if (due < now) {
+                 statsData.overdue += balance;
+             }
+         }
+
+         if (inv.status === 'draft') {
+             statsData.drafts++;
+         }
+      });
+
+  } catch (err) {
+      console.error("Failed to fetch invoice stats", err);
+  }
+
+  const invoiceStats: any[] = [
+    {
+       title: "Total Revenue",
+       value: new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(statsData.totalRevenue),
+       icon: CheckCircle2,
+       description: "Posted & Paid Invoices",
+       color: "text-green-600"
+    },
+    {
+       title: "Pending Payment",
+       value: new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(statsData.pendingPayment),
+       icon: AlertCircle,
+       description: "Outstanding Balance",
+       color: "text-orange-500"
+    },
+    {
+       title: "Overdue",
+       value: new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(statsData.overdue),
+       icon: AlertTriangle,
+       description: "Past Due Date",
+       color: "text-red-500"
+    },
+    {
+       title: "Draft Invoices",
+       value: statsData.drafts,
+       icon: FileText,
+       description: "Not issued yet",
+       color: "text-gray-500"
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-6 p-4 md:p-8 pt-6">
       <GradientHeader
@@ -44,6 +124,8 @@ export default async function InvoicesPage() {
         icon={FileText}
       />
       
+      <StatsCards stats={invoiceStats} />
+
       <div className="flex items-center justify-end gap-2">
          <ExportButton data={invoices} filename="Sales_Invoices" />
          <Link href="/sales/invoices/new">
