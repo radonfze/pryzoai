@@ -61,6 +61,35 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<ArrayBuffer
   const pageWidth = doc.internal.pageSize.width;
   let yPos = 20;
 
+  // Render Logo if available
+  if (data.company.logo) {
+    try {
+      const imgProps = doc.getImageProperties(data.company.logo);
+      const logoWidth = 30; // mm
+      const logoHeight = (imgProps.height * logoWidth) / imgProps.width;
+      
+      doc.addImage(data.company.logo, "PNG", 14, yPos, logoWidth, logoHeight);
+      
+      // Adjust yPos for text below logo or keep side-by-side
+      // For now, let's put text to the right of logo or below.
+      // Standard header often has Logo Left, Text Right, or Text Below.
+      // Let's shift text start Y if we want text below, but here let's keep text layout 
+      // and maybe move text slightly down or right if needed.
+      // But current text positioning code uses hardcoded 14 x yPos.
+      // Let's place logo at top left (14, 10) and move text down.
+      
+      // Actually, let's just place logo at top-left 14, 15
+      // And move the Company Name text down or to the right. 
+      // Let's move text down to yPos + logoHeight + 5
+      
+      doc.addImage(data.company.logo, "PNG", 14, 10, logoWidth, logoHeight);
+      yPos = 10 + logoHeight + 5;
+      
+    } catch (e) {
+      console.warn("Failed to add logo to PDF", e);
+    }
+  }
+
   // Company Name
   doc.setFontSize(18);
   doc.text(data.company.name, 14, yPos);
