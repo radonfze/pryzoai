@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { MUIProvider } from "@/providers/mui-theme-provider";
+import { SessionMonitor } from "@/components/auth/session-monitor";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <MUIProvider>
+          <SessionMonitor />
           {children}
         </MUIProvider>
       </body>

@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { salesQuotations } from "@/db/schema";
-import { eq, desc, count } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText, CheckCircle2, Send } from "lucide-react";
@@ -52,17 +52,18 @@ export default async function QuotationsPage() {
     const statsResult = await db
       .select({
         status: salesQuotations.status,
-        count: count(),
+        count: sql<number>`count(*)`,
       })
       .from(salesQuotations)
       .where(eq(salesQuotations.companyId, companyId))
       .groupBy(salesQuotations.status);
 
     statsData = statsResult.reduce((acc, curr) => {
-      acc.total += curr.count;
-      if (curr.status === 'draft') acc.draft += curr.count;
-      if (curr.status === 'sent') acc.sent += curr.count;
-      if (curr.status === 'issued') acc.accepted += curr.count; // issued = accepted/processed
+      const countVal = Number(curr.count);
+      acc.total += countVal;
+      if (curr.status === 'draft') acc.draft += countVal;
+      if (curr.status === 'sent') acc.sent += countVal;
+      if (curr.status === 'issued') acc.accepted += countVal; // issued = accepted/processed
       return acc;
     }, { total: 0, draft: 0, sent: 0, accepted: 0 });
   } catch (err) {

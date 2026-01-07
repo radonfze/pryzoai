@@ -46,15 +46,32 @@ export async function POST(request: Request) {
       ),
     });
 
-    // Auto-create default series for invoices if missing
-    if (!series && entityType === 'invoice') {
-      console.log('Auto-creating default invoice number series...');
+    // Generic auto-create default series if missing
+    if (!series) {
+      console.log(`Auto-creating default number series for ${entityType}...`);
+      
+      const defaultPrefixes: Record<string, string> = {
+        invoice: 'INV',
+        quotation: 'QT',
+        proforma: 'PRO',
+        sales_order: 'SO',
+        delivery_note: 'DN',
+        purchase_order: 'PO',
+        purchase_request: 'PR',
+        purchase_bill: 'BILL',
+        receipt: 'RCT',
+        payment: 'PAY',
+      };
+
+      const prefix = defaultPrefixes[entityType] || entityType.substring(0, 3).toUpperCase();
+      const docType = documentType || prefix;
+
       try {
         const [created] = await db.insert(numberSeries).values({
           companyId,
-          entityType: 'invoice',
-          documentType: 'INV',
-          prefix: 'INV',
+          entityType,
+          documentType: docType,
+          prefix: prefix,
           separator: '-',
           yearFormat: 'YYYY',
           currentValue: 0,
@@ -64,7 +81,7 @@ export async function POST(request: Request) {
           isActive: true,
         }).returning();
         
-        series = created; // Use the newly created series
+        series = created; 
       } catch (createError) {
         console.error('Failed to auto-create number series:', createError);
         return NextResponse.json(
