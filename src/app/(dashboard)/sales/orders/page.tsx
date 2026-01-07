@@ -104,7 +104,7 @@ export default async function SalesOrdersPage() {
       <StatsCards stats={orderStats} className="grid-cols-3" />
 
       <div className="flex items-center justify-end gap-2">
-        <ExportButton data={orders} filename="Sales_Orders" />
+        <ExportButton data={JSON.parse(JSON.stringify(orders))} filename="Sales_Orders" />
         <Link href="/sales/orders/new">
           <Button><Plus className="mr-2 h-4 w-4" /> New Sales Order</Button>
         </Link>

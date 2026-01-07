@@ -127,8 +127,8 @@ export default async function InvoicesPage() {
       <StatsCards stats={invoiceStats} />
 
       <div className="flex items-center justify-end gap-2">
-         <ExportButton data={invoices} filename="Sales_Invoices" />
-         <Link href="/sales/invoices/new">
+        <ExportButton data={JSON.parse(JSON.stringify(invoices))} filename="Invoices" />
+        <Link href="/sales/invoices/new">
            <Button><Plus className="mr-2 h-4 w-4" /> Create Invoice</Button>
          </Link>
       </div>

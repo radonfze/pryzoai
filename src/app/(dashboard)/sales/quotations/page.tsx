@@ -113,7 +113,7 @@ export default async function QuotationsPage() {
       <StatsCards stats={salesStats} />
 
       <div className="flex items-center justify-end gap-2">
-        <ExportButton data={specificQuotations} filename="Quotations" />
+        <ExportButton data={JSON.parse(JSON.stringify(specificQuotations))} filename="Quotations" />
         <Link href="/sales/quotations/new">
           <Button><Plus className="mr-2 h-4 w-4" /> New Quotation</Button>
         </Link>

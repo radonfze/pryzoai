@@ -81,7 +81,7 @@ export default async function PurchaseBillsPage() {
       <StatsCards stats={billStats} className="grid-cols-3" />
       
       <div className="flex items-center justify-end gap-2">
-         <ExportButton data={bills} filename="Purchase_Bills" />
+         <ExportButton data={JSON.parse(JSON.stringify(bills))} filename="Purchase_Bills" />
          <Link href="/procurement/bills/new">
            <Button><Plus className="mr-2 h-4 w-4" /> New Bill</Button>
          </Link>
