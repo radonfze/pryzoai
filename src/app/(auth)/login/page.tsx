@@ -61,7 +61,7 @@ export default function LoginPage() {
       {/* Logo */}
       <div className="text-center">
         <div className="inline-flex items-center justify-center mb-4">
-          <div className="relative h-20 w-64">
+          <div className="relative h-32 w-96">
             <Image src="/logo-full.png" alt="PryzoAI" fill className="object-contain" priority />
           </div>
         </div>
