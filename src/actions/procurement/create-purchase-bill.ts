@@ -37,7 +37,7 @@ type PurchaseBillInput = {
   billSundry?: BillSundry[];
 };
 
-const DEMO_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+import { getCompanyId } from "@/lib/auth";
 
 async function generateBillNumber(companyId: string, billDate: Date): Promise<string> {
   const series = await db.query.numberSeries.findFirst({
@@ -54,11 +54,20 @@ async function generateBillNumber(companyId: string, billDate: Date): Promise<st
 
 export async function createPurchaseBillAction(input: PurchaseBillInput): Promise<ActionResponse> {
   try {
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, message: "Unauthorized" };
+    
+    // We can reuse the variable name or just use companyId everywhere. 
+    // For minimal code change, let's just shadow the constant or use a new variable.
+    // The existing code uses DEMO_COMPANY_ID. Let's make DEMO_COMPANY_ID point to the real one inside the scope if we want to avoid replacing all usages,
+    // OR just pass companyId to generateBillNumber and replace usages. 
+    // Replacing usage is cleaner.
+    
     if (!input.supplierId || !input.billDate || !input.lines?.length) {
       return { success: false, message: "Invalid input" };
     }
     
-    const billNumber = await generateBillNumber(DEMO_COMPANY_ID, new Date(input.billDate));
+    const billNumber = await generateBillNumber(companyId, new Date(input.billDate));
     
     // Calculate Totals
     const subtotal = input.lines.reduce((sum, l) => {
@@ -75,7 +84,7 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
     const result = await db.transaction(async (tx) => {
       // 1. Insert Bill Header (Purchase Invoice)
       const [bill] = await tx.insert(purchaseInvoices).values({
-        companyId: DEMO_COMPANY_ID,
+        companyId: companyId,
         invoiceNumber: billNumber,
         purchaseOrderId: input.purchaseOrderId && input.purchaseOrderId.trim() !== "" ? input.purchaseOrderId : null,
         supplierId: input.supplierId,
@@ -101,7 +110,7 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
       // 2. Insert Bill Lines
       await tx.insert(purchaseLines).values(
         input.lines.map((line, index) => ({
-          companyId: DEMO_COMPANY_ID,
+          companyId: companyId,
           invoiceId: bill.id,
           lineNumber: index + 1,
           purchaseOrderLineId: line.poLineId || null,
@@ -123,7 +132,7 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
       // 3. GL Posting: Use Standard Service
       // Fetch GL Mapping
       const defaults = await tx.query.defaultGlAccounts.findMany({
-          where: eq(defaultGlAccounts.companyId, DEMO_COMPANY_ID)
+          where: eq(defaultGlAccounts.companyId, companyId)
       });
       const getDef = (key: string) => defaults.find(d => d.mappingKey === key)?.accountId;
 
@@ -157,7 +166,7 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
         for (const line of input.lines) {
           // Insert stock ledger entry
           await tx.insert(stockLedger).values({
-            companyId: DEMO_COMPANY_ID,
+            companyId: companyId,
             itemId: line.itemId,
             warehouseId: input.warehouseId,
             transactionType: "purchase_bill",

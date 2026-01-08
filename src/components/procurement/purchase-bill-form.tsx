@@ -217,67 +217,45 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
     control: form.control,
   });
 
-  const [totals, setTotals] = useState({ subtotal: 0, taxTotal: 0, total: 0 });
+  // Direct calculation during render (reliable)
+  const watchedLines = form.watch("lines") || [];
+  const watchedSundry = form.watch("billSundry") || [];
 
-  // Watch fields for changes
-  const watchedLines = form.watch("lines");
-  const watchedSundry = form.watch("billSundry");
-
-  useEffect(() => {
-    console.log('[BILL FORM] Recalculating totals...');
-    console.log('[BILL FORM] watchedLines:', watchedLines);
-    console.log('[BILL FORM] watchedSundry:', watchedSundry);
-    
-    let sub = 0;
-    let tax = 0;
-    const lines = watchedLines || [];
-    
-    lines.forEach((line, index) => {
-      const qty = parseFloat(String(line.quantity)) || 0;
-      const price = parseFloat(String(line.unitPrice)) || 0;
-      const disc = parseFloat(String(line.discountAmount)) || 0;
-      const tAmount = parseFloat(String(line.taxAmount)) || 0;
+  const { subtotal, taxTotal, total } = (() => {
+      let sub = 0;
+      let tax = 0;
       
-      const lineBase = qty * price;
-      const taxable = Math.max(0, lineBase - disc);
-      
-      console.log(`[BILL FORM] Line ${index + 1}: qty=${qty}, price=${price}, disc=${disc}, tax=${tAmount}, taxable=${taxable}`);
-      
-      sub += taxable;
-      tax += tAmount;
-    });
+      watchedLines.forEach((line) => {
+        const qty = parseFloat(String(line.quantity)) || 0;
+        const price = parseFloat(String(line.unitPrice)) || 0;
+        const disc = parseFloat(String(line.discountAmount)) || 0;
+        const tAmount = parseFloat(String(line.taxAmount)) || 0;
+        
+        const lineBase = qty * price;
+        const taxable = Math.max(0, lineBase - disc);
+        
+        sub += taxable;
+        tax += tAmount;
+      });
 
-    const currentSundry = watchedSundry || [];
-    let sundryTotal = 0;
-    currentSundry.forEach(s => {
-      sundryTotal += parseFloat(String(s.amount)) || 0;
-    });
-    
-    const newTotal = sub + tax + sundryTotal;
-    console.log(`[BILL FORM] Calculated: subtotal=${sub}, taxTotal=${tax}, sundryTotal=${sundryTotal}, GRAND TOTAL=${newTotal}`);
+      let sundryTotal = 0;
+      watchedSundry.forEach(s => {
+        sundryTotal += parseFloat(String(s.amount)) || 0;
+      });
 
-    setTotals({
-      subtotal: sub,
-      taxTotal: tax,
-      total: newTotal
-    });
-  }, [watchedLines, watchedSundry]);
+      return {
+        subtotal: sub,
+        taxTotal: tax,
+        total: sub + tax + sundryTotal
+      };
+  })();
 
-  const { subtotal, taxTotal, total } = totals;
-  
   // Helper to re-calculate line tax when qty/price changes
   const updateLineTax = (index: number) => {
-     // This would ideally check the Item's tax percent. 
-     // Since we don't have easy access to the exact item object here without searching 'items' array again:
      const line = form.getValues(`lines.${index}`);
-     // If we want to be safe, we can default to 5% if we know it's taxable.
-     // But we don't know if it's taxable without the item.
-     // Let's rely on handleItemSelect setting a hidden 'taxRate' field in the future, 
-     // but for now, let's try to lookup item again or assume 5% if 'taxAmount' was previously set > 0
-     
-     // QUICK FIX: If taxAmount was > 0 or it's a new line with a selected item,
-     // we could try to re-apply 5% logic.
-     // Better yet, let's look up the item:
+     // Try to look up tax percent from items array if possible
+     // Just doing basic logic for now or relying on user manual input if needed
+     // ... (logic remains same)
      const selectedItem = items.find(i => i.id === line.itemId);
      if (selectedItem) {
           const taxMod = selectedItem.taxPercent ? parseFloat(String(selectedItem.taxPercent)) / 100 : 0.05;
@@ -298,7 +276,6 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
 
   async function onSubmit(data: PurchaseBillFormValues) {
     console.log('[BILL FORM] Submit triggered with data:', data);
-    console.log('[BILL FORM] Current totals:', { subtotal, taxTotal, total });
     setLoading(true);
     try {
       const payload = { ...data };
@@ -320,6 +297,12 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
       setLoading(false);
     }
   }
+
+  const onInvalid = (errors: any) => {
+    console.error("[BILL FORM] Validation Errors:", errors);
+    const errorFields = Object.keys(errors);
+    toast.error(`Please fix errors in: ${errorFields.join(", ")}`);
+  };
 
   const handleItemSelect = (index: number, itemId: string) => {
     const item = items.find((i) => i.id === itemId);
@@ -346,7 +329,7 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
         
         {/* Header Section */}
         <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
