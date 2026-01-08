@@ -45,7 +45,7 @@ export async function GET(
   // Read Logo File
   let logoBase64: string | undefined;
   try {
-    const logoPath = path.join(process.cwd(), "public", "logo.png");
+    const logoPath = path.join(process.cwd(), "public", "logo-full.png");
     if (fs.existsSync(logoPath)) {
       const logoBuffer = fs.readFileSync(logoPath);
       logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;

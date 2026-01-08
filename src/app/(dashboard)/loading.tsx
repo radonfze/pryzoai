@@ -7,6 +7,12 @@ export default function DashboardLoading() {
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       {/* Header Skeleton */}
+      <div className="flex items-center justify-center py-4">
+        <div className="relative h-12 w-12 animate-pulse">
+             <img src="/logo-icon.png" alt="Loading..." className="h-full w-full object-contain opacity-50" />
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div className="space-y-2">
            <div className="flex items-center gap-2 mb-4">

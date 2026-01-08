@@ -12,6 +12,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   Collapsible,
@@ -401,13 +402,18 @@ const menuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { state } = useSidebar();
 
   return (
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
-          <div className="relative h-16 w-auto min-w-[140px]">
-            <Image src="/logo.png" alt="PryzoAI" width={160} height={50} className="object-contain h-full w-auto" priority />
+          <div className="relative h-12 w-auto min-w-[40px] flex items-center justify-center">
+            {state === "collapsed" ? (
+               <Image src="/logo-icon.png" alt="PryzoAI" width={40} height={40} className="object-contain h-10 w-auto" priority />
+            ) : (
+               <Image src="/logo-full.png" alt="PryzoAI" width={160} height={50} className="object-contain h-full w-auto" priority />
+            )}
           </div>
         </div>
       </SidebarHeader>
