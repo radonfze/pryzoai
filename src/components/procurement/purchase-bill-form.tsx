@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea"; // Added Textarea for Remarks
+import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -35,13 +35,42 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Check, ChevronsUpDown, Loader2, Upload } from "lucide-react";
+import { 
+  Plus, 
+  Trash2, 
+  Check, 
+  ChevronsUpDown, 
+  Loader2, 
+  Upload, 
+  ArrowLeft,
+  FileText,
+  BadgePercent,
+  Receipt,
+  Package,
+  CheckCircle2,
+  TrendingUp,
+  Eye,
+  Settings,
+  MoreVertical
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch"; 
+import { Label } from "@/components/ui/label";
 import { createPurchaseBillAction } from "@/actions/procurement/create-purchase-bill";
+
+// --- Schema Definitions ---
 
 const billSundrySchema = z.object({
   name: z.string().optional(),
@@ -50,27 +79,27 @@ const billSundrySchema = z.object({
 
 const formSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
-  supplierEmail: z.string().optional(), // Display only mainly
+  supplierEmail: z.string().optional(),
   billDate: z.string().min(1, "Bill Date is required"),
   dueDate: z.string().optional(),
   reference: z.string().optional(),
   
   // New Fields
-  warehouseId: z.string().optional(), // Material Center
+  warehouseId: z.string().optional(), 
   purchaseType: z.string().default("vat_item_wise"),
   paymentType: z.string().default("credit"),
   status: z.string().default("open"),
   
-  notes: z.string().optional(), // Remarks
+  notes: z.string().optional(),
   termsAndConditions: z.string().optional(),
 
   lines: z.array(z.object({
     itemId: z.string().min(1, "Item is required"),
     quantity: z.number().min(0.001, "Quantity required"),
-    uom: z.string().min(1, "Unit required"), // Unit
-    unitPrice: z.number().min(0, "Price required"), // Rate
-    discountAmount: z.number().default(0), // Discount
-    taxAmount: z.number().default(0), // TAX
+    uom: z.string().default("PCS"),
+    unitPrice: z.number().min(0, "Price required"),
+    discountAmount: z.number().default(0),
+    taxAmount: z.number().default(0),
     projectId: z.string().optional(),
     taskId: z.string().optional(),
     description: z.string().optional(),
@@ -89,91 +118,23 @@ interface PurchaseBillFormProps {
   initialData?: any;
 }
 
-// Sub-component for Item Combobox
-function ItemCombobox({ 
-  value, 
-  onChange, 
-  items,
-  onSelect 
-}: { 
-  value: string, 
-  onChange: (val: string) => void, 
-  items: any[], 
-  onSelect: (val: string) => void 
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <FormControl>
-          <Button
-            variant="outline"
-            role="combobox"
-            className={cn(
-              "w-full justify-between h-9 px-3 font-normal",
-              !value && "text-muted-foreground"
-            )}
-          >
-            <span className="truncate">
-              {value
-                ? items.find((item) => item.id === value)?.name || "Search Item"
-                : "Search Item by Code"}
-            </span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </FormControl>
-      </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Search item code/name..." />
-          <CommandList>
-            <CommandEmpty>No item found.</CommandEmpty>
-            <CommandGroup>
-              {items.slice(0, 50).map((item) => (
-                <CommandItem
-                  value={item.id}
-                  key={item.id}
-                  onSelect={() => {
-                    onChange(item.id);
-                    onSelect(item.id);
-                    setOpen(false);
-                  }}
-                  keywords={[item.name, item.code || ""]}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      item.id === value ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <div className="flex flex-col">
-                    <span className="font-medium">{item.name}</span>
-                    {item.code && <span className="text-xs text-muted-foreground">{item.code}</span>}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], projects = [], initialData }: PurchaseBillFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [openSupplier, setOpenSupplier] = useState(false);
-  const isEdit = !!initialData;
   
-  // Calculations
+  // Design states matched to InvoiceForm
+  const [selectedLineIndex, setSelectedLineIndex] = useState<number | null>(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [savedBillNumber, setSavedBillNumber] = useState("");
+  
+  // Form Initialization
   const form = useForm<PurchaseBillFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
       supplierId: initialData.supplierId || "",
-      billDate: initialData.invoiceDate || new Date().toISOString().split("T")[0],
-      dueDate: initialData.dueDate || new Date().toISOString().split("T")[0],
+      billDate: initialData.invoiceDate ? new Date(initialData.invoiceDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+      dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
       reference: initialData.supplierInvoiceNo || "",
       notes: initialData.notes || "",
       warehouseId: initialData.warehouseId || "",
@@ -191,7 +152,7 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
         projectId: line.projectId || "",
         taskId: line.taskId || "",
         description: line.description || "",
-      })) || [{ itemId: "", quantity: 0, uom: "PCS", unitPrice: 0, discountAmount: 0, taxAmount: 0, projectId: "" }],
+      })) || [{ itemId: "", quantity: 1, uom: "PCS", unitPrice: 0, discountAmount: 0, taxAmount: 0, projectId: "" }],
       billSundry: initialData.billSundry || [{ name: "", amount: 0 }],
     } : {
       billDate: new Date().toISOString().split("T")[0],
@@ -201,7 +162,7 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
       purchaseType: "vat_item_wise",
       paymentType: "credit",
       status: "open",
-      lines: [{ itemId: "", quantity: 0, uom: "PCS", unitPrice: 0, discountAmount: 0, taxAmount: 0, projectId: "" }],
+      lines: [{ itemId: "", quantity: 1, uom: "PCS", unitPrice: 0, discountAmount: 0, taxAmount: 0, projectId: "" }],
       billSundry: [{ name: "", amount: 0 }],
     },
     mode: "onChange",
@@ -217,11 +178,11 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
     control: form.control,
   });
 
-  // Direct calculation during render (reliable)
+  // --- Calculations ---
   const watchedLines = form.watch("lines") || [];
   const watchedSundry = form.watch("billSundry") || [];
 
-  const { subtotal, taxTotal, total } = (() => {
+  const { subtotal, taxTotal, total } = useMemo(() => {
       let sub = 0;
       let tax = 0;
       
@@ -248,78 +209,26 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
         taxTotal: tax,
         total: sub + tax + sundryTotal
       };
-  })();
+  }, [watchedLines, watchedSundry]);
 
-  // Helper to re-calculate line tax when qty/price changes
-  const updateLineTax = (index: number) => {
-     const line = form.getValues(`lines.${index}`);
-     // Try to look up tax percent from items array if possible
-     // Just doing basic logic for now or relying on user manual input if needed
-     // ... (logic remains same)
-     const selectedItem = items.find(i => i.id === line.itemId);
-     if (selectedItem) {
-          const taxMod = selectedItem.taxPercent ? parseFloat(String(selectedItem.taxPercent)) / 100 : 0.05;
-          const isTaxable = selectedItem.isTaxable !== false;
-          const qty = parseFloat(String(line.quantity)) || 0;
-          const price = parseFloat(String(line.unitPrice)) || 0;
-           const disc = parseFloat(String(line.discountAmount)) || 0;
-           
-          // Taxable Amount = (Qty * Price) - Discount
-           const base = (qty * price) - disc;
-           
-          if (isTaxable && base > 0) {
-              const newTax = base * taxMod;
-              form.setValue(`lines.${index}.taxAmount`, parseFloat(newTax.toFixed(2)));
-          }
-     }
-  };
-
-  async function onSubmit(data: PurchaseBillFormValues) {
-    console.log('[BILL FORM] Submit triggered with data:', data);
-    setLoading(true);
-    try {
-      const payload = { ...data };
-      console.log('[BILL FORM] Calling createPurchaseBillAction with payload:', payload);
-      const result = await createPurchaseBillAction(payload as any);
-      console.log('[BILL FORM] Server response:', result);
-      if (result.success) {
-        toast.success(result.message);
-        router.push("/procurement/bills");
-        router.refresh();
-      } else {
-        console.error('[BILL FORM] Server returned failure:', result.message);
-        toast.error(result.message);
-      }
-    } catch (error: any) {
-      console.error('[BILL FORM] Submit error:', error);
-      toast.error(error.message || "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const onInvalid = (errors: any) => {
-    console.error("[BILL FORM] Validation Errors:", errors);
-    const errorFields = Object.keys(errors);
-    toast.error(`Please fix errors in: ${errorFields.join(", ")}`);
-  };
+  // --- Handlers ---
 
   const handleItemSelect = (index: number, itemId: string) => {
     const item = items.find((i) => i.id === itemId);
     if (item) {
+      // Prioritize cost price for purchase, then purchase_price if distinct, fallback to selling price logic (usually standard cost)
       const costPrice = parseFloat(String(item.costPrice)) || 0;
+      
       form.setValue(`lines.${index}.unitPrice`, costPrice);
       form.setValue(`lines.${index}.uom`, item.uom || "PCS");
       
-      // Auto-calc tax (basic logic)
+      // Auto-calc tax
       const taxRate = item.taxPercent ? parseFloat(String(item.taxPercent)) / 100 : 0.05;
       const isTaxable = item.isTaxable !== false;
       
       if (isTaxable) {
          const qty = form.getValues(`lines.${index}.quantity`) || 0;
-         // Tax on (Qty * Price) - Wait, discount? 
-         // For complexity, let's just do Tax on Gross for now unless discount is entered.
-         const tax = qty * costPrice * taxRate;
+         const tax = qty * costPrice * taxRate; // Tax on gross for simplicity per your logic
          form.setValue(`lines.${index}.taxAmount`, parseFloat(tax.toFixed(2)));
       } else {
          form.setValue(`lines.${index}.taxAmount`, 0);
@@ -327,370 +236,577 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
     }
   };
 
+  const updateLineTax = (index: number) => {
+      const line = form.getValues(`lines.${index}`);
+      const selectedItem = items.find(i => i.id === line.itemId);
+      if (selectedItem) {
+          const taxMod = selectedItem.taxPercent ? parseFloat(String(selectedItem.taxPercent)) / 100 : 0.05;
+          const isTaxable = selectedItem.isTaxable !== false;
+          const qty = parseFloat(String(line.quantity)) || 0;
+          const price = parseFloat(String(line.unitPrice)) || 0;
+          const disc = parseFloat(String(line.discountAmount)) || 0;
+           
+          const base = (qty * price) - disc;
+           
+          if (isTaxable && base > 0) {
+              const newTax = base * taxMod;
+              form.setValue(`lines.${index}.taxAmount`, parseFloat(newTax.toFixed(2)));
+          }
+      }
+  };
+
+  async function onSubmit(data: PurchaseBillFormValues) {
+    setLoading(true);
+    try {
+      const result = await createPurchaseBillAction(data as any);
+      if (result.success) {
+        setSavedBillNumber(result.data?.billNumber || "Saved");
+        setShowSuccessDialog(true);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const onInvalid = (errors: any) => {
+    console.error("Validation Errors:", errors);
+    toast.error("Please check the form for errors.");
+  };
+
+  const isDirty = form.formState.isDirty;
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
-        
-        {/* Header Section */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
-           {/* Row 1 */}
-           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="reference"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Invoice No / Ref *</FormLabel>
-                    <FormControl><Input placeholder="Invoice No" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="billDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date *</FormLabel>
-                    <FormControl><Input type="date" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="warehouseId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Material Center</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Select Center" /></SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {warehouses.map(w => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="purchaseType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Purchase Type *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Select Type" /></SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="vat_item_wise">VAT Item Wise</SelectItem>
-                        <SelectItem value="exempt">Exempt</SelectItem>
-                        <SelectItem value="import">Import</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-           </div>
-
-           {/* Row 2 */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="paymentType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Type *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Select Payment" /></SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="credit">Credit</SelectItem>
-                        <SelectItem value="cash">Cash</SelectItem>
-                        <SelectItem value="bank">Bank Transfer</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="supplierId"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col md:col-span-1">
-                    <FormLabel>Supplier Name *</FormLabel>
-                    <Popover open={openSupplier} onOpenChange={setOpenSupplier}>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn("justify-between px-3 font-normal", !field.value && "text-muted-foreground")}
-                          >
-                            {field.value ? suppliers.find((s) => s.id === field.value)?.name : "Select Supplier"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="p-0">
-                        <Command>
-                          <CommandInput placeholder="Search supplier..." />
-                          <CommandList>
-                             <CommandGroup>
-                               {suppliers.map((s) => (
-                                 <CommandItem
-                                   value={s.name}
-                                   key={s.id}
-                                   onSelect={() => {
-                                     form.setValue("supplierId", s.id);
-                                     if (s.email) form.setValue("supplierEmail", s.email);
-                                     setOpenSupplier(false);
-                                   }}
-                                 >
-                                   <Check className={cn("mr-2 h-4 w-4", s.id === field.value ? "opacity-100" : "opacity-0")} />
-                                   {s.name}
-                                 </CommandItem>
-                               ))}
-                             </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="supplierEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address</FormLabel>
-                    <FormControl><Input placeholder="Email" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Purchase Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                       <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                       <SelectContent>
-                         <SelectItem value="open">Open</SelectItem>
-                         <SelectItem value="posted">Posted</SelectItem>
-                         <SelectItem value="draft">Draft</SelectItem>
-                       </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-           </div>
-
-           {/* Excel Upload Placeholder */}
-           <div className="flex items-center gap-4 border p-2 rounded-md bg-muted/20">
-              <Button type="button" variant="outline" size="sm">Browse...</Button>
-              <span className="text-sm text-muted-foreground">No file selected.</span>
-              <Button type="button" size="sm" className="ml-auto bg-blue-500 hover:bg-blue-600">Item Excel Upload</Button>
-           </div>
-        </div>
-
-        {/* Line Items Table Section */}
-        <div className="rounded-md border bg-white">
-            <div className="p-4 border-b bg-muted/10 font-medium grid grid-cols-12 gap-2 text-xs uppercase tracking-wider text-muted-foreground text-center">
-                 <div className="col-span-1">S/N</div>
-                 <div className="col-span-3 text-left pl-2">Item *</div>
-                 <div className="col-span-1">Unit</div>
-                 <div className="col-span-1">Qty *</div>
-                 <div className="col-span-1">Rate *</div>
-                 <div className="col-span-1">Disc</div>
-                 <div className="col-span-1">Tax</div>
-                 <div className="col-span-1">Total</div>
-                 <div className="col-span-2">Project</div>
+    <>
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-500 shadow-lg">
+              <CheckCircle2 className="h-8 w-8 text-white" />
             </div>
-            
-            <div className="divide-y max-h-[500px] overflow-y-auto">
-              {fields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-12 gap-2 p-2 items-center hover:bg-muted/5">
-                   <div className="col-span-1 text-center text-xs">{index + 1}</div>
-                   
-                   <div className="col-span-3">
+            <DialogTitle className="text-xl">Bill Created Successfully!</DialogTitle>
+            <DialogDescription className="text-base">
+              Purchase Bill <span className="font-semibold text-foreground">{savedBillNumber}</span> has been created.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="my-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 p-4 dark:from-green-900/20 dark:to-emerald-900/20">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Total Amount</span>
+              <span className="text-lg font-bold text-green-600">{total.toFixed(2)} AED</span>
+            </div>
+          </div>
+          <DialogFooter className="flex flex-col gap-2 sm:flex-row">
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => {
+                setShowSuccessDialog(false);
+                form.reset();
+                router.refresh();
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Bill
+            </Button>
+            <Button 
+              className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600"
+              onClick={() => {
+                setShowSuccessDialog(false);
+                router.push("/procurement/bills");
+              }}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              View All Bills
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
+          
+          {/* --- Header --- */}
+          <div className="rounded-xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 p-6 text-white shadow-lg">
+             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+               <div className="flex items-center gap-4">
+                 <Button type="button" variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={() => router.back()}>
+                   <ArrowLeft className="h-5 w-5" />
+                 </Button>
+                 <div>
+                   <div className="flex items-center gap-3">
+                     <FileText className="h-6 w-6" />
+                     <h1 className="text-2xl font-bold">{initialData ? "Edit Purchase Bill" : "New Purchase Bill"}</h1>
+                   </div>
+                   <p className="text-sm text-white/80 mt-1">Manage vendor invoices and inventory ingestion</p>
+                 </div>
+               </div>
+               <div className="flex items-center gap-3">
+                 {isDirty && (
+                    <Badge variant="secondary" className="bg-amber-500/20 text-amber-100 animate-pulse border-none">
+                      <span className="mr-1 h-2 w-2 rounded-full bg-amber-300" />
+                      Unsaved changes
+                    </Badge>
+                  )}
+                 <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5">
+                    <span className="text-xs font-medium opacity-80">Status:</span>
+                    <Badge variant={form.getValues("status") === 'posted' ? "default" : "secondary"} className="capitalize">
+                      {form.getValues("status")}
+                    </Badge>
+                 </div>
+               </div>
+             </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+            {/* --- Main Left Column --- */}
+            <div className="space-y-4">
+              
+              {/* Compact Meta Card */}
+              <Card className="shadow-sm">
+                <CardContent className="pt-4 pb-3">
+                   {/* Row 1: Supplier, Dates, Reference */}
+                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      {/* Supplier */}
                       <FormField
                         control={form.control}
-                        name={`lines.${index}.itemId`}
+                        name="supplierId"
                         render={({ field }) => (
-                           <ItemCombobox
-                             value={field.value}
-                             onChange={field.onChange}
-                             items={items}
-                             onSelect={(val) => handleItemSelect(index, val)}
-                           />
+                          <FormItem className="md:col-span-1">
+                            <FormLabel className="text-xs text-muted-foreground uppercase">Supplier *</FormLabel>
+                            <Popover open={openSupplier} onOpenChange={setOpenSupplier}>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button variant="outline" role="combobox" className={cn("h-9 w-full justify-between", !field.value && "text-muted-foreground")}>
+                                    <span className="truncate">{field.value ? suppliers.find((s) => s.id === field.value)?.name : "Select..."}</span>
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="p-0">
+                                <Command>
+                                  <CommandInput placeholder="Search..." />
+                                  <CommandList>
+                                    <CommandEmpty>No supplier.</CommandEmpty>
+                                    <CommandGroup>
+                                      {suppliers.map((s) => (
+                                        <CommandItem key={s.id} value={s.name} onSelect={() => { form.setValue("supplierId", s.id); setOpenSupplier(false); }}>
+                                          <Check className={cn("mr-2 h-4 w-4", s.id === field.value ? "opacity-100" : "opacity-0")} />
+                                          {s.name}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Bill Date */}
+                      <FormField
+                        control={form.control}
+                        name="billDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs text-muted-foreground uppercase">Bill Date *</FormLabel>
+                            <FormControl><Input type="date" className="h-9" {...field} /></FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Due Date */}
+                      <FormField
+                        control={form.control}
+                        name="dueDate"
+                        render={({ field }) => (
+                          <FormItem>
+                             <FormLabel className="text-xs text-muted-foreground uppercase">Due Date</FormLabel>
+                             <FormControl><Input type="date" className="h-9" {...field} /></FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      {/* Reference */}
+                      <FormField
+                        control={form.control}
+                        name="reference"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs text-muted-foreground uppercase">Ref / Invoice #</FormLabel>
+                            <FormControl><Input placeholder="SUP-INV-001" className="h-9" {...field} /></FormControl>
+                          </FormItem>
                         )}
                       />
                    </div>
 
-                   <div className="col-span-1">
-                      <FormField control={form.control} name={`lines.${index}.uom`} render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
-                           <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                           <SelectContent><SelectItem value="PCS">PCS</SelectItem><SelectItem value="BOX">BOX</SelectItem><SelectItem value="KG">KG</SelectItem></SelectContent>
-                        </Select>
-                      )} />
-                   </div>
+                   {/* Row 2: Warehouse, Types */}
+                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-3 pt-3 border-t">
+                      <FormField
+                        control={form.control}
+                        name="warehouseId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs text-muted-foreground uppercase">Receiving Warehouse</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || undefined}>
+                               <FormControl><SelectTrigger className="h-9"><SelectValue placeholder="Select Warehouse" /></SelectTrigger></FormControl>
+                               <SelectContent>
+                                  {warehouses.map(w => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}
+                               </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                      
+                       <FormField
+                        control={form.control}
+                        name="purchaseType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs text-muted-foreground uppercase">Purchase Type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                               <FormControl><SelectTrigger className="h-9"><SelectValue /></SelectTrigger></FormControl>
+                               <SelectContent>
+                                  <SelectItem value="vat_item_wise">VAT Item Wise</SelectItem>
+                                  <SelectItem value="exempt">Exempt</SelectItem>
+                                  <SelectItem value="import">Import</SelectItem>
+                               </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
 
-                   <div className="col-span-1">
-                      <FormField control={form.control} name={`lines.${index}.quantity`} render={({ field }) => (
-                        <Input type="number" className="h-8 text-center" min={0} {...field} onChange={e => {
-                            field.onChange(parseFloat(e.target.value) || 0);
-                            updateLineTax(index);
-                        }} />
-                      )} />
-                   </div>
+                      <FormField
+                        control={form.control}
+                        name="paymentType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs text-muted-foreground uppercase">Payment Mode</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                               <FormControl><SelectTrigger className="h-9"><SelectValue /></SelectTrigger></FormControl>
+                               <SelectContent>
+                                  <SelectItem value="credit">Credit</SelectItem>
+                                  <SelectItem value="cash">Cash</SelectItem>
+                                  <SelectItem value="bank">Bank Transfer</SelectItem>
+                               </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
 
-                   <div className="col-span-1">
-                      <FormField control={form.control} name={`lines.${index}.unitPrice`} render={({ field }) => (
-                        <Input type="number" className="h-8 text-center" min={0} {...field} onChange={e => {
-                            field.onChange(parseFloat(e.target.value) || 0);
-                            updateLineTax(index);
-                        }} />
-                      )} />
+                      <div className="flex items-end pb-1">
+                          <Button 
+                             type="button" 
+                             variant="outline" 
+                             className="w-full h-9 border-dashed text-muted-foreground hover:text-primary"
+                          >
+                             <Upload className="mr-2 h-4 w-4" /> Upload Scan
+                          </Button>
+                      </div>
                    </div>
+                </CardContent>
+              </Card>
 
-                   <div className="col-span-1">
-                       <FormField control={form.control} name={`lines.${index}.discountAmount`} render={({ field }) => (
-                        <Input type="number" className="h-8 text-center" min={0} {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
-                      )} />
-                   </div>
-
-                   <div className="col-span-1">
-                      <FormField control={form.control} name={`lines.${index}.taxAmount`} render={({ field }) => (
-                        <Input type="number" className="h-8 text-center bg-muted/10" readOnly {...field} />
-                      )} />
-                   </div>
-
-                    <div className="col-span-1 text-right text-sm font-medium pr-2">
-                       {(() => {
-                          const l = form.getValues(`lines.${index}`);
-                          const tot = ((Number(l.quantity)||0) * (Number(l.unitPrice)||0)) - (Number(l.discountAmount)||0) + (Number(l.taxAmount)||0);
-                          return tot.toFixed(2);
-                       })()}
-                   </div>
-                   
-                   <div className="col-span-2 flex gap-1">
-                      <FormField control={form.control} name={`lines.${index}.projectId`} render={({ field }) => (
-                         <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="h-8 text-xs w-full"><SelectValue placeholder="Project" /></SelectTrigger>
-                            <SelectContent>
-                              {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.projectCode}</SelectItem>)}
-                            </SelectContent>
-                         </Select>
-                      )} />
-                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => remove(index)}>
-                          <Trash2 className="h-4 w-4" />
+              {/* Line Items - Premium Style */}
+              <Card className="shadow-md">
+                 <CardHeader className="pb-3 border-b bg-muted/5">
+                    <div className="flex items-center justify-between">
+                       <CardTitle className="flex items-center gap-2 text-base">
+                          <Package className="h-5 w-5 text-indigo-500" />
+                          Line Items
+                          <Badge variant="secondary" className="ml-2 text-xs font-normal text-muted-foreground">
+                             {fields.length} item{fields.length !== 1 ? 's' : ''}
+                          </Badge>
+                       </CardTitle>
+                       <Button 
+                         type="button" 
+                         size="sm" 
+                         className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white"
+                         onClick={() => append({ itemId: "", quantity: 1, uom: "PCS", unitPrice: 0, discountAmount: 0, taxAmount: 0, projectId: "" })}
+                       >
+                         <Plus className="h-4 w-4 mr-1" /> Add Item
                        </Button>
-                   </div>
-                </div>
-              ))}
-            </div>
-             <div className="p-2 border-t">
-               <Button type="button" variant="outline" size="sm" onClick={() => append({ itemId: "", quantity: 0, uom: "PCS", unitPrice: 0, discountAmount: 0, taxAmount: 0, projectId: "" })}>
-                 <Plus className="mr-2 h-4 w-4" /> Add Line
-               </Button>
-             </div>
-        </div>
+                    </div>
+                 </CardHeader>
+                 <CardContent className="pt-4 space-y-4">
+                    {fields.map((field, index) => (
+                       <div 
+                         key={field.id}
+                         className={cn(
+                           "rounded-lg border p-3 transition-all",
+                           selectedLineIndex === index ? "border-indigo-500 bg-indigo-50/10 shadow-sm" : "border-border/50 hover:border-indigo-200"
+                         )}
+                         onClick={() => setSelectedLineIndex(index)}
+                       >
+                         {/* Row Header */}
+                         <div className="flex items-center gap-3 mb-2">
+                            <Badge variant="outline" className="text-[10px] h-5 w-6 flex items-center justify-center p-0">
+                               #{index + 1}
+                            </Badge>
+                            
+                            <FormField
+                               control={form.control}
+                               name={`lines.${index}.itemId`}
+                               render={({ field }) => {
+                                 const selectedItem = items.find(i => i.id === field.value);
+                                 const [open, setOpen] = useState(false);
+                                 return (
+                                   <FormItem className="flex-1">
+                                      <Popover open={open} onOpenChange={setOpen}>
+                                         <PopoverTrigger asChild>
+                                            <FormControl>
+                                               <Button variant="outline" role="combobox" aria-expanded={open} className={cn("h-8 w-full justify-between text-xs", !field.value && "text-muted-foreground")}> 
+                                                  <span className="truncate font-medium">{selectedItem ? selectedItem.name : "Select Item..."}</span>
+                                                  <ChevronsUpDown className="ml-2 h-3 w-3 opacity-50" />
+                                               </Button>
+                                            </FormControl>
+                                         </PopoverTrigger>
+                                         <PopoverContent className="p-0 w-[400px]" align="start">
+                                            <Command>
+                                               <CommandInput placeholder="Search item..." />
+                                               <CommandList>
+                                                  <CommandEmpty>No item found.</CommandEmpty>
+                                                  <CommandGroup>
+                                                     {items.map(item => (
+                                                        <CommandItem key={item.id} value={item.name} onSelect={() => {
+                                                           field.onChange(item.id);
+                                                           handleItemSelect(index, item.id);
+                                                           setOpen(false);
+                                                        }}>
+                                                           {item.name} <span className="ml-2 text-xs text-muted-foreground line-through opacity-70"></span>
+                                                        </CommandItem>
+                                                     ))}
+                                                  </CommandGroup>
+                                               </CommandList>
+                                            </Command>
+                                         </PopoverContent>
+                                      </Popover>
+                                   </FormItem>
+                                 )
+                               }}
+                            />
+                            
+                             <FormField
+                              control={form.control}
+                              name={`lines.${index}.projectId`}
+                              render={({ field }) => (
+                                <FormItem className="w-[120px]">
+                                   <Select onValueChange={field.onChange} value={field.value || undefined}>
+                                      <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Project" /></SelectTrigger></FormControl>
+                                      <SelectContent>
+                                         <SelectItem value="">None</SelectItem>
+                                         {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.projectCode}</SelectItem>)}
+                                      </SelectContent>
+                                   </Select>
+                                </FormItem>
+                              )}
+                            />
 
-        {/* Footer: Remarks & Bill Sundry */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Remarks</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Remarks" className="min-h-[100px]" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="termsAndConditions"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Terms And Conditions</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Terms..." className="min-h-[80px]" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-           </div>
-
-           <div className="space-y-4">
-              <Card>
-                 <CardHeader className="py-2 px-4 bg-muted/20 border-b"><CardTitle className="text-sm">Bill Sundry</CardTitle></CardHeader>
-                 <CardContent className="p-0">
-                    <div className="rounded-b-md">
-                       <div className="grid grid-cols-12 gap-2 p-2 bg-muted/10 text-xs font-medium">
-                          <div className="col-span-1">S/N</div>
-                          <div className="col-span-5">Bill Sundry</div>
-                          <div className="col-span-4">Amount</div>
-                          <div className="col-span-2">Action</div>
-                       </div>
-                       {sundryFields.map((field, index) => (
-                         <div key={field.id} className="grid grid-cols-12 gap-2 p-2 items-center">
-                            <div className="col-span-1 text-center text-xs">{index + 1}</div>
-                            <div className="col-span-5">
-                               <FormField control={form.control} name={`billSundry.${index}.name`} render={({ field }) => (
-                                 <Input className="h-7 text-xs" placeholder="Charge Name" {...field} />
-                               )} />
-                            </div>
-                            <div className="col-span-4">
-                               <FormField control={form.control} name={`billSundry.${index}.amount`} render={({ field }) => (
-                                 <Input type="number" className="h-7 text-xs text-right" {...field} onChange={e => field.onChange(parseFloat(e.target.value)||0)} />
-                               )} />
-                            </div>
-                            <div className="col-span-2">
-                               <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeSundry(index)}>
-                                  <Trash2 className="h-3 w-3" />
-                               </Button>
-                            </div>
+                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={() => remove(index)}>
+                               <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
                          </div>
-                       ))}
-                       <div className="p-2 border-t">
-                          <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => appendSundry({ name: "", amount: 0 })}>
-                            + Add Charge
+
+                         {/* Row Values */}
+                         <div className="grid grid-cols-6 gap-2">
+                             <FormField
+                               control={form.control}
+                               name={`lines.${index}.uom`}
+                               render={({ field }) => (
+                                 <FormItem>
+                                    <FormLabel className="text-[10px] text-muted-foreground uppercase">Unit</FormLabel>
+                                    <FormControl><Input className="h-7 text-xs" {...field} /></FormControl>
+                                 </FormItem>
+                               )}
+                             />
+                             <FormField
+                               control={form.control}
+                               name={`lines.${index}.quantity`}
+                               render={({ field }) => (
+                                 <FormItem>
+                                    <FormLabel className="text-[10px] text-muted-foreground uppercase">Qty</FormLabel>
+                                    <FormControl>
+                                       <Input 
+                                          type="number" className="h-7 text-xs text-center font-medium" 
+                                          {...field} 
+                                          onChange={e => { field.onChange(parseFloat(e.target.value)||0); updateLineTax(index); }} 
+                                       />
+                                    </FormControl>
+                                 </FormItem>
+                               )}
+                             />
+                             <FormField
+                               control={form.control}
+                               name={`lines.${index}.unitPrice`}
+                               render={({ field }) => (
+                                 <FormItem>
+                                    <FormLabel className="text-[10px] text-muted-foreground uppercase">Rate</FormLabel>
+                                    <FormControl>
+                                       <Input 
+                                          type="number" className="h-7 text-xs text-right" 
+                                          {...field} 
+                                          onChange={e => { field.onChange(parseFloat(e.target.value)||0); updateLineTax(index); }} 
+                                       />
+                                    </FormControl>
+                                 </FormItem>
+                               )}
+                             />
+                             <FormField
+                               control={form.control}
+                               name={`lines.${index}.discountAmount`}
+                               render={({ field }) => (
+                                 <FormItem>
+                                    <FormLabel className="text-[10px] text-muted-foreground uppercase">Disc</FormLabel>
+                                    <FormControl>
+                                       <Input 
+                                          type="number" className="h-7 text-xs text-right" 
+                                          {...field} 
+                                          onChange={e => { field.onChange(parseFloat(e.target.value)||0); updateLineTax(index); }} 
+                                       />
+                                    </FormControl>
+                                 </FormItem>
+                               )}
+                             />
+                             <FormField
+                               control={form.control}
+                               name={`lines.${index}.taxAmount`}
+                               render={({ field }) => (
+                                 <FormItem>
+                                    <FormLabel className="text-[10px] text-muted-foreground uppercase">Tax</FormLabel>
+                                    <FormControl>
+                                       <Input className="h-7 text-xs text-right bg-muted/10 border-dashed" readOnly {...field} />
+                                    </FormControl>
+                                 </FormItem>
+                               )}
+                             />
+                             
+                             <div className="flex flex-col gap-2">
+                                <Label className="text-[10px] text-muted-foreground uppercase text-right">Total</Label>
+                                <div className="h-7 flex items-center justify-end px-2 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-xs font-bold text-indigo-700">
+                                   {(() => {
+                                      const l = form.getValues(`lines.${index}`);
+                                      const tot = ((Number(l.quantity)||0) * (Number(l.unitPrice)||0)) - (Number(l.discountAmount)||0) + (Number(l.taxAmount)||0);
+                                      return tot.toFixed(2);
+                                   })()}
+                                </div>
+                             </div>
+                         </div>
+                       </div>
+                    ))}
+
+                    {fields.length === 0 && (
+                       <div className="text-center py-10 border-2 border-dashed rounded-xl opacity-60">
+                          <Package className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+                          <p className="text-sm">No items added yet</p>
+                          <Button 
+                             type="button" 
+                             variant="link" 
+                             onClick={() => append({ itemId: "", quantity: 1, uom: "PCS", unitPrice: 0, discountAmount: 0, taxAmount: 0, projectId: "" })}
+                          >
+                             Add your first item
                           </Button>
                        </div>
-                    </div>
+                    )}
                  </CardContent>
               </Card>
 
-              <div className="flex justify-between items-center pt-4 border-t">
-                 <span className="font-bold text-lg">Grand Total :</span>
-                 <span className="font-bold text-xl">{total.toFixed(2)}</span>
-              </div>
-           </div>
-        </div>
+              {/* Remarks Box */}
+               <Card>
+                  <CardContent className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <FormField
+                        control={form.control}
+                        name="notes"
+                        render={({ field }) => (
+                          <FormItem>
+                             <FormLabel className="text-xs">Internal Notes</FormLabel>
+                             <FormControl><Textarea className="resize-none h-20 text-xs" placeholder="Type..." {...field} /></FormControl>
+                          </FormItem>
+                        )}
+                     />
+                     <FormField
+                        control={form.control}
+                        name="termsAndConditions"
+                        render={({ field }) => (
+                          <FormItem>
+                             <FormLabel className="text-xs">Terms</FormLabel>
+                             <FormControl><Textarea className="resize-none h-20 text-xs" placeholder="Review terms..." {...field} /></FormControl>
+                          </FormItem>
+                        )}
+                     />
+                  </CardContent>
+               </Card>
+            </div>
 
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={() => router.push("/procurement/bills")}>Cancel</Button>
-          <Button type="submit" disabled={loading} className="w-[150px]">
-             {loading ? <Loader2 className="animate-spin mr-2" /> : null} Save
-          </Button>
-        </div>
-      </form>
-    </Form>
+            {/* --- Sidebar (Summary) --- */}
+            <div className="lg:sticky lg:top-4 lg:self-start space-y-4">
+               {/* Summary Card */}
+               <Card className="shadow-md border-t-4 border-t-indigo-500">
+                  <CardHeader className="bg-muted/10 pb-3 border-b">
+                     <CardTitle className="text-sm font-bold flex items-center gap-2">
+                        <Receipt className="h-4 w-4" /> Bill Summary
+                     </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-3">
+                     <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span>{subtotal.toFixed(2)}</span>
+                     </div>
+                     <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Tax (VAT)</span>
+                        <span>{taxTotal.toFixed(2)}</span>
+                     </div>
+                     
+                     {/* Bill Sundry Section in Sidebar */}
+                     <div className="pt-2 border-t mt-2">
+                        <div className="flex items-center justify-between mb-2">
+                           <span className="text-xs font-semibold uppercase text-muted-foreground">Charges (Sundry)</span>
+                           <Button type="button" variant="ghost" size="icon" className="h-5 w-5" onClick={() => appendSundry({ name: "", amount: 0 })}>
+                              <Plus className="h-3 w-3" />
+                           </Button>
+                        </div>
+                        <div className="space-y-2">
+                           {sundryFields.map((field, index) => (
+                              <div key={field.id} className="flex gap-1 items-center">
+                                 <FormField control={form.control} name={`billSundry.${index}.name`} render={({ field }) => (
+                                    <Input className="h-6 text-[10px] w-full" placeholder="Name" {...field} />
+                                 )} />
+                                 <FormField control={form.control} name={`billSundry.${index}.amount`} render={({ field }) => (
+                                    <Input type="number" className="h-6 text-[10px] w-16 text-right" placeholder="0" {...field} />
+                                 )} />
+                                 <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeSundry(index)}>
+                                    <Trash2 className="h-3 w-3" />
+                                 </Button>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+
+                     <div className="border-t pt-3 mt-2">
+                        <div className="flex justify-between items-center">
+                           <span className="text-base font-bold">Total</span>
+                           <span className="text-xl font-bold text-indigo-600">{total.toFixed(2)}</span>
+                        </div>
+                        <p className="text-xs text-right text-muted-foreground font-medium mt-1">AED</p>
+                     </div>
+                  </CardContent>
+               </Card>
+
+               <Card className="shadow-sm">
+                  <CardContent className="pt-4 space-y-2">
+                     <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" size="lg" disabled={loading}>
+                        {loading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                        {initialData ? "Update Bill" : "Save Bill"}
+                     </Button>
+                     <Button type="button" variant="outline" className="w-full" onClick={() => router.push("/procurement/bills")}>Cancel</Button>
+                  </CardContent>
+               </Card>
+            </div>
+          </div>
+        </form>
+      </Form>
+    </>
   );
 }
