@@ -18,7 +18,11 @@ export const metadata: Metadata = {
   title: "PryzoAI ERP",
   description: "Modern Enterprise Resource Planning System with AI",
   icons: {
-    icon: "/logo-hq.png",
+    icon: [
+      { url: "/favicon.png", sizes: "any" },
+      { url: "/logo-hq.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/logo-hq.png",
   },
 };
 
