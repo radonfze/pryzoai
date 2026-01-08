@@ -139,9 +139,20 @@ export const columns: ColumnDef<PurchaseBill>[] = [
               <Printer className="mr-2 h-4 w-4" /> Print PDF
             </DropdownMenuItem>
             {bill.status === "draft" && (
-              <DropdownMenuItem onClick={() => {
-                // TODO: Implement post to GL functionality
-                alert('Post to GL functionality - to be implemented');
+              <DropdownMenuItem onClick={async () => {
+                const { postPurchaseBillToGLAction } = await import("@/actions/procurement/post-purchase-bill-action");
+                const { toast } = await import("sonner");
+                
+                const promise = postPurchaseBillToGLAction(bill.id);
+                
+                toast.promise(promise, {
+                  loading: 'Posting to GL...',
+                  success: (data) => {
+                    if (data.success) return data.message;
+                    throw new Error(data.message);
+                  },
+                  error: (err) => err.message
+                });
               }}>
                 <CheckCircle className="mr-2 h-4 w-4" /> Post to GL
               </DropdownMenuItem>

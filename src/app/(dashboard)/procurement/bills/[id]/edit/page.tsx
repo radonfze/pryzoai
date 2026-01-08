@@ -8,12 +8,13 @@ import { PurchaseBillForm } from "@/components/procurement/purchase-bill-form";
 
 export const dynamic = 'force-dynamic';
 
-export default async function EditPurchaseBillPage({ params }: { params: { id: string } }) {
+export default async function EditPurchaseBillPage({ params }: { params: Promise<{ id: string }> }) {
   const companyId = "00000000-0000-0000-0000-000000000000";
+  const { id } = await params;
 
   const [bill, supplierList, itemList, warehouseList, projectList] = await Promise.all([
     db.query.purchaseInvoices.findFirst({
-      where: eq(purchaseInvoices.id, params.id),
+      where: eq(purchaseInvoices.id, id),
       with: {
         lines: true,
       },
