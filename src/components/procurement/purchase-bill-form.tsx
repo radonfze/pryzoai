@@ -217,10 +217,13 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
     control: form.control,
   });
 
+  const [totals, setTotals] = useState({ subtotal: 0, taxTotal: 0, total: 0 });
+
+  // Watch fields for changes
   const watchedLines = form.watch("lines");
   const watchedSundry = form.watch("billSundry");
 
-  const { subtotal, taxTotal, total } = useMemo(() => {
+  useEffect(() => {
     let sub = 0;
     let tax = 0;
     const lines = watchedLines || [];
@@ -232,6 +235,7 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
       const tAmount = parseFloat(String(line.taxAmount)) || 0;
       
       const lineBase = qty * price;
+      // Taxable usually doesn't subtract tax, it's (Qty*Price)-Disc
       const taxable = Math.max(0, lineBase - disc);
       
       sub += taxable;
@@ -244,12 +248,14 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
       sundryTotal += parseFloat(String(s.amount)) || 0;
     });
 
-    return {
+    setTotals({
       subtotal: sub,
       taxTotal: tax,
       total: sub + tax + sundryTotal
-    };
+    });
   }, [watchedLines, watchedSundry]);
+
+  const { subtotal, taxTotal, total } = totals;
   
   // Helper to re-calculate line tax when qty/price changes
   const updateLineTax = (index: number) => {
