@@ -412,7 +412,10 @@ export function AppSidebar() {
             {state === "collapsed" ? (
                <Image src="/logo-hq.png" alt="PryzoAI" width={50} height={50} className="object-contain h-12 w-auto" priority />
             ) : (
-               <Image src="/logo-full.png" alt="PryzoAI" width={180} height={60} className="object-contain h-14 w-auto" priority />
+               <div className="flex items-center gap-3">
+                 <Image src="/logo-hq.png" alt="PryzoAI" width={50} height={50} className="object-contain h-10 w-auto" priority />
+                 <span className="text-xl font-bold tracking-tight text-foreground/90">PryzoAI</span>
+               </div>
             )}
           </div>
         </div>
