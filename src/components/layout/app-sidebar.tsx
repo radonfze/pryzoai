@@ -407,12 +407,12 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-4 py-2">
-          <div className="relative h-16 w-auto min-w-[50px] flex items-center justify-center">
+        <div className="flex items-center gap-2 px-4 py-4">
+          <div className="relative h-24 w-auto min-w-[50px] flex items-center justify-center">
             {state === "collapsed" ? (
-               <Image src="/logo-hq.png" alt="PryzoAI" width={50} height={50} className="object-contain h-12 w-auto" priority />
+               <Image src="/logo-hq.png" alt="PryzoAI" width={60} height={60} className="object-contain h-14 w-auto" priority />
             ) : (
-               <Image src="/sidebar-logo.png" alt="PryzoAI" width={180} height={60} className="object-contain h-14 w-auto" priority />
+               <Image src="/sidebar-logo.png" alt="PryzoAI" width={240} height={80} className="object-contain h-20 w-auto" priority />
             )}
           </div>
         </div>
