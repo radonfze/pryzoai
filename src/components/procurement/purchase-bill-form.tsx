@@ -224,19 +224,24 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
   const watchedSundry = form.watch("billSundry");
 
   useEffect(() => {
+    console.log('[BILL FORM] Recalculating totals...');
+    console.log('[BILL FORM] watchedLines:', watchedLines);
+    console.log('[BILL FORM] watchedSundry:', watchedSundry);
+    
     let sub = 0;
     let tax = 0;
     const lines = watchedLines || [];
     
-    lines.forEach((line) => {
+    lines.forEach((line, index) => {
       const qty = parseFloat(String(line.quantity)) || 0;
       const price = parseFloat(String(line.unitPrice)) || 0;
       const disc = parseFloat(String(line.discountAmount)) || 0;
       const tAmount = parseFloat(String(line.taxAmount)) || 0;
       
       const lineBase = qty * price;
-      // Taxable usually doesn't subtract tax, it's (Qty*Price)-Disc
       const taxable = Math.max(0, lineBase - disc);
+      
+      console.log(`[BILL FORM] Line ${index + 1}: qty=${qty}, price=${price}, disc=${disc}, tax=${tAmount}, taxable=${taxable}`);
       
       sub += taxable;
       tax += tAmount;
@@ -247,11 +252,14 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
     currentSundry.forEach(s => {
       sundryTotal += parseFloat(String(s.amount)) || 0;
     });
+    
+    const newTotal = sub + tax + sundryTotal;
+    console.log(`[BILL FORM] Calculated: subtotal=${sub}, taxTotal=${tax}, sundryTotal=${sundryTotal}, GRAND TOTAL=${newTotal}`);
 
     setTotals({
       subtotal: sub,
       taxTotal: tax,
-      total: sub + tax + sundryTotal
+      total: newTotal
     });
   }, [watchedLines, watchedSundry]);
 
@@ -289,19 +297,25 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
   };
 
   async function onSubmit(data: PurchaseBillFormValues) {
+    console.log('[BILL FORM] Submit triggered with data:', data);
+    console.log('[BILL FORM] Current totals:', { subtotal, taxTotal, total });
     setLoading(true);
     try {
       const payload = { ...data };
+      console.log('[BILL FORM] Calling createPurchaseBillAction with payload:', payload);
       const result = await createPurchaseBillAction(payload as any);
+      console.log('[BILL FORM] Server response:', result);
       if (result.success) {
         toast.success(result.message);
         router.push("/procurement/bills");
         router.refresh();
       } else {
+        console.error('[BILL FORM] Server returned failure:', result.message);
         toast.error(result.message);
       }
-    } catch (error) {
-      toast.error("An error occurred");
+    } catch (error: any) {
+      console.error('[BILL FORM] Submit error:', error);
+      toast.error(error.message || "An error occurred");
     } finally {
       setLoading(false);
     }
