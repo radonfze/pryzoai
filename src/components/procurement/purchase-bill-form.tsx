@@ -167,6 +167,55 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
   const isEdit = !!initialData;
   
   // Calculations
+  const form = useForm<PurchaseBillFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: initialData ? {
+      supplierId: initialData.supplierId || "",
+      billDate: initialData.invoiceDate || new Date().toISOString().split("T")[0],
+      dueDate: initialData.dueDate || new Date().toISOString().split("T")[0],
+      reference: initialData.supplierInvoiceNo || "",
+      notes: initialData.notes || "",
+      warehouseId: initialData.warehouseId || "",
+      purchaseType: initialData.purchaseType || "vat_item_wise",
+      paymentType: initialData.paymentType || "credit",
+      status: initialData.status || "open",
+      termsAndConditions: initialData.termsAndConditions || "",
+      lines: initialData.lines?.map((line: any) => ({
+        itemId: line.itemId,
+        quantity: Number(line.quantity) || 0,
+        uom: line.uom || "PCS",
+        unitPrice: Number(line.unitPrice) || 0,
+        discountAmount: Number(line.discountAmount) || 0,
+        taxAmount: Number(line.taxAmount) || 0,
+        projectId: line.projectId || "",
+        taskId: line.taskId || "",
+        description: line.description || "",
+      })) || [{ itemId: "", quantity: 0, uom: "PCS", unitPrice: 0, discountAmount: 0, taxAmount: 0, projectId: "" }],
+      billSundry: initialData.billSundry || [{ name: "", amount: 0 }],
+    } : {
+      billDate: new Date().toISOString().split("T")[0],
+      dueDate: new Date().toISOString().split("T")[0],
+      reference: "",
+      notes: "",
+      purchaseType: "vat_item_wise",
+      paymentType: "credit",
+      status: "open",
+      lines: [{ itemId: "", quantity: 0, uom: "PCS", unitPrice: 0, discountAmount: 0, taxAmount: 0, projectId: "" }],
+      billSundry: [{ name: "", amount: 0 }],
+    },
+    mode: "onChange",
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    name: "lines",
+    control: form.control,
+  });
+
+  const { fields: sundryFields, append: appendSundry, remove: removeSundry } = useFieldArray({
+    name: "billSundry",
+    control: form.control,
+  });
+
   const watchedLines = form.watch("lines");
   const watchedSundry = form.watch("billSundry");
 
