@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   title: "PryzoAI ERP",
   description: "Modern Enterprise Resource Planning System with AI",
   icons: {
-    icon: "/logo-icon.png",
+    icon: "/logo-hq.png",
   },
 };
 
