@@ -167,105 +167,38 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
   const isEdit = !!initialData;
   
   // Calculations
-  const [subtotal, setSubtotal] = useState(0);
-  const [taxTotal, setTaxTotal] = useState(0);
-  const [total, setTotal] = useState(0);
-
-  const form = useForm<PurchaseBillFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: initialData ? {
-      supplierId: initialData.supplierId || "",
-      billDate: initialData.invoiceDate || new Date().toISOString().split("T")[0],
-      dueDate: initialData.dueDate || new Date().toISOString().split("T")[0],
-      reference: initialData.supplierInvoiceNo || "",
-      notes: initialData.notes || "",
-      warehouseId: initialData.warehouseId || "",
-      purchaseType: initialData.purchaseType || "vat_item_wise",
-      paymentType: initialData.paymentType || "credit",
-      status: initialData.status || "open",
-      termsAndConditions: initialData.termsAndConditions || "",
-      lines: initialData.lines?.map((line: any) => ({
-        itemId: line.itemId,
-        quantity: Number(line.quantity) || 0,
-        uom: line.uom || "PCS",
-        unitPrice: Number(line.unitPrice) || 0,
-        discountAmount: Number(line.discountAmount) || 0,
-        taxAmount: Number(line.taxAmount) || 0,
-        projectId: line.projectId || "",
-        taskId: line.taskId || "",
-        description: line.description || "",
-      })) || [{ itemId: "", quantity: 0, uom: "PCS", unitPrice: 0, discountAmount: 0, taxAmount: 0, projectId: "" }],
-      billSundry: initialData.billSundry || [{ name: "", amount: 0 }],
-    } : {
-      billDate: new Date().toISOString().split("T")[0],
-      dueDate: new Date().toISOString().split("T")[0],
-      reference: "",
-      notes: "",
-      purchaseType: "vat_item_wise",
-      paymentType: "credit",
-      status: "open",
-      lines: [{ itemId: "", quantity: 0, uom: "PCS", unitPrice: 0, discountAmount: 0, taxAmount: 0, projectId: "" }],
-      billSundry: [{ name: "", amount: 0 }],
-    },
-    mode: "onChange",
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    name: "lines",
-    control: form.control,
-  });
-
-  const { fields: sundryFields, append: appendSundry, remove: removeSundry } = useFieldArray({
-    name: "billSundry",
-    control: form.control,
-  });
-
   const watchedLines = form.watch("lines");
   const watchedSundry = form.watch("billSundry");
 
-  useEffect(() => {
-    const calculateTotals = () => {
-      let sub = 0;
-      let tax = 0;
-
-      const currentLines = form.getValues("lines");
+  const { subtotal, taxTotal, total } = useMemo(() => {
+    let sub = 0;
+    let tax = 0;
+    const lines = watchedLines || [];
+    
+    lines.forEach((line) => {
+      const qty = parseFloat(String(line.quantity)) || 0;
+      const price = parseFloat(String(line.unitPrice)) || 0;
+      const disc = parseFloat(String(line.discountAmount)) || 0;
+      const tAmount = parseFloat(String(line.taxAmount)) || 0;
       
-      currentLines.forEach((line) => {
-        const qty = parseFloat(String(line.quantity)) || 0;
-        const price = parseFloat(String(line.unitPrice)) || 0;
-        const disc = parseFloat(String(line.discountAmount)) || 0;
-        let tAmount = parseFloat(String(line.taxAmount)) || 0;
-        
-        const lineBase = qty * price;
-        const taxable = Math.max(0, lineBase - disc);
+      const lineBase = qty * price;
+      const taxable = Math.max(0, lineBase - disc);
+      
+      sub += taxable;
+      tax += tAmount;
+    });
 
-        // If taxAmount is 0 but it's a VAT purchase, we might want to auto-calculate if it wasn't manually set?
-        // But for now, we trust the 'taxAmount' field which is set by handleItemSelect or manual input.
-        // However, if the user changes Qty/Price, tax should update.
-        // The current implementation only sets tax on Item Select. 
-        // We really need to update tax when Qty/Price changes.
-        
-        // Recalculate tax if we have enough info and if it's not a manual override?
-        // Simplified: Assume 5% standard for now if not set, or preserve what was set.
-        // Better approach: In the render loop, we calculate line total. Here we sum up.
-        
-        sub += taxable;
-        tax += tAmount;
-      });
+    const currentSundry = watchedSundry || [];
+    let sundryTotal = 0;
+    currentSundry.forEach(s => {
+      sundryTotal += parseFloat(String(s.amount)) || 0;
+    });
 
-      // Add Bill Sundry
-      const currentSundry = form.getValues("billSundry") || [];
-      let sundryTotal = 0;
-      currentSundry.forEach(s => {
-        sundryTotal += parseFloat(String(s.amount)) || 0;
-      });
-
-      setSubtotal(sub);
-      setTaxTotal(tax);
-      setTotal(sub + tax + sundryTotal);
+    return {
+      subtotal: sub,
+      taxTotal: tax,
+      total: sub + tax + sundryTotal
     };
-
-    calculateTotals();
   }, [watchedLines, watchedSundry]);
   
   // Helper to re-calculate line tax when qty/price changes
