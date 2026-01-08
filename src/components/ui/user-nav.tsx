@@ -47,9 +47,9 @@ export function UserNav() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="/logo-icon.png" alt="@admin" />
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src="/logo-hq.png" alt="@admin" />
             <AvatarFallback>AD</AvatarFallback>
           </Avatar>
         </Button>
