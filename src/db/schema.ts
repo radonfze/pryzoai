@@ -40,3 +40,4 @@ export * from "./schema/security";
 export * from "./schema/document-history";
 export * from "./schema/item-price-tiers";
 export * from "./schema/email-templates";
+export * from "./schema/auth-reset";

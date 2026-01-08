@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { ForgotPasswordDialog } from "@/components/auth/forgot-password-dialog";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function LoginPage() {
       {/* Logo */}
       <div className="text-center">
         <div className="inline-flex items-center justify-center mb-4">
-          <div className="relative h-32 w-96">
+          <div className="relative h-48 w-[32rem]">
             <Image src="/login-logo.png" alt="PryzoAI" fill className="object-contain" priority />
           </div>
         </div>
@@ -133,9 +134,7 @@ export default function LoginPage() {
                   Remember me
                 </Label>
               </div>
-              <a href="#" className="text-sm text-primary hover:underline">
-                Forgot password?
-              </a>
+              <ForgotPasswordDialog />
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
@@ -149,16 +148,12 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Demo credentials: any email + any password</p>
-          </div>
         </CardContent>
       </Card>
 
       {/* Footer */}
       <p className="text-center text-xs text-muted-foreground">
-        © 2024 PryzoAI. All rights reserved.
+        © {new Date().getFullYear()} PryzoAI. All rights reserved.
       </p>
     </div>
   );
