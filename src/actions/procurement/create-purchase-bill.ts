@@ -86,12 +86,15 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
     
     const total = subtotal + taxTotal + sundryTotal;
 
+    const sanitizedPoId = (!input.purchaseOrderId || input.purchaseOrderId.trim() === "") ? null : input.purchaseOrderId;
+    const sanitizedWarehouseId = (!input.warehouseId || input.warehouseId.trim() === "") ? null : input.warehouseId;
+
     const result = await db.transaction(async (tx) => {
       // 1. Insert Bill Header (Purchase Invoice)
       const [bill] = await tx.insert(purchaseInvoices).values({
         companyId: companyId,
         invoiceNumber: billNumber,
-        purchaseOrderId: input.purchaseOrderId?.trim() || null,
+        purchaseOrderId: sanitizedPoId,
         supplierId: input.supplierId,
         invoiceDate: input.billDate,
         dueDate: input.dueDate,
@@ -105,7 +108,7 @@ export async function createPurchaseBillAction(input: PurchaseBillInput): Promis
         status: (input.status as any) || "open", // Use provided status or default to open
         
         // New Fields
-        warehouseId: input.warehouseId?.trim() || null,
+        warehouseId: sanitizedWarehouseId,
         purchaseType: input.purchaseType,
         paymentType: input.paymentType,
         billSundry: input.billSundry,
