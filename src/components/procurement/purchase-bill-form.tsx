@@ -594,10 +594,10 @@ export function PurchaseBillForm({ suppliers = [], items = [], warehouses = [], 
                               name={`lines.${index}.projectId`}
                               render={({ field }) => (
                                 <FormItem className="w-[120px]">
-                                   <Select onValueChange={field.onChange} value={field.value || undefined}>
+                                   <Select onValueChange={(val) => field.onChange(val === "_none" ? "" : val)} value={field.value || undefined}>
                                       <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Project" /></SelectTrigger></FormControl>
                                       <SelectContent>
-                                         <SelectItem value="">None</SelectItem>
+                                         <SelectItem value="_none">None</SelectItem>
                                          {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.projectCode}</SelectItem>)}
                                       </SelectContent>
                                    </Select>
